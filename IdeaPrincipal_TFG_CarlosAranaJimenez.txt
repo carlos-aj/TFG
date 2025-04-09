@@ -1,0 +1,75 @@
+Web Peluquería
+
+Dos Vistas:
+	
+	Usuario:
+	 - Registro:
+		- Nombre
+		- Correo electrónico (validación)
+		- Número de teléfono:
+			- El número de teléfono solo será visible para el peluquero con el que se solicite la cita, en casos específicos
+		- El registro no es necesario para hacer una reserva
+
+	 - Reserva de citas:
+		Con registro previo:
+		 - Tipo de servicio
+		 - Peluquero
+		 - Calendario con días y horas disponibles
+		 - Se envía el correo con la confirmación de la cita (fecha, hora, tipo de servicio)
+		Sin registro previo:
+		 - Nombre
+		 - Correo electrónico
+		 - Número de teléfono
+		 - Tipo de servicio
+		 - Peluquero
+		 - Calendario con días y horas disponibles
+		 - Se envía el correo con la confirmación de la cita (fecha, hora, tipo de servicio)
+		
+	 - Sistema de "invitados":
+		- Es necesario estar registrado
+		- Este sistema se trata de poder reservar citas seguidas a la del usuario, de forma que tus amigos no tengan que hacer el proceso completo
+
+	 - Sistema de prepago (opcional):
+		- Herramientas aun por seleccionar
+	 
+	 - Sistema de restricción:
+		- Si un usuario no asiste a su cita se le dará una advertencia (vía correo electrónico)
+			- En caso de prepago se devolverá la mitad del precio del servicio
+		- Con la segunda advertencia al usuario se le hará un suplemento extra a la siguiente cita
+		- Con la tercera advertencia el usuario será restringido durante un tiempo por definir
+		- Cada advertencia caduca a los 3 meses (Ejemplo: si tienes dos advertencias, a los tres meses de no fallar a una cita pasas a tener una advertencia).
+
+	Administrador (Peluquero):
+	 - Dos tipos de Peluquero:
+	 	- Jefe: 
+	 	 	- Podrá eliminar usuarios y citas
+		 	- Podrá crear nuevos servicios y modificar los creados
+ 		 	- Listado de citas reservadas (Suyas/Resto Peluqueros)
+		 	- Listado de citas para ese día
+				- Sistema de marcado de citas (Realizadas/Faltas)
+				- Sistema de sanción por falta
+		 	- Administración de cierre/vacaciones:
+				- Cuando se cierre la peluquería, de forma no regular, se cancelaran las citas notificando a los usuarios
+				- Una vez la empresa administre las vacaciones, podrá "ocupar días completos"
+
+		- Empleado:
+	 	 	- Listado de citas del mes
+		 	- Listado de citas para ese día
+				- Sistema de marcado de citas (Realizadas/Faltas)
+				- Sistema de sanción por falta
+
+Herramientas:
+	
+	- Diseño:
+		-Figma
+
+	- FRONT:
+		- CSS y Boostrap
+		- React
+		- Fontawesome
+
+	- BACK:
+		- Laravel
+
+	- BD:
+		- MariaDB
