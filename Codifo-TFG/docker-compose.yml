@@ -10,6 +10,8 @@ services:
       - /app/node_modules
     env_file:
       - ./docker/.env.backend
+    depends_on:
+      - db
 
   frontend:
     build: ./frontend
@@ -17,6 +19,21 @@ services:
       - "5173:5173"
     volumes:
       - ./frontend:/app
-      - /app/node_modules   
+      - /app/node_modules
     env_file:
       - ./docker/.env.frontend
+
+  db:
+    image: postgres:15
+    restart: always
+    environment:
+      POSTGRES_DB: tfg_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5433:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+volumes:
+  pgdata:

@@ -12,3 +12,10 @@ app.listen(process.env.PORT || 3000, '0.0.0.0', () => {
   console.log(`Servidor en puerto ${process.env.PORT || 3000}`);
 });
 
+const knex = require('knex')(require('./src/db/knexfile').development);
+
+knex.raw('SELECT 1')
+  .then(() => console.log('✅ Conexión a la base de datos exitosa'))
+  .catch(err => console.error('❌ Error conectando a la base de datos', err));
+
+
