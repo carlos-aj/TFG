@@ -7,7 +7,7 @@ export async function getUserById(req: Request, res: Response) {
     const user = await UserService.getUserById(id);
 
     if (!user) {
-      return res.status(404).json({ message: 'User not found' });
+      res.status(404).json({ message: 'User not found' });
     }
 
     res.json(user);
@@ -45,7 +45,7 @@ export async function deleteUser(req: Request, res: Response) {
     const deleted = await UserService.deleteUser(id);
 
     if(deleted === 0){
-      return res.status(404).json({ message: 'User not found' });
+      res.status(404).json({ message: 'User not found' });
     }
 
     res.json({ message: 'User deleted successfully' });
@@ -62,7 +62,7 @@ export async function updateUser(req: Request, res: Response) {
     const updatedUser = await UserService.updateUser(data, id)
 
     if (!updatedUser) {
-      return res.status(404).json({ message: 'User not found' });
+      res.status(404).json({ message: 'User not found' });
     }
 
     res.json(updatedUser);

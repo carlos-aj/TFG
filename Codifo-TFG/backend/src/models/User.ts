@@ -1,4 +1,5 @@
 import { Model } from 'objection';
+import { Cita } from './Cita';
 
 export class User extends Model {
   id!: number;
@@ -14,7 +15,16 @@ export class User extends Model {
   created_at!: string;
   updated_at!: string;
 
-  static get tableName() {
-    return 'users';
-  }
+  static tableName = 'users';
+
+  static relationMappings = {
+    citas: {
+      relation: Model.HasManyRelation,
+      modelClass: Cita,
+      join: {
+        from: 'users.id',
+        to: 'cita.user_id'
+      }
+    }
+  };
 }

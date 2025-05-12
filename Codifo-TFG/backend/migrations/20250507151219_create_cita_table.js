@@ -13,7 +13,7 @@ exports.up = function(knex) {
       table.date('fecha').notNullable();
       table.time('hora').notNullable();
       
-      table.boolean('estado').defaultTo(false); // por ejemplo: false = pendiente, true = realizada
+      table.boolean('estado').defaultTo(false); 
       table.boolean('pagado').defaultTo(false);
   
       table.timestamps(true, true);

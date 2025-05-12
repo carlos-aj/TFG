@@ -2,6 +2,10 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import { userRouter } from './routes/user.routes';
+import { barberoRouter } from './routes/barbero.routes';
+import { servicioRouter } from './routes/servicio.routes';
+import { citaRouter } from './routes/cita.routes';
+
 import knex from './db/knex';
 
 dotenv.config();
@@ -18,6 +22,10 @@ knex.raw('SELECT 1')
 
 // Rutas
 app.use('/api/user', userRouter);
+app.use('/api/barbero', barberoRouter);
+app.use('/api/servicio', servicioRouter);
+app.use('/api/cita', citaRouter);
+
 
 // Iniciar servidor
 const PORT = Number(process.env.PORT) || 3000;
