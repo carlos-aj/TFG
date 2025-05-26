@@ -1,7 +1,16 @@
 import { Model } from 'objection';
 import { Cita } from './Cita';
 
-export class Servicio extends Model {
+export interface IServicio {
+  id: number;
+  nombre: string;
+  precio: number;
+  duracion: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export class Servicio extends Model implements IServicio {
   id!: number;
   nombre!: string;
   precio!: number;

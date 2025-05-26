@@ -8,6 +8,7 @@ services:
     volumes:
       - ./backend:/app
       - /app/node_modules
+      - ./backend/node_modules:/app/node_modules
     env_file:
       - ./docker/.env.backend
     depends_on:
@@ -17,6 +18,7 @@ services:
     build: ./frontend
     ports:
       - "5173:5173"
+    command: npm run dev
     volumes:
       - ./frontend:/app
       - /app/node_modules

@@ -1,17 +1,24 @@
 import { Request, Response } from 'express';
 import * as UserService from '../services/user.service';
+import jwt from 'jsonwebtoken';
+import bcrypt from 'bcrypt';
+
+const JWT_SECRET = process.env.JWT_SECRET;
 
 export async function getUserById(req: Request, res: Response) {
   try{
     const id = parseInt(req.params.id);
-    const user = await UserService.getUserById(id);
+    if (isNaN(id)) {
+      res.status(400).json({ message: 'ID inválido' });
+    }else{
+      const user = await UserService.getUserById(id);
 
-    if (!user) {
-      res.status(404).json({ message: 'User not found' });
-    }
+      if (!user) {
+        res.status(404).json({ message: 'User not found' });
+      }
 
-    res.json(user);
-    
+      res.json(user);
+  }
   }catch (err) {
     console.error('Error getting user:', err);
     res.status(500).json({ message: 'Error getting user' });
@@ -29,13 +36,33 @@ export async function getAllUsers(req: Request, res: Response) {
 }
 
 export async function createUser(req: Request, res: Response) {
-  try{
-    const newUser = req.body;
-    const user = await UserService.createUser(newUser);
+  try {
+    const { nombre, apellidos, email, telefono, contrasena, rol } = req.body;
+
+    if (!nombre || typeof nombre !== 'string') {
+      res.status(400).json({ message: 'El nombre es obligatorio' });
+    }
+    if (!apellidos || typeof apellidos !== 'string') {
+      res.status(400).json({ message: 'Los apellidos son obligatorios' });
+    }
+    if (!email || !/\S+@\S+\.\S+/.test(email)) {
+      res.status(400).json({ message: 'Introduce un email válido' });
+    }
+    if (!telefono || !/^\d{9,15}$/.test(telefono)) {
+      res.status(400).json({ message: 'Introduce un número de teléfono válido' });
+    }
+    if (!contrasena || contrasena.length < 6) {
+      res.status(400).json({ message: 'La contraseña debe tener al menos 6 caracteres' });
+    }
+    if (!rol) {
+      res.status(400).json({ message: 'El rol es obligatorio' });
+    }
+
+    const user = await UserService.createUser(req.body);
     res.status(201).json(user);
-  }catch (err){
+  } catch (err) {
     console.log('Error creating user:', err);
-    res.status(500).json({ message: 'Error creating user'})
+    res.status(500).json({ message: 'Error creating user' });
   }
 }
 
@@ -69,5 +96,54 @@ export async function updateUser(req: Request, res: Response) {
   }catch (err){
     console.error('Error updating user:', err);
     res.status(500).json({ message: 'Error updating user' });
+  }
+}
+
+export async function confirmUser(req: Request, res: Response) {
+    console.log('Entrando en confirmUser');
+  try{
+    const token = req.query.token as string;
+    console.log('Token recibido:', token); // <-- Asegúrate de ver el token aquí
+    const user = await UserService.confirmUser(token);
+
+    if (!user) {
+     res.status(404).json({ message: 'User not found' });
+    }
+
+    res.json({ message: 'User confirmed successfully' });
+  }catch (err){
+    console.error('Error confirming user:', err);
+    res.status(500).json({ message: 'Error confirming user' });
+  }
+}
+
+export async function login(req: Request, res: Response) {
+  const { correo, contrasena } = req.body;
+
+  if (!correo || !contrasena) {
+    res.status(400).json({ message: 'Correo y contraseña son obligatorios' });
+  }else{
+    const user = await UserService.getUserByEmail(correo);
+    if (!user) {
+      res.status(401).json({ message: 'Credenciales incorrectas' });
+    }else{
+      const passwordMatch = await bcrypt.compare(contrasena, user.contrasena);
+      if (!passwordMatch) {
+        res.status(401).json({ message: 'Credenciales incorrectas' });
+      }else{
+        if (!user.is_verified) {
+          res.status(403).json({ message: 'Debes confirmar tu cuenta antes de iniciar sesión' });
+        }else{
+          if (!JWT_SECRET) {
+            throw new Error('JWT_SECRET is not defined in environment variables.');
+          }
+          const token = jwt.sign({ id: user.id, email: user.email, rol: user.rol }, JWT_SECRET, {
+            expiresIn: '1h',
+          });
+
+          res.json({ token });
+        }
+      }
+    }
   }
 }

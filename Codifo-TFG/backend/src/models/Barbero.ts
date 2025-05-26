@@ -1,7 +1,15 @@
 import { Model } from 'objection';
 import { Cita } from './Cita';
 
-export class Barbero extends Model {
+export interface IBarbero {
+  id: number;
+  nombre: string;
+  especialidad: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export class Barbero extends Model implements IBarbero {
   id!: number;
   nombre!: string;
   especialidad!: string;

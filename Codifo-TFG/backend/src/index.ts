@@ -1,14 +1,14 @@
+import * as dotenv from 'dotenv';
+dotenv.config();
+
 import express from 'express';
 import cors from 'cors';
-import dotenv from 'dotenv';
 import { userRouter } from './routes/user.routes';
 import { barberoRouter } from './routes/barbero.routes';
 import { servicioRouter } from './routes/servicio.routes';
 import { citaRouter } from './routes/cita.routes';
 
 import knex from './db/knex';
-
-dotenv.config();
 
 const app = express();
 

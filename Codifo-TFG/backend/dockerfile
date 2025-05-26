@@ -10,4 +10,6 @@ COPY . .
 
 EXPOSE 3000
 
-CMD ["npx", "ts-node", "src/index.ts"]
+RUN npm install -g nodemon
+
+CMD ["nodemon", "--watch", "src", "--ext", "ts", "--exec", "ts-node", "src/index.ts"]

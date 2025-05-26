@@ -3,7 +3,20 @@ import { User } from './User';
 import { Barbero } from './Barbero';
 import { Servicio } from './Servicio';
 
-export class Cita extends Model {
+export interface ICita {
+  id: number;
+  user_id: number;
+  barbero_id: number;
+  servicio_id: number;
+  fecha: string;
+  hora: string;
+  estado: boolean;
+  pagado: boolean;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export class Cita extends Model implements ICita {
   id!: number;
   user_id!: number;
   barbero_id!: number;
