@@ -103,7 +103,6 @@ export async function confirmUser(req: Request, res: Response) {
     console.log('Entrando en confirmUser');
   try{
     const token = req.query.token as string;
-    console.log('Token recibido:', token); // <-- Asegúrate de ver el token aquí
     const user = await UserService.confirmUser(token);
 
     if (!user) {
@@ -140,10 +139,24 @@ export async function login(req: Request, res: Response) {
           const token = jwt.sign({ id: user.id, email: user.email, rol: user.rol }, JWT_SECRET, {
             expiresIn: '1h',
           });
-
-          res.json({ token });
+          res.cookie('token', token, {
+              httpOnly: true,
+              secure: process.env.NODE_ENV === 'production',
+              sameSite: 'strict',
+              maxAge: 60 * 60 * 1000 
+            });
+          res.json({ token, rol: user.rol });
         }
       }
     }
   }
+}
+
+export async function logout(req: Request, res: Response) {
+  res.clearCookie('token', {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'strict'
+  });
+  res.json({ message: 'Logout successful' });
 }

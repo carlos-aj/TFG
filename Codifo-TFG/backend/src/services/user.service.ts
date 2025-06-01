@@ -19,7 +19,7 @@ export async function createUser(data: Partial<User>) {
     const user = await User.query().insert({
         ...data,
         contrasena: hashedPassword,
-        rol: 'user',
+        rol: data.rol || 'user',
         auth_token: authToken,
         is_verified: false,
     });

@@ -1,6 +1,6 @@
 import * as dotenv from 'dotenv';
 dotenv.config();
-
+import cookieParser from 'cookie-parser';
 import express from 'express';
 import cors from 'cors';
 import { userRouter } from './routes/user.routes';
@@ -12,8 +12,13 @@ import knex from './db/knex';
 
 const app = express();
 
-app.use(cors());
+app.use(cors({
+  origin: process.env.FRONTEND_URL || 'http://localhost:5173', // Cambia al puerto de tu frontend
+  credentials: true
+}));
 app.use(express.json());
+app.use(cookieParser());
+
 
 // Conexión base de datos
 knex.raw('SELECT 1')

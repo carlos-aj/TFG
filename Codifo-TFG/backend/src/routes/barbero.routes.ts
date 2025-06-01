@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import * as BarberoController from '../controllers/babero.controller'
+import * as BarberoController from '../controllers/barbero.controller'
 
 export const barberoRouter = Router();
 

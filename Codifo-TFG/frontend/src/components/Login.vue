@@ -30,6 +30,7 @@ const correo = ref('')
 const contrasena = ref('')
 const errors = reactive({ correo: '', contrasena: '', general: '' })
 const router = useRouter()
+const error = ref('')
 
 const validate = () => {
   let valid = true
@@ -48,29 +49,32 @@ const validate = () => {
   return valid
 }
 
-const login = async () => {
+async function login() {
   if (!validate()) return
 
   try {
     const response = await fetch('http://localhost:3000/api/user/login', {
       method: 'POST',
+      credentials: 'include', 
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ correo: correo.value, contrasena: contrasena.value })
-    })
-
-    const data = await response.json()
-
-    if (!response.ok) {
-      errors.general = data.message || 'Error al iniciar sesión'
-      return
-    }
-
-    if (data.token) {
-      localStorage.setItem('token', data.token)
-      router.push('/citas')
+    });
+    const data = await response.json();
+    console.log(data);
+    if (response.ok) {
+      localStorage.setItem('role', data.rol || ''); 
+      localStorage.setItem('token', 'true');
+      window.dispatchEvent(new Event('storage'));
+      if (data.rol === 'admin' || data.rol === 'empleado') {
+        router.push('/citas-empleados-admin');
+      } else {
+        router.push('/citas');
+      }
+    } else {
+      error.value = data.message || 'Error al iniciar sesión';
     }
   } catch (err) {
-    errors.general = 'Error en el login'
+    error.value = 'Error de red';
   }
 }
 </script>

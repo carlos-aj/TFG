@@ -18,7 +18,7 @@ export class Servicio extends Model implements IServicio {
   created_at!: string;
   updated_at!: string;
 
-  static tableName = 'servicio';
+  static tableName = 'servicios';
 
   static relationMappings = {
     citas: {
