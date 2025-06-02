@@ -64,6 +64,9 @@ async function login() {
     if (response.ok) {
       localStorage.setItem('role', data.rol || ''); 
       localStorage.setItem('token', 'true');
+       if (data.id) {
+        localStorage.setItem('user_id', data.id); // <-- AÑADE ESTA LÍNEA
+      }
       window.dispatchEvent(new Event('storage'));
       if (data.rol === 'admin' || data.rol === 'empleado') {
         router.push('/citas-empleados-admin');

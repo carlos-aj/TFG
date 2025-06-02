@@ -26,3 +26,19 @@ export async function sendConfirmationEmail(to: string, token: string) {
 
   console.log('Correo de confirmación enviado: %s', info.messageId);
 }
+
+export async function sendCitaEmail(to: string, citaInfo: any) {
+  const info = await transporter.sendMail({
+    from: '"Barbería" <no-reply@barberia.com>',
+    to,
+    subject: 'Confirmación de tu cita',
+    html: `
+      <h2>¡Cita reservada!</h2>
+      <p><b>Servicio:</b> ${citaInfo.servicio}</p>
+      <p><b>Barbero:</b> ${citaInfo.barbero}</p>
+      <p><b>Fecha:</b> ${citaInfo.fecha}</p>
+      <p><b>Hora:</b> ${citaInfo.hora}</p>
+    `,
+  });
+  console.log('Correo de cita enviado: %s', info.messageId);
+}

@@ -1,5 +1,7 @@
 import { Request, Response } from 'express';
 import * as CitaService from '../services/cita.service';
+import { sendCitaEmail } from '../utils/emailSender';
+
 
 export async function getAllCitas(req: Request, res: Response) {
   try {
@@ -27,11 +29,34 @@ export async function getCitaById(req: Request, res: Response) {
   }
 }
 
+
 export async function createCita(req: Request, res: Response) {
   try {
     const data = req.body;
-    const newCita = await CitaService.createCita(data);
-    res.status(201).json(newCita);
+
+    const citaExistente = await CitaService.findCitaByBarberoFechaHora(
+      data.barbero_id,
+      data.fecha,
+      data.hora
+    );
+    if (citaExistente) {
+      res.status(400).json({ message: 'Ya existe una cita para ese barbero en esa fecha y hora.' });
+    }else{
+      const newCita = await CitaService.createCita(data);
+
+      const { user, barbero, servicio } = await CitaService.getCitaInfoForEmail(data);
+
+      if (user && user.email) {
+        await sendCitaEmail(user.email, {
+          servicio: servicio?.nombre || data.servicio_id,
+          barbero: barbero?.nombre || data.barbero_id,
+          fecha: data.fecha,
+          hora: data.hora
+        });
+      }
+
+      res.status(201).json(newCita);
+    }
   } catch (err) {
     console.error('Error creating appointment:', err);
     res.status(500).json({ message: 'Failed to create appointment' });
@@ -70,3 +95,4 @@ export async function deleteCita(req: Request, res: Response) {
     res.status(500).json({ message: 'Failed to delete appointment' });
   }
 }
+

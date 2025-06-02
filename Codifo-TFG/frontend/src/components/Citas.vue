@@ -1,10 +1,6 @@
 <script setup>
 import { ref, onMounted } from 'vue'
-// Quita estas líneas:
-// import Datepicker from '@vuepic/vue-datepicker'
-// import '@vuepic/vue-datepicker/dist/main.css'
 
-// Estados
 const servicios = ref([])
 const barberos = ref([])
 const servicioSeleccionado = ref(null)
@@ -32,34 +28,37 @@ async function reservarCita() {
     return
   }
 
+  const user_id = localStorage.getItem('user_id')
+  if (!user_id) {
+    alert('No se encontró el user_id en localStorage')
+    return
+  }
+
   const cita = {
     servicio_id: servicioSeleccionado.value,
     barbero_id: barberoSeleccionado.value,
-    fecha: fechaSeleccionada.value, // Ya es string en formato YYYY-MM-DD
+    fecha: fechaSeleccionada.value,
     hora: horaSeleccionada.value,
     estado: false,
-    pagado: false
+    pagado: false,
+    user_id: parseInt(user_id)
   }
 
-  const token = localStorage.getItem('token')
-  const user_id = localStorage.getItem('user_id')
-
-  if (user_id) cita.user_id = parseInt(user_id)
+  console.log('Cita a enviar:', cita)
 
   const res = await fetch('http://localhost:3000/api/cita', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      // 'Authorization': `Bearer ${token}`
     },
     body: JSON.stringify(cita)
   })
 
   if (res.ok) {
     alert('¡Cita reservada con éxito!')
-    // Limpia el formulario si quieres
   } else {
-    alert('Error al reservar la cita.')
+    const errorData = await res.json();
+    alert(errorData.message || 'Error al reservar la cita.');
   }
 }
 </script>

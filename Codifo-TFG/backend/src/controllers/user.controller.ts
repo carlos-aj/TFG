@@ -145,7 +145,7 @@ export async function login(req: Request, res: Response) {
               sameSite: 'strict',
               maxAge: 60 * 60 * 1000 
             });
-          res.json({ token, rol: user.rol });
+          res.json({ token, rol: user.rol, id: user.id });
         }
       }
     }
