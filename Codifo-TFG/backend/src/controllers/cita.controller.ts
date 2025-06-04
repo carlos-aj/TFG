@@ -96,3 +96,13 @@ export async function deleteCita(req: Request, res: Response) {
   }
 }
 
+export async function checkPuedeInvitar(req: Request, res: Response) {
+  try {
+    const { barbero_id, fecha, hora } = req.query;
+    const puede = await CitaService.puedeInvitar(Number(barbero_id), String(fecha), String(hora));
+    res.json({ puedeInvitar: puede });
+  } catch (err) {
+    res.status(500).json({ message: 'Error comprobando invitación' });
+  }
+}
+

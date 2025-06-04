@@ -7,6 +7,7 @@ import { userRouter } from './routes/user.routes';
 import { barberoRouter } from './routes/barbero.routes';
 import { servicioRouter } from './routes/servicio.routes';
 import { citaRouter } from './routes/cita.routes';
+import { galeriaRouter } from './routes/galeria.routes';
 
 import knex from './db/knex';
 
@@ -30,6 +31,7 @@ app.use('/api/user', userRouter);
 app.use('/api/barbero', barberoRouter);
 app.use('/api/servicio', servicioRouter);
 app.use('/api/cita', citaRouter);
+app.use('/api/galeria', galeriaRouter);
 
 
 // Iniciar servidor

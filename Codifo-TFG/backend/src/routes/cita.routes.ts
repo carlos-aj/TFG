@@ -8,3 +8,4 @@ citaRouter.get('/:id', CitaController.getCitaById);
 citaRouter.post('/', CitaController.createCita);
 citaRouter.put('/:id', CitaController.updateCita);
 citaRouter.delete('/:id', CitaController.deleteCita);
+citaRouter.get('/puede-invitar/check', CitaController.checkPuedeInvitar);

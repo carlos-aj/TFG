@@ -36,3 +36,31 @@ export async function getCitaInfoForEmail(data: any) {
   return { user, barbero, servicio };
 }
 
+function sumarMinutos(hora: string, minutos: number): string {
+  const [h, m] = hora.split(':').map(Number);
+  const date = new Date(0, 0, 0, h, m + minutos);
+  return date.toTimeString().slice(0, 5);
+}
+
+export async function puedeInvitar(barbero_id: number, fecha: string, hora: string) {
+  // Calcula las horas adyacentes
+  const horaAntes = sumarMinutos(hora, -30);
+  const horaDespues = sumarMinutos(hora, 30);
+
+  // Busca si hay citas ocupadas en las horas adyacentes (con cualquier barbero)
+  const citaAntes = await Cita.query().where({ fecha, hora: horaAntes }).first();
+  const citaDespues = await Cita.query().where({ fecha, hora: horaDespues }).first();
+
+  // Si alguna de las horas adyacentes está libre (no hay cita), se puede invitar
+  const puedeInvitar = !citaAntes || !citaDespues;
+
+  // Opcional: si solo quieres que haya al menos un hueco libre, usa:
+  // const puedeInvitar = !citaAntes || !citaDespues;
+
+  console.log('citaAntes:', citaAntes);
+  console.log('citaDespues:', citaDespues);
+  console.log('puedeInvitar:', puedeInvitar);
+
+  return puedeInvitar;
+}
+
