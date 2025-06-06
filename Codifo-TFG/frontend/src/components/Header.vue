@@ -118,6 +118,9 @@ onUnmounted(() => {
             <router-link class="nav-link" to="/usuarios" active-class="active" exact-active-class="active">Usuarios</router-link>
           </li>
           <li class="nav-item">
+            <router-link class="nav-link" to="/galeria" active-class="active" exact-active-class="active">Galeria</router-link>
+          </li>
+          <li class="nav-item">
             <a class="nav-link" href="#" @click.prevent="logout">Logout</a>
           </li>
         </template>

@@ -30,7 +30,7 @@
           <div class="card-front">
             <img src="../assets/Barbero2.png" alt="Imagen Barbero"/>
             <h2>Luka Petrov</h2>
-            <h3>Tinte y diseños con navaja </h3>
+            <h3>Tinte y diseños con navaja</h3>
           </div>
           <div class="card-back">
             <p>Luka emigró con su familia cuando era adolescente y encontró en la barbería una forma de expresión artística. Combina la técnica europea clásica con tendencias urbanas. Siempre está estudiando nuevas formas de estilizar barbas y cabello</p>

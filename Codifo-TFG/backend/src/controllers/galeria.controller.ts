@@ -9,26 +9,29 @@ export async function getGalerias(req: Request, res: Response) {
 
 export async function getGaleriaById(req: Request, res: Response) {
   const galeria = await GaleriaService.getGaleriaById(Number(req.params.id));
-  if (!galeria) return res.status(404).json({ message: 'No encontrada' });
+  if (!galeria) res.status(404).json({ message: 'No encontrada' });
   res.json(galeria);
 }
 
 export async function createGaleria(req: Request, res: Response) {
-  const { barbero, imagenes } = req.body;
-  if (!barbero || !imagenes) return res.status(400).json({ message: 'Faltan datos' });
-  const nueva = await GaleriaService.createGaleria(barbero, imagenes);
+  const { barbero_id, imagenes } = req.body;
+  if (!barbero_id || !imagenes) res.status(400).json({ message: 'Faltan datos' });
+  const nueva = await GaleriaService.createGaleria(barbero_id, imagenes);
   res.status(201).json(nueva);
 }
 
 export async function updateGaleria(req: Request, res: Response) {
   const { barbero, imagenes } = req.body;
   const galeria = await GaleriaService.updateGaleria(Number(req.params.id), barbero, imagenes);
-  if (!galeria) return res.status(404).json({ message: 'No encontrada' });
+  if (!galeria) res.status(404).json({ message: 'No encontrada' });
   res.json(galeria);
 }
 
 export async function deleteGaleria(req: Request, res: Response) {
   const numDeleted = await GaleriaService.deleteGaleria(Number(req.params.id));
-  if (!numDeleted) return res.status(404).json({ message: 'No encontrada' });
-  res.json({ message: 'Eliminada correctamente' });
+  if (!numDeleted){ 
+    res.status(404).json({ message: 'No encontrada' });
+    }else{
+        res.json({ message: 'Eliminada correctamente' });
+    }
 }

@@ -3,6 +3,7 @@ dotenv.config();
 import cookieParser from 'cookie-parser';
 import express from 'express';
 import cors from 'cors';
+import path from 'path';
 import { userRouter } from './routes/user.routes';
 import { barberoRouter } from './routes/barbero.routes';
 import { servicioRouter } from './routes/servicio.routes';
@@ -20,6 +21,8 @@ app.use(cors({
 app.use(express.json());
 app.use(cookieParser());
 
+app.use('/galeria', express.static(path.join(__dirname, 'ApiGaleria')));
+
 
 // Conexión base de datos
 knex.raw('SELECT 1')
@@ -33,6 +36,7 @@ app.use('/api/servicio', servicioRouter);
 app.use('/api/cita', citaRouter);
 app.use('/api/galeria', galeriaRouter);
 
+app.use('/public', express.static(path.join(__dirname, '../../public')));
 
 // Iniciar servidor
 const PORT = Number(process.env.PORT) || 3000;
