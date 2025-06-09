@@ -160,3 +160,19 @@ export async function logout(req: Request, res: Response) {
   });
   res.json({ message: 'Logout successful' });
 }
+
+export async function sancionarUsuario(req: Request, res: Response) {
+  try {
+    const id = parseInt(req.params.id);
+    const user = await UserService.getUserById(id);
+    if (!user) {
+      res.status(404).json({ message: 'User not found' });
+    }else{
+      const nuevaPenalizacion = (user.penalizacion || 0) + 1;
+      const updated = await UserService.updateUser({ penalizacion: nuevaPenalizacion }, id);
+      res.json({ message: 'Usuario sancionado', penalizacion: nuevaPenalizacion });
+    }
+  } catch (err) {
+    res.status(500).json({ message: 'Error sancionando usuario' });
+  }
+}

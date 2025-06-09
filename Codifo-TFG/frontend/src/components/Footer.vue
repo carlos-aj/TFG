@@ -36,7 +36,7 @@
 
 <style scoped>
 .footer {
-    background-color: white;
+    background-color: #656565;
     color: black;
     text-align: center;
     padding: 1rem 0;

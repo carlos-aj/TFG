@@ -7,20 +7,42 @@ const servicioSeleccionado = ref(null)
 const barberoSeleccionado = ref(null)
 const fechaSeleccionada = ref(null)
 const horaSeleccionada = ref('')
+const horasOcupadas = ref([])
 const horasDisponibles = [
   '09:00', '09:30', '10:00', '10:30', '11:00', '11:30',
   '12:00', '12:30', '13:00', '13:30',
   '16:00', '16:30', '17:00', '17:30', '18:00', '18:30', '19:00', '19:30'
 ]
-
+const horaInvitado = ref('');
 const puedeInvitar = ref(false)
 const nombreInvitado = ref('')
 const servicioInvitado = ref(null)
 const barberoInvitado = ref(null)
+const horasOcupadasInvitado = ref([]);
 
 
 // Para el diálogo del date picker
 const datePickerDialog = ref(false)
+
+function getHorasDisponibles() {
+  if (!fechaSeleccionada.value) return [];
+  const fecha = new Date(fechaSeleccionada.value);
+  const dia = fecha.getDay(); // 0=Domingo, 1=Lunes, ..., 5=Viernes
+  if (dia >= 1 && dia <= 4) {
+    // Lunes a Jueves
+    return [
+      '09:30', '10:00', '10:30', '11:00', '11:30', '12:00', '12:30', '13:00', '13:30',
+      '16:00', '16:30', '17:00', '17:30', '18:00', '18:30', '19:00', '19:30', '20:00'
+    ];
+  } else if (dia === 5) {
+    // Viernes
+    return [
+      '10:00', '10:30', '11:00', '11:30', '12:00', '12:30', '13:00', '13:30', '14:00',
+      '16:00', '16:30', '17:00', '17:30', '18:00', '18:30', '19:00', '19:30'
+    ];
+  }
+  return [];
+}
 
 onMounted(async () => {
   const resServicios = await fetch('http://localhost:3000/api/servicio')
@@ -51,8 +73,20 @@ async function checkPuedeInvitar() {
   puedeInvitar.value = data.puedeInvitar
 }
 
-watch([barberoSeleccionado, fechaSeleccionada, horaSeleccionada], checkPuedeInvitar)
+watch([barberoSeleccionado, fechaSeleccionada, horaSeleccionada], () => {
+  checkPuedeInvitar();
+});
 
+watch([barberoInvitado, fechaSeleccionada, servicioInvitado], async () => {
+  if (!barberoInvitado.value || !fechaSeleccionada.value || !servicioInvitado.value) {
+    horasOcupadasInvitado.value = [];
+    return;
+  }
+  const fechaFormateada = new Date(fechaSeleccionada.value).toISOString().split('T')[0];
+  const res = await fetch(`http://localhost:3000/api/cita?barbero_id=${barberoInvitado.value}&fecha=${fechaFormateada}`);
+  const citas = await res.json();
+  horasOcupadasInvitado.value = citas.map(c => c.hora);
+});
 
 async function reservarCita() {
   if (!servicioSeleccionado.value || !barberoSeleccionado.value || !fechaSeleccionada.value || !horaSeleccionada.value) {
@@ -76,6 +110,20 @@ async function reservarCita() {
     user_id: parseInt(user_id)
   }
 
+  // Si puede invitar y los campos de invitado están completos, añade los datos del invitado al mismo objeto
+  if (
+    puedeInvitar.value &&
+    nombreInvitado.value &&
+    servicioInvitado.value &&
+    barberoInvitado.value &&
+    horaInvitado.value
+  ) {
+    cita.nombre_invitado = nombreInvitado.value;
+    cita.servicio_id_invitado = servicioInvitado.value;
+    cita.barbero_id_invitado = barberoInvitado.value;
+    cita.hora_invitado = horaInvitado.value;
+  }
+
   console.log('Cita a enviar:', cita)
 
   const res = await fetch('http://localhost:3000/api/cita', {
@@ -87,28 +135,7 @@ async function reservarCita() {
   })
 
   if (res.ok) {
-    const newCita = await res.json()
-    // Si puede invitar y los campos de invitado están completos, añade el invitado
-    if (
-      puedeInvitar.value &&
-      nombreInvitado.value &&
-      servicioInvitado.value &&
-      barberoInvitado.value
-    ) {
-      await fetch('http://localhost:3000/api/invitado', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          cita_id: newCita.id,
-          nombre: nombreInvitado.value,
-          servicio_id: servicioInvitado.value,
-          barbero_id: barberoInvitado.value
-        })
-      })
-      alert('¡Cita e invitado reservados con éxito!')
-    } else {
-      alert('¡Cita reservada con éxito!')
-    }
+    alert('¡Cita reservada con éxito!')
     nombreInvitado.value = ''
     servicioInvitado.value = null
     barberoInvitado.value = null
@@ -116,6 +143,28 @@ async function reservarCita() {
     const errorData = await res.json();
     alert(errorData.message || 'Error al reservar la cita.');
   }
+}
+
+function getHorasInvitado() {
+  if (!horaSeleccionada.value || !barberoInvitado.value) return [];
+  const horas = getHorasDisponibles();
+  const idx = horas.indexOf(horaSeleccionada.value);
+
+  let opciones = [];
+  if (barberoInvitado.value === barberoSeleccionado.value) {
+    // Mismo barbero: solo anterior y siguiente
+    if (idx > 0) opciones.push(horas[idx - 1]);
+    if (idx < horas.length - 1) opciones.push(horas[idx + 1]);
+  } else {
+    // Otro barbero: misma, anterior y siguiente
+    if (idx > 0) opciones.push(horas[idx - 1]);
+    opciones.push(horaSeleccionada.value);
+    if (idx < horas.length - 1) opciones.push(horas[idx + 1]);
+  }
+
+  // Solo muestra horas que estén libres para el barbero invitado
+  const ocupadas = horasOcupadasInvitado.value || [];
+  return opciones.filter(hora => !ocupadas.includes(hora));
 }
 </script>
 
@@ -152,14 +201,20 @@ async function reservarCita() {
           v-model="fechaSeleccionada"
           :min="new Date().toISOString().split('T')[0]"
           @update:model-value="datePickerDialog = false"
+          locale="es"
         ></v-date-picker>
       </v-dialog>
 
       <label>Hora:</label>
       <select v-model="horaSeleccionada" required>
         <option disabled value="">Selecciona una hora</option>
-        <option v-for="hora in horasDisponibles" :key="hora" :value="hora">
-          {{ hora }}
+        <option
+          v-for="hora in getHorasDisponibles()"
+          :key="hora"
+          :value="hora"
+          :disabled="horasOcupadas.includes(hora)"
+        >
+          {{ hora }} <span v-if="horasOcupadas.includes(hora)"> (Ocupada)</span>
         </option>
       </select>
       <div v-if="puedeInvitar" style="margin-top: 2em; border: 1px solid #ccc; padding: 1em;">
@@ -175,6 +230,16 @@ async function reservarCita() {
           <option disabled value="">Selecciona un barbero</option>
           <option v-for="barbero in barberos" :key="barbero.id" :value="barbero.id">
             {{ barbero.nombre }}
+          </option>
+        </select>
+        <select v-model="horaInvitado" required>
+          <option disabled value="">Selecciona una hora</option>
+          <option
+            v-for="hora in getHorasInvitado()"
+            :key="hora"
+            :value="hora"
+          >
+            {{ hora }}
           </option>
         </select>
       </div>

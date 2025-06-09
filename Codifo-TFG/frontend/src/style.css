@@ -4,6 +4,8 @@
 /* Aplica la fuente a todo el proyecto */
 body {
     font-family: 'DM Serif', serif;
+    background-color: #2B2B2B;
+    color: white;
 }
 
 h1{

@@ -1,6 +1,8 @@
 import { Request, Response } from 'express';
 import * as CitaService from '../services/cita.service';
 import { sendCitaEmail } from '../utils/emailSender';
+import { Servicio } from '../models/Servicio';
+import { User } from '../models/User';
 
 
 export async function getAllCitas(req: Request, res: Response) {
@@ -34,29 +36,121 @@ export async function createCita(req: Request, res: Response) {
   try {
     const data = req.body;
 
-    const citaExistente = await CitaService.findCitaByBarberoFechaHora(
-      data.barbero_id,
-      data.fecha,
-      data.hora
-    );
-    if (citaExistente) {
-      res.status(400).json({ message: 'Ya existe una cita para ese barbero en esa fecha y hora.' });
-    }else{
-      const newCita = await CitaService.createCita(data);
-
-      const { user, barbero, servicio } = await CitaService.getCitaInfoForEmail(data);
-
-      if (user && user.email) {
-        await sendCitaEmail(user.email, {
-          servicio: servicio?.nombre || data.servicio_id,
-          barbero: barbero?.nombre || data.barbero_id,
-          fecha: data.fecha,
-          hora: data.hora
-        });
+     if (data.user_id) {
+      const user = await User.query().findById(data.user_id);
+      if (user && user.penalizacion >= 3) {
+        res.status(403).json({ message: 'No puedes reservar porque tienes 3 o más sanciones.' });
+        return;
       }
-
-      res.status(201).json(newCita);
     }
+    // Obtener duración del servicio principal
+    const servicio = await Servicio.query().findById(data.servicio_id);
+    if (!servicio) {
+      res.status(400).json({ message: 'Servicio no encontrado' });
+      return;
+    }
+
+    // Calcular las franjas necesarias para el servicio principal
+    const franjas = Math.ceil(servicio.duracion / 30);
+    const horas = [];
+    let [h, m] = data.hora.split(':').map(Number);
+    for (let i = 0; i < franjas; i++) {
+      const horaStr = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+      horas.push(horaStr);
+      m += 30;
+      if (m >= 60) { h++; m = 0; }
+    }
+
+    // Comprobar que todas las franjas están libres para el servicio principal
+    for (const hora of horas) {
+      const citaExistente = await CitaService.findCitaByBarberoFechaHora(
+        data.barbero_id, data.fecha, hora
+      );
+      if (citaExistente) {
+        res.status(400).json({ message: 'Ya existe una cita para ese barbero en esa fecha y hora.' });
+        return;
+      }
+    }
+
+    // Crear la cita principal (solo campos válidos)
+    const newCita = await CitaService.createCita({
+      servicio_id: data.servicio_id,
+      barbero_id: data.barbero_id,
+      fecha: data.fecha,
+      hora: data.hora,
+      estado: false,
+      pagado: false,
+      user_id: data.user_id,
+      nombre_invitado: undefined
+    });
+
+    // Si hay datos de invitado, crear la cita del invitado
+    let invitadoInfo = null;
+    if (
+      data.nombre_invitado &&
+      data.servicio_id_invitado &&
+      data.barbero_id_invitado &&
+      data.hora_invitado
+    ) {
+      // Obtener duración del servicio del invitado
+      const servicioInvitado = await Servicio.query().findById(data.servicio_id_invitado);
+      if (!servicioInvitado) {
+        res.status(400).json({ message: 'Servicio de invitado no encontrado' });
+        return;
+      }
+      // Calcular franjas del invitado
+      const franjasInv = Math.ceil(servicioInvitado.duracion / 30);
+      const horasInv = [];
+      let [hi, mi] = data.hora_invitado.split(':').map(Number);
+      for (let i = 0; i < franjasInv; i++) {
+        const horaStr = `${String(hi).padStart(2, '0')}:${String(mi).padStart(2, '0')}`;
+        horasInv.push(horaStr);
+        mi += 30;
+        if (mi >= 60) { hi++; mi = 0; }
+      }
+      // Comprobar que todas las franjas están libres para el invitado
+      for (const hora of horasInv) {
+        const citaExistente = await CitaService.findCitaByBarberoFechaHora(
+          data.barbero_id_invitado, data.fecha, hora
+        );
+        if (citaExistente) {
+          res.status(400).json({ message: 'Ya existe una cita para ese barbero (invitado) en esa fecha y hora.' });
+          return;
+        }
+      }
+      // Crear cita invitado (solo campos válidos)
+      await CitaService.createCita({
+        servicio_id: data.servicio_id_invitado,
+        barbero_id: data.barbero_id_invitado,
+        fecha: data.fecha,
+        hora: data.hora_invitado,
+        estado: false,
+        pagado: false,
+        user_id: undefined,
+        nombre_invitado: data.nombre_invitado
+      });
+      invitadoInfo = {
+        nombre: data.nombre_invitado,
+        servicio: servicioInvitado.nombre,
+        barbero: (await CitaService.getBarberoNombreById(data.barbero_id_invitado)),
+        fecha: data.fecha,
+        hora: data.hora_invitado
+      };
+    }
+
+    const { user, barbero, servicio: servicioObj } = await CitaService.getCitaInfoForEmail(data);
+
+    if (user && user.email) {
+      await sendCitaEmail(user.email, {
+        servicio: servicioObj?.nombre || data.servicio_id,
+        barbero: barbero?.nombre || data.barbero_id,
+        fecha: data.fecha,
+        hora: data.hora,
+        invitado: invitadoInfo
+      });
+    }
+
+    res.status(201).json(newCita);
   } catch (err) {
     console.error('Error creating appointment:', err);
     res.status(500).json({ message: 'Failed to create appointment' });

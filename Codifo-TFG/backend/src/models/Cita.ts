@@ -14,6 +14,7 @@ export interface ICita {
   pagado: boolean;
   created_at?: string;
   updated_at?: string;
+  nombre_invitado?: string; // <-- Añade esta línea
 }
 
 export class Cita extends Model implements ICita {
@@ -27,6 +28,7 @@ export class Cita extends Model implements ICita {
   pagado!: boolean;
   created_at?: string;
   updated_at?: string;
+  nombre_invitado?: string; // <-- Añade esta línea
 
   static tableName = 'cita';
 

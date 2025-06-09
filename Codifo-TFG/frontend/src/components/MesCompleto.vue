@@ -1,46 +1,3 @@
-<template>
-  <div class="mes-completo">
-    <h1>Calendario de Citas</h1>
-    <div class="calendar">
-      <div class="calendar-header">
-        <button @click="prevMonth">&lt;</button>
-        <span>{{ monthName }} {{ year }}</span>
-        <button @click="nextMonth">&gt;</button>
-      </div>
-      <div class="calendar-grid">
-        <div class="calendar-day header" v-for="d in daysShort" :key="d">{{ d }}</div>
-        <div
-          v-for="blank in firstDayOfWeek"
-          :key="'blank-' + blank"
-          class="calendar-day blank"
-        ></div>
-        <div
-          v-for="day in daysInMonth"
-          :key="day"
-          class="calendar-day"
-          :class="{ today: isToday(day) }"
-          @click="selectDay(day)"
-        >
-          <div>{{ day }}</div>
-          <div class="citas-count">
-            {{ citasPorDia[day] || 0 }}/16
-          </div>
-        </div>
-      </div>
-    </div>
-    <div v-if="selectedDay" class="citas-list">
-      <h2>Citas del {{ year }}-{{ monthString }}-{{ selectedDay.toString().padStart(2, '0') }}</h2>
-      <ul v-if="citasDelDia.length">
-        <li v-for="cita in citasDelDia" :key="cita.id">
-          Cliente: {{ cita.user_id }}, Barbero: {{ cita.barbero_id }}, Servicio: {{ cita.servicio_id }}, Hora: {{ cita.hora }}, Estado: {{ cita.estado ? 'Atendida' : 'Pendiente' }}
-        </li>
-      </ul>
-      <div v-else>No hay citas para este día.</div>
-      <button @click="selectedDay = null">Cerrar</button>
-    </div>
-  </div>
-</template>
-
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 
@@ -91,10 +48,11 @@ const citasFiltradas = computed(() => {
     if (!c.fecha) return false
     const [cYear, cMonth] = c.fecha.split('-')
     if (parseInt(cYear) !== year.value || parseInt(cMonth) !== month.value + 1) return false
-    // Si es empleado, solo sus citas
-    if (rol === 'empleado' && barbero_id) {
+    // Si es barbero, solo sus citas
+    if (rol === 'barbero' && barbero_id) {
       return String(c.barbero_id) === String(barbero_id)
     }
+    // Admin ve todas
     return true
   })
   return filtradas
@@ -145,7 +103,86 @@ function nextMonth() {
   }
   selectedDay.value = null
 }
+
+function getMaxCitas(day) {
+  // day: 1 = lunes, ..., 5 = viernes, 6 = sábado, 0 = domingo
+  const date = new Date(year.value, month.value, day);
+  const weekday = date.getDay(); // 0 = domingo, 1 = lunes, ..., 6 = sábado
+
+  if (weekday === 0 || weekday === 6) return 0; // cerrado
+
+  // Si es admin, multiplica por número de barberos
+  if (rol === 'admin') {
+    // Puedes guardar el número de barberos en una variable reactiva si lo tienes en la API
+    return (weekday === 5 ? 17 : 18) * numBarberos.value;
+  }
+  // Si es barbero, solo su cupo
+  return weekday === 5 ? 17 : 18;
+}
+
+// Número de barberos (solo para admin)
+const numBarberos = ref(1);
+onMounted(async () => {
+  // ...código existente...
+  if (rol === 'admin') {
+    try {
+      const res = await fetch('http://localhost:3000/api/barbero');
+      if (res.ok) {
+        const barberos = await res.json();
+        numBarberos.value = barberos.length;
+      }
+    } catch {}
+  }
+});
 </script>
+
+<template>
+  <div class="mes-completo">
+    <h1>Calendario de Citas</h1>
+    <div class="calendar">
+      <div class="calendar-header">
+        <button @click="prevMonth">&lt;</button>
+        <span>{{ monthName }} {{ year }}</span>
+        <button @click="nextMonth">&gt;</button>
+      </div>
+      <div class="calendar-grid">
+        <div class="calendar-day header" v-for="d in daysShort" :key="d">{{ d }}</div>
+        <div
+          v-for="blank in firstDayOfWeek"
+          :key="'blank-' + blank"
+          class="calendar-day blank"
+        ></div>
+        <div
+          v-for="day in daysInMonth"
+          :key="day"
+          class="calendar-day"
+          :class="{ today: isToday(day) }"
+          @click="selectDay(day)"
+        >
+          <div>{{ day }}</div>
+          <div class="citas-count">
+            <template v-if="getMaxCitas(day) > 0">
+              {{ citasPorDia[day] || 0 }} / {{ getMaxCitas(day) }}
+            </template>
+            <template v-else :class="{ today: isToday(day), cerrado: getMaxCitas(day) === 0 }">
+              Cerrado
+            </template>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div v-if="selectedDay" class="citas-list">
+      <h2>Citas del {{ year }}-{{ monthString }}-{{ selectedDay.toString().padStart(2, '0') }}</h2>
+      <ul v-if="citasDelDia.length">
+        <li v-for="cita in citasDelDia" :key="cita.id">
+          Cliente: {{ cita.user_id }}, Barbero: {{ cita.barbero_id }}, Servicio: {{ cita.servicio_id }}, Hora: {{ cita.hora }}, Estado: {{ cita.estado ? 'Atendida' : 'Pendiente' }}
+        </li>
+      </ul>
+      <div v-else>No hay citas para este día.</div>
+      <button @click="selectedDay = null">Cerrar</button>
+    </div>
+  </div>
+</template>
 
 <style scoped>
 .mes-completo {
@@ -207,5 +244,11 @@ function nextMonth() {
   border: 1px solid #ccc;
   padding: 20px;
   border-radius: 8px;
+}
+
+.calendar-day.cerrado {
+  background: #eee;
+  color: #aaa;
+  cursor: not-allowed;
 }
 </style>

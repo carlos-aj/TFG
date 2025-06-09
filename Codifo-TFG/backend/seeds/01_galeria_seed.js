@@ -5,6 +5,7 @@ const galeriaDir = path.join(__dirname, '../src/ApiGaleria');
 
 exports.seed = async function(knex) {
   await knex('galeria').del();
+  await knex.raw('ALTER SEQUENCE galeria_id_seq RESTART WITH 1');
 
   const imagenes = fs.readdirSync(galeriaDir).filter(f =>
     /\.(jpg|jpeg|png|webp)$/i.test(f)

@@ -5,6 +5,7 @@ import 'vuetify/styles'
 import { createVuetify } from 'vuetify'
 import * as components from 'vuetify/components'
 import * as directives from 'vuetify/directives'
+import { es } from 'vuetify/locale' // <-- Añade esta línea
 
 import Landing from './components/Landing.vue'
 import Login from './components/Login.vue'
@@ -57,6 +58,10 @@ router.beforeEach((to, from, next) => {
 const vuetify = createVuetify({
   components,
   directives,
+  locale: {
+    locale: 'es',
+    messages: { es },
+  },
 })
 
 const app = createApp(App)

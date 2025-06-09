@@ -5,6 +5,7 @@
 exports.seed = async function(knex) {
   // Deletes ALL existing entries
   await knex('servicios').del();
+  await knex.raw('ALTER SEQUENCE servicios_id_seq RESTART WITH 1');
   await knex('servicios').insert([
     { nombre: 'Fade', precio: 10, duracion: 1 },
     { nombre: 'Fade + Barba', precio: 12, duracion: 1 },
