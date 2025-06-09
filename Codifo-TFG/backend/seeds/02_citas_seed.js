@@ -4,24 +4,59 @@
  */
 exports.seed = async function(knex) {
   await knex('cita').del();
-  await knex('cita').insert([
-    { user_id: 5, barbero_id: 1, servicio_id: 1, fecha: '2024-05-10', hora: '10:00', estado: true, pagado: true, created_at: new Date('2024-05-10T09:00:00'), updated_at: new Date('2024-05-10T10:30:00') },
-    { user_id: 6, barbero_id: 1, servicio_id: 2, fecha: '2024-05-15', hora: '11:00', estado: true, pagado: true, created_at: new Date('2024-05-15T10:30:00'), updated_at: new Date('2024-05-15T11:30:00') },
-    { user_id: 7, barbero_id: 1, servicio_id: 3, fecha: '2024-04-12', hora: '12:00', estado: true, pagado: false, created_at: new Date('2024-04-12T11:30:00'), updated_at: new Date('2024-04-12T12:30:00') },
-    { user_id: 8, barbero_id: 1, servicio_id: 4, fecha: '2024-03-18', hora: '13:30', estado: true, pagado: true, created_at: new Date('2024-03-18T13:00:00'), updated_at: new Date('2024-03-18T14:00:00') },
-    { user_id: 9, barbero_id: 1, servicio_id: 5, fecha: '2024-02-22', hora: '16:00', estado: true, pagado: false, created_at: new Date('2024-02-22T15:30:00'), updated_at: new Date('2024-02-22T16:30:00') },
-    { user_id: 10, barbero_id: 1, servicio_id: 6, fecha: '2024-01-10', hora: '17:30', estado: true, pagado: true, created_at: new Date('2024-01-10T17:00:00'), updated_at: new Date('2024-01-10T18:00:00') },
 
-    { user_id: 11, barbero_id: 2, servicio_id: 1, fecha: '2024-04-20', hora: '12:00', estado: true, pagado: false, created_at: new Date('2024-04-20T11:30:00'), updated_at: new Date('2024-04-20T12:30:00') },
-    { user_id: 12, barbero_id: 2, servicio_id: 2, fecha: '2024-03-22', hora: '16:30', estado: true, pagado: true, created_at: new Date('2024-03-22T16:00:00'), updated_at: new Date('2024-03-22T17:00:00') },
-    { user_id: 13, barbero_id: 2, servicio_id: 3, fecha: '2024-02-15', hora: '09:30', estado: true, pagado: false, created_at: new Date('2024-02-15T09:00:00'), updated_at: new Date('2024-02-15T10:00:00') },
-    { user_id: 14, barbero_id: 2, servicio_id: 4, fecha: '2024-01-25', hora: '13:00', estado: true, pagado: true, created_at: new Date('2024-01-25T12:30:00'), updated_at: new Date('2024-01-25T13:30:00') },
-    { user_id: 15, barbero_id: 2, servicio_id: 5, fecha: '2024-05-05', hora: '10:30', estado: true, pagado: true, created_at: new Date('2024-05-05T10:00:00'), updated_at: new Date('2024-05-05T11:00:00') },
-    { user_id: 16, barbero_id: 2, servicio_id: 6, fecha: '2024-04-18', hora: '11:30', estado: true, pagado: false, created_at: new Date('2024-04-18T11:00:00'), updated_at: new Date('2024-04-18T12:00:00') },
+  const citas = [];
+  const horas = ['09:00', '09:30', '10:00', '10:30', '11:00', '11:30', '12:00', '12:30', '13:00', '13:30', '16:00', '16:30', '17:00', '17:30'];
+  const fechas = [
+    '2024-01-10', '2024-01-20', '2024-01-25', '2024-02-12', '2024-02-15', '2024-02-22',
+    '2024-03-10', '2024-03-18', '2024-03-22', '2024-04-12', '2024-04-18', '2024-04-20',
+    '2024-05-05', '2024-05-10', '2024-05-15', '2024-05-18'
+  ];
 
-    { user_id: 17, barbero_id: 3, servicio_id: 1, fecha: '2024-03-10', hora: '09:00', estado: true, pagado: true, created_at: new Date('2024-03-10T08:30:00'), updated_at: new Date('2024-03-10T09:30:00') },
-    { user_id: 18, barbero_id: 3, servicio_id: 2, fecha: '2024-02-12', hora: '10:30', estado: true, pagado: false, created_at: new Date('2024-02-12T10:00:00'), updated_at: new Date('2024-02-12T11:00:00') },
-    { user_id: 19, barbero_id: 3, servicio_id: 3, fecha: '2024-01-20', hora: '12:00', estado: true, pagado: true, created_at: new Date('2024-01-20T11:30:00'), updated_at: new Date('2024-01-20T12:30:00') },
-    { user_id: 20, barbero_id: 3, servicio_id: 4, fecha: '2024-05-18', hora: '13:30', estado: true, pagado: false, created_at: new Date('2024-05-18T13:00:00'), updated_at: new Date('2024-05-18T14:00:00') }
-  ]);
+  // Barbero 1 es el más popular, barbero 2 normal, barbero 3 poco demandado
+  const citasPorBarbero = {
+    1: 120, // más citas
+    2: 60,
+    3: 24  // menos citas
+  };
+
+  // Servicio 1 y 2 son los más demandados, 3 y 4 normal, 5 y 6 poco
+  const popularidadServicio = [0, 0.30, 0.25, 0.20, 0.15, 0.07, 0.03]; // index 0 no se usa
+
+  let citaId = 1;
+  for (let barbero_id = 1; barbero_id <= 3; barbero_id++) {
+    for (let n = 0; n < citasPorBarbero[barbero_id]; n++) {
+      // Elige servicio según popularidad
+      let servicio_id;
+      const r = Math.random();
+      let acc = 0;
+      for (let i = 1; i <= 6; i++) {
+        acc += popularidadServicio[i];
+        if (r <= acc) {
+          servicio_id = i;
+          break;
+        }
+      }
+      // Elige usuario, fecha y hora aleatorios
+      const user_id = 5 + Math.floor(Math.random() * 16); // 5-20
+      const fecha = fechas[Math.floor(Math.random() * fechas.length)];
+      const hora = horas[Math.floor(Math.random() * horas.length)];
+      const estado = Math.random() > 0.3;
+      const pagado = Math.random() > 0.5;
+      citas.push({
+        id: citaId++,
+        user_id,
+        barbero_id,
+        servicio_id,
+        fecha,
+        hora,
+        estado,
+        pagado,
+        created_at: new Date(`${fecha}T${hora}`),
+        updated_at: new Date(`${fecha}T${hora}`)
+      });
+    }
+  }
+
+  await knex('cita').insert(citas);
 };

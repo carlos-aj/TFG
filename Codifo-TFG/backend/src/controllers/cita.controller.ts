@@ -7,7 +7,14 @@ import { User } from '../models/User';
 
 export async function getAllCitas(req: Request, res: Response) {
   try {
-    const citas = await CitaService.getAllCitas();
+    const { barbero_id, fecha } = req.query;
+    console.log('Controller params:', barbero_id, fecha);
+    let citas;
+    if (barbero_id && fecha) {
+      citas = await CitaService.getCitasByBarberoYFecha(Number(barbero_id), String(fecha));
+    } else {
+      citas = await CitaService.getAllCitas();
+    }
     res.json(citas);
   } catch (err) {
     console.error('Error fetching appointments:', err);
@@ -146,6 +153,7 @@ export async function createCita(req: Request, res: Response) {
         barbero: barbero?.nombre || data.barbero_id,
         fecha: data.fecha,
         hora: data.hora,
+        importe_pagado: data.importe_pagado || null,
         invitado: invitadoInfo
       });
     }

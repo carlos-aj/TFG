@@ -7,7 +7,7 @@ module.exports = {
 
   development: {
     client: 'pg',
-    connection: {
+    connection: process.env.DATABASE_URL || {
       host: 'db',
       user: 'postgres',
       password: 'postgres',
@@ -35,16 +35,8 @@ module.exports = {
   },
 
   production: {
-    client: 'postgresql',
-    connection: {
-      database: 'tfg_db',
-      user:     'postgres',
-      password: 'postgres'
-    },
-    pool: {
-      min: 2,
-      max: 10
-    },
+    client: 'pg',
+    connection: process.env.DATABASE_URL, // Railway te da esta URL
     migrations: {
       tableName: 'knex_migrations'
     }

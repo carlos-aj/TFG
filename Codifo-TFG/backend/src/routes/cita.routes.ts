@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import * as CitaController from '../controllers/cita.controller';
+import * as PaymentController from '../controllers/payment.controller';
 
 export const citaRouter = Router();
 
@@ -10,3 +11,4 @@ citaRouter.post('/', CitaController.createCita);
 citaRouter.put('/:id', CitaController.updateCita);
 citaRouter.delete('/:id', CitaController.deleteCita);
 citaRouter.get('/puede-invitar/check', CitaController.checkPuedeInvitar);
+citaRouter.post('/pago', PaymentController.createCheckoutSession);

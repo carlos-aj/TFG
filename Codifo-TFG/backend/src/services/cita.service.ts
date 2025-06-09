@@ -36,12 +36,6 @@ export async function getCitaInfoForEmail(data: any) {
   return { user, barbero, servicio };
 }
 
-function sumarMinutos(hora: string, minutos: number): string {
-  const [h, m] = hora.split(':').map(Number);
-  const date = new Date(0, 0, 0, h, m + minutos);
-  return date.toTimeString().slice(0, 5);
-}
-
 export async function puedeInvitar(barbero_id: number, fecha: string, hora: string) {
   // Busca si hay alguna cita en esa fecha y hora (con cualquier barbero)
   const citaExistente = await Cita.query()
@@ -58,4 +52,10 @@ export async function getBarberoNombreById(id: number) {
   return barbero ? barbero.nombre : id;
 }
 
+export async function getCitasByBarberoYFecha(barbero_id: number, fecha: string) {
+  console.log('getCitasByBarberoYFecha', barbero_id, fecha);
+  return await Cita.query()
+    .where('barbero_id', barbero_id)
+    .whereRaw('fecha::date = ?', [fecha]);
+}
 

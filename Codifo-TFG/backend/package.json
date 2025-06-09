@@ -12,6 +12,7 @@
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
+    "@types/stripe": "^8.0.416",
     "bcrypt": "^6.0.0",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
@@ -22,7 +23,8 @@
     "multer": "^2.0.1",
     "nodemailer": "^7.0.3",
     "objection": "^3.1.5",
-    "pg": "^8.15.6"
+    "pg": "^8.15.6",
+    "stripe": "^18.2.1"
   },
   "devDependencies": {
     "@types/bcrypt": "^5.0.2",
