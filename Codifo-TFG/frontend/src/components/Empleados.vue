@@ -1,5 +1,15 @@
 <template>
   <div>
+    <button @click="showStats = true; cargarEstadisticas()" style="margin-bottom: 1rem;">Ver estadísticas</button>
+   <div v-if="showStats" class="stats-modal">
+  <button @click="showStats = false" style="float:right;">Cerrar</button>
+  <h2>Servicios realizados por barbero</h2>
+  <GChart type="ColumnChart" :data="serviciosPorBarbero" :options="{ title: 'Servicios por Barbero' }" style="width:100%;max-width:600px;height:300px;" />
+  <h2>Servicios por hora</h2>
+  <GChart type="ColumnChart" :data="serviciosPorHora" :options="{ title: 'Servicios por Hora' }" style="width:100%;max-width:600px;height:300px;" />
+  <h2>Servicios por tipo</h2>
+  <GChart type="PieChart" :data="serviciosPorTipo" :options="{ title: 'Servicios por Tipo' }" style="width:100%;max-width:600px;height:300px;" />
+</div>
     <h2>Lista de Empleados</h2>
     <table>
       <thead>
@@ -53,6 +63,13 @@
 
 <script setup>
 import { ref, onMounted, computed } from 'vue'
+import { GChart } from 'vue-google-charts'
+
+const citasStats = ref([])
+const barberosStats = ref([])
+
+const showStats = ref(false)
+const citasPorBarbero = ref([['Barbero', 'Citas']])
 
 const barberos = ref([])
 const form = ref({ nombre: '', especialidad: '' })
@@ -157,6 +174,61 @@ async function saveEdit(id) {
   }
 }
 
+const serviciosPorBarbero = computed(() => {
+  // { barbero_id: cantidad }
+  const counts = {}
+  citasStats.value.forEach(c => {
+    counts[c.barbero_id] = (counts[c.barbero_id] || 0) + 1
+  })
+  return [
+    ['Barbero', 'Servicios realizados'],
+    ...barberosStats.value.map(b => [b.nombre, counts[b.id] || 0])
+  ]
+})
+
+const serviciosPorHora = computed(() => {
+  // { hora: cantidad }
+  const counts = {}
+  citasStats.value.forEach(c => {
+    counts[c.hora] = (counts[c.hora] || 0) + 1
+  })
+  // Ordena por hora
+  const horas = Object.keys(counts).sort()
+  return [
+    ['Hora', 'Servicios'],
+    ...horas.map(h => [h, counts[h]])
+  ]
+})
+
+const servicios = ref([])
+async function cargarServicios() {
+  const res = await fetch('http://localhost:3000/api/servicio', { credentials: 'include' })
+  servicios.value = res.ok ? await res.json() : []
+}
+onMounted(cargarServicios)
+
+const serviciosPorTipo = computed(() => {
+  const counts = {}
+  citasStats.value.forEach(c => {
+    counts[c.servicio_id] = (counts[c.servicio_id] || 0) + 1
+  })
+  return [
+    ['Servicio', 'Veces realizado'],
+    ...servicios.value.map(s => [s.nombre, counts[s.id] || 0])
+  ]
+})
+
+async function cargarEstadisticas() {
+  // Obtén barberos y citas
+  const [barberosRes, citasRes] = await Promise.all([
+    fetch('http://localhost:3000/api/barbero', { credentials: 'include' }),
+    fetch('http://localhost:3000/api/cita', { credentials: 'include' })
+  ])
+  barberosStats.value = barberosRes.ok ? await barberosRes.json() : []
+  citasStats.value = citasRes.ok ? await citasRes.json() : []
+  // No necesitas más aquí, los computed se actualizan solos
+}
+
 onMounted(cargarBarberos)
 </script>
 
@@ -185,5 +257,23 @@ th, td {
   border: 1px solid #ccc;
   padding: 0.5rem;
   text-align: left;
+}
+
+.stats-modal {
+  position: fixed;
+  top: 10%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #fff;
+  border: 2px solid #333;
+  border-radius: 10px;
+  padding: 30px 20px 20px 20px;
+  z-index: 1000;
+  box-shadow: 0 0 20px #0002;
+  max-height: 80vh;         
+  overflow-y: auto;         
+}
+.stats-modal button {
+  margin-bottom: 10px;
 }
 </style>
