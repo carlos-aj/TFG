@@ -32,7 +32,9 @@ const firstDayOfWeek = computed(() => {
 
 onMounted(async () => {
   try {
-    const res = await fetch(`${API_URL}/api/cita`)
+    const res = await fetch(`${API_URL}/api/cita`, {
+      credentials: 'include'
+    })
     if (!res.ok) throw new Error('Error al cargar citas')
     const data = await res.json()
     citas.value = data
@@ -126,7 +128,9 @@ const numBarberos = ref(1);
 onMounted(async () => {
   if (rol === 'admin') {
     try {
-      const res = await fetch(`${API_URL}/api/barbero`);
+      const res = await fetch(`${API_URL}/api/barbero`, {
+        credentials: 'include'
+      });
       if (res.ok) {
         const barberos = await res.json();
         numBarberos.value = barberos.length;

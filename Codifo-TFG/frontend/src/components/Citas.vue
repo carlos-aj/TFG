@@ -52,9 +52,13 @@ function getBarberosDisponibles() {
 }
 
 onMounted(async () => {
-  const resServicios = await fetch(`${API_URL}/api/servicio`)
+  const resServicios = await fetch(`${API_URL}/api/servicio`, {
+    credentials: 'include'
+  })
   servicios.value = await resServicios.json()
-  const resBarberos = await fetch(`${API_URL}/api/barbero`)
+  const resBarberos = await fetch(`${API_URL}/api/barbero`, {
+    credentials: 'include'
+  })
   barberos.value = await resBarberos.json()
 })
 
@@ -73,9 +77,11 @@ async function checkPuedeInvitar() {
     fecha: fechaFormateada,
     hora: horaSeleccionada.value
   })
-  const res = await fetch(`${API_URL}/api/cita/puede-invitar/check?${params}`)
+  const res = await fetch(`${API_URL}/api/cita/puede-invitar/check?${params}`, {
+    credentials: 'include'
+  })
   const data = await res.json()
-    console.log('Respuesta puedeInvitar:', data) // <-- Añade esto
+  console.log('Respuesta puedeInvitar:', data)
 
   puedeInvitar.value = data.puedeInvitar
 }
@@ -90,7 +96,9 @@ watch([barberoSeleccionado, fechaSeleccionada], async () => {
     return;
   }
   const fechaFormateada = new Date(fechaSeleccionada.value).toISOString().split('T')[0];
-  const res = await fetch(`${API_URL}/api/cita?barbero_id=${barberoSeleccionado.value}&fecha=${fechaFormateada}`);
+  const res = await fetch(`${API_URL}/api/cita?barbero_id=${barberoSeleccionado.value}&fecha=${fechaFormateada}`, {
+    credentials: 'include'
+  });
   const citas = await res.json();
   // Normaliza a formato HH:mm
   horasOcupadas.value = citas.map(c => c.hora.slice(0,5));
@@ -102,7 +110,9 @@ watch([barberoInvitado, fechaSeleccionada], async () => {
     return;
   }
   const fechaFormateada = new Date(fechaSeleccionada.value).toISOString().split('T')[0];
-  const res = await fetch(`${API_URL}/api/cita?barbero_id=${barberoInvitado.value}&fecha=${fechaFormateada}`);
+  const res = await fetch(`${API_URL}/api/cita?barbero_id=${barberoInvitado.value}&fecha=${fechaFormateada}`, {
+    credentials: 'include'
+  });
   const citas = await res.json();
   horasOcupadasInvitado.value = citas.map(c => c.hora.slice(0,5));
 });
@@ -115,7 +125,9 @@ watch(fechaSeleccionada, async () => {
   const fechaFormateada = new Date(fechaSeleccionada.value).toISOString().split('T')[0];
   const ocupadas = {};
   for (const barbero of barberos.value) {
-    const res = await fetch(`${API_URL}/api/cita?barbero_id=${barbero.id}&fecha=${fechaFormateada}`);
+    const res = await fetch(`${API_URL}/api/cita?barbero_id=${barbero.id}&fecha=${fechaFormateada}`, {
+      credentials: 'include'
+    });
     const citas = await res.json();
     ocupadas[barbero.id] = citas.map(c => {
       if (typeof c.hora === 'string') return c.hora.slice(0,5);
@@ -130,8 +142,8 @@ watch(fechaSeleccionada, async () => {
   }
   horasOcupadasPorBarbero.value = ocupadas;
   console.log('Barberos:', barberos.value);
-console.log('Horas ocupadas por barbero:', ocupadas);
-console.log('Horas disponibles:', getHorasDisponibles());
+  console.log('Horas ocupadas por barbero:', ocupadas);
+  console.log('Horas disponibles:', getHorasDisponibles());
 });
 
 watch([barberoSeleccionado, fechaSeleccionada], () => {
@@ -188,6 +200,7 @@ async function reservarCita() {
     // Llama a tu backend para crear la sesión de Stripe Checkout
     const res = await fetch(`${API_URL}/api/cita/pago`, {
       method: 'POST',
+      credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ amount })
     })
@@ -210,6 +223,7 @@ async function reservarCita() {
   // Si no paga ahora, reserva la cita normalmente
   const res = await fetch(`${API_URL}/api/cita`, {
     method: 'POST',
+    credentials: 'include',
     headers: {
       'Content-Type': 'application/json',
     },

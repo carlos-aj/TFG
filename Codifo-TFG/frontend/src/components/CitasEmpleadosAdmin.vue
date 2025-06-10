@@ -16,20 +16,28 @@ const hoy = new Date().toISOString().split('T')[0]
 onMounted(async () => {
   try {
     // Cargar citas
-    const resCitas = await fetch(`${API_URL}/api/cita`)
+    const resCitas = await fetch(`${API_URL}/api/cita`, {
+      credentials: 'include'
+    })
     if (!resCitas.ok) throw new Error('Error al cargar citas')
     citas.value = await resCitas.json()
 
     // Cargar usuarios
-    const resUsuarios = await fetch(`${API_URL}/api/user`)
+    const resUsuarios = await fetch(`${API_URL}/api/user`, {
+      credentials: 'include'
+    })
     usuarios.value = await resUsuarios.json()
 
     // Cargar barberos
-    const resBarberos = await fetch(`${API_URL}/api/barbero`)
+    const resBarberos = await fetch(`${API_URL}/api/barbero`, {
+      credentials: 'include'
+    })
     barberos.value = await resBarberos.json()
 
     // Cargar servicios
-    const resServicios = await fetch(`${API_URL}/api/servicio`)
+    const resServicios = await fetch(`${API_URL}/api/servicio`, {
+      credentials: 'include'
+    })
     servicios.value = await resServicios.json()
   } catch (e) {
     error.value = e.message
@@ -65,6 +73,7 @@ async function toggleEstado(cita) {
   try {
     const res = await fetch(`${API_URL}/api/cita/${cita.id}`, {
       method: 'PUT',
+      credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ estado: nuevoEstado }),
     });
@@ -83,11 +92,14 @@ async function sancionarUsuario(userId) {
   try {
     const res = await fetch(`${API_URL}/api/user/${userId}/sancionar`, {
       method: 'POST',
+      credentials: 'include'
     });
     if (res.ok) {
       alert('Usuario sancionado');
       // Opcional: recargar usuarios para ver la penalización actualizada
-      const resUsuarios = await fetch(`${API_URL}/api/user`);
+      const resUsuarios = await fetch(`${API_URL}/api/user`, {
+        credentials: 'include'
+      });
       usuarios.value = await resUsuarios.json();
     } else {
       alert('Error al sancionar usuario');
