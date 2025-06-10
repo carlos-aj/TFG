@@ -2,7 +2,6 @@ import * as dotenv from 'dotenv';
 dotenv.config();
 import cookieParser from 'cookie-parser';
 import express from 'express';
-import cors from 'cors';
 import path from 'path';
 import { userRouter } from './routes/user.routes';
 import { barberoRouter } from './routes/barbero.routes';
@@ -11,6 +10,7 @@ import { citaRouter } from './routes/cita.routes';
 import { galeriaRouter } from './routes/galeria.routes';
 
 import knex from './db/knex';
+const cors = require('cors');
 
 const app = express();
 
