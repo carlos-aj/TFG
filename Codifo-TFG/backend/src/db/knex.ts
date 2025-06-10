@@ -1,4 +1,4 @@
-import * as dotenv from 'dotenv';
+const dotenv = require('dotenv');
 dotenv.config();
 import { Model } from 'objection';
 import knex from 'knex';
