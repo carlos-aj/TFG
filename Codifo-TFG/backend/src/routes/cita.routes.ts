@@ -8,6 +8,7 @@ const router: Router = express.Router();
 // Rutas públicas
 router.get('/', citaController.getAllCitas);
 router.get('/check/puede-invitar', citaController.checkPuedeInvitar);
+router.get('/puede-invitar/check', citaController.checkPuedeInvitar);
 router.get('/:id', citaController.getCitaById);
 
 // Rutas protegidas

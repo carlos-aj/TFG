@@ -121,34 +121,67 @@ export async function login(req: Request, res: Response) {
 
   if (!correo || !contrasena) {
     res.status(400).json({ message: 'Correo y contraseña son obligatorios' });
-  }else{
+    return;
+  }
+
+  try {
     const user = await UserService.getUserByEmail(correo);
     if (!user) {
       res.status(401).json({ message: 'Credenciales incorrectas' });
-    }else{
-      const passwordMatch = await bcrypt.compare(contrasena, user.contrasena);
-      if (!passwordMatch) {
-        res.status(401).json({ message: 'Credenciales incorrectas' });
-      }else{
-        if (!user.is_verified) {
-          res.status(403).json({ message: 'Debes confirmar tu cuenta antes de iniciar sesión' });
-        }else{
-          if (!JWT_SECRET) {
-            throw new Error('JWT_SECRET is not defined in environment variables.');
-          }
-          const token = jwt.sign({ id: user.id, email: user.email, rol: user.rol }, JWT_SECRET, {
-            expiresIn: '1h',
-          });
-          res.cookie('token', token, {
-              httpOnly: true,
-              secure: true,
-              sameSite: 'none',
-              maxAge: 60 * 60 * 1000 
-            });
-          res.json({ token, rol: user.rol, id: user.id });
-        }
-      }
+      return;
     }
+
+    const passwordMatch = await bcrypt.compare(contrasena, user.contrasena);
+    if (!passwordMatch) {
+      res.status(401).json({ message: 'Credenciales incorrectas' });
+      return;
+    }
+
+    if (!user.is_verified) {
+      res.status(403).json({ message: 'Debes confirmar tu cuenta antes de iniciar sesión' });
+      return;
+    }
+
+    if (!JWT_SECRET) {
+      console.error('JWT_SECRET no está definido en las variables de entorno');
+      res.status(500).json({ message: 'Error en la configuración del servidor' });
+      return;
+    }
+
+    let rol = user.rol;
+    console.log('Rol original del usuario:', rol);
+    
+    if (rol !== 'admin' && rol !== 'empleado' && rol !== 'user' && rol !== 'cliente') {
+      console.log('Rol no reconocido, asignando cliente por defecto');
+      rol = 'cliente';
+    }
+    
+    const token = jwt.sign(
+      { 
+        userId: user.id, 
+        email: user.email, 
+        rol: rol
+      }, 
+      JWT_SECRET, 
+      { expiresIn: '1h' }
+    );
+
+    res.cookie('token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'none',
+      maxAge: 60 * 60 * 1000
+    });
+
+    console.log('Login exitoso:', { id: user.id, rol });
+    res.json({ 
+      token, 
+      rol,
+      id: user.id 
+    });
+  } catch (err) {
+    console.error('Error en login:', err);
+    res.status(500).json({ message: 'Error en el servidor' });
   }
 }
 

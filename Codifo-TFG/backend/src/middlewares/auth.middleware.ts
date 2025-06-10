@@ -12,36 +12,61 @@ declare global {
 }
 
 interface JwtPayload {
-  userId: number;
-  role: string;
+  userId?: number;
+  id?: number;  // Añadir id como campo opcional para compatibilidad con tokens antiguos
+  email: string;
+  rol: string;
 }
 
 // Middleware para verificar si el usuario está autenticado
 export const isAuthenticated = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
+    // Verificar token en headers de Authorization
     const authHeader = req.headers.authorization;
-    if (!authHeader) {
+    let token: string | undefined;
+
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      token = authHeader.split(' ')[1];
+    } else {
+      // Si no hay token en headers, intentar obtenerlo de las cookies
+      token = req.cookies?.token;
+    }
+
+    if (!token) {
       res.status(401).json({ message: 'No token provided' });
       return;
     }
 
-    const token = authHeader.split(' ')[1];
-    if (!token) {
-      res.status(401).json({ message: 'Invalid token format' });
+    // Verificar el JWT
+    const JWT_SECRET = process.env.JWT_SECRET;
+    if (!JWT_SECRET) {
+      console.error('JWT_SECRET no está definido en las variables de entorno');
+      res.status(500).json({ message: 'Error en la configuración del servidor' });
       return;
     }
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET!) as JwtPayload;
-    const user = await User.query().findById(decoded.userId);
+    const decoded = jwt.verify(token, JWT_SECRET) as JwtPayload;
+    console.log('Token decodificado:', decoded);
+
+    // Buscar usuario en la base de datos
+    const userId = decoded.userId || decoded.id;
+    if (!userId) {
+      res.status(401).json({ message: 'Invalid token: no user ID' });
+      return;
+    }
+
+    const user = await User.query().findById(userId);
 
     if (!user) {
       res.status(401).json({ message: 'User not found' });
       return;
     }
 
+    // Añadir el usuario a la solicitud
     req.user = user;
     next();
   } catch (err) {
+    console.error('Error de autenticación:', err);
     res.status(401).json({ message: 'Invalid token' });
   }
 };
@@ -56,7 +81,12 @@ export const hasRole = (roles: string[]) => {
         return;
       }
 
-      if (roles.includes(user.rol)) {
+      // Mapear 'user' a 'cliente' si es necesario para compatibilidad
+      const userRole = user.rol === 'user' ? 'cliente' : user.rol;
+      
+      console.log(`Verificando rol: Usuario tiene ${userRole}, se requiere uno de: ${roles.join(', ')}`);
+      
+      if (roles.includes(userRole)) {
         next();
         return;
       }
@@ -75,7 +105,14 @@ export const isOwnerOrAdmin = (paramName: string) => {
       const user = req.user as User;
       const resourceId = parseInt(req.params[paramName]);
 
-      if (user.rol === 'admin' || user.id === resourceId) {
+      // Los admin y empleados siempre tienen acceso
+      if (user.rol === 'admin' || user.rol === 'empleado') {
+        next();
+        return;
+      }
+      
+      // Los usuarios normales solo pueden acceder a sus propios recursos
+      if (user.id === resourceId) {
         next();
         return;
       }
