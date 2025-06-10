@@ -193,51 +193,73 @@ async function reservarCita() {
 
   // Si el usuario quiere pagar ahora, inicia Stripe Checkout
   if (pagarAhora.value) {
-    // Primero crear la cita
-    const resCita = await fetch(`${API_URL}/api/cita`, {
-      method: 'POST',
-      credentials: 'include',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(cita)
-    });
+    try {
+      // Primero crear la cita
+      console.log('Creando cita...');
+      const resCita = await fetch(`${API_URL}/api/cita`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(cita)
+      });
 
-    if (!resCita.ok) {
-      const errorData = await resCita.json();
-      alert(errorData.message || 'Error al crear la cita');
-      return;
+      if (!resCita.ok) {
+        const errorData = await resCita.json();
+        throw new Error(errorData.message || 'Error al crear la cita');
+      }
+
+      const citaCreada = await resCita.json();
+      console.log('Cita creada:', citaCreada);
+
+      // Busca el precio del servicio seleccionado
+      const servicio = servicios.value.find(s => s.id === servicioSeleccionado.value)
+      if (!servicio) {
+        throw new Error('No se encontró el servicio seleccionado');
+      }
+
+      const amount = Math.round(servicio.precio * 100); // en céntimos
+      console.log('Iniciando pago:', { amount, citaId: citaCreada.id });
+
+      // Crear la sesión de Stripe Checkout
+      const res = await fetch(`${API_URL}/api/cita/pago`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          amount,
+          citaId: citaCreada.id
+        })
+      });
+
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.message || 'Error al iniciar el pago');
+      }
+
+      const data = await res.json();
+      console.log('Sesión de pago creada:', data);
+
+      if (!data.sessionId) {
+        throw new Error('No se recibió el ID de sesión de pago');
+      }
+
+      const stripe = await stripePromise;
+      if (!stripe) {
+        throw new Error('No se pudo inicializar Stripe');
+      }
+
+      // Redirige a Stripe Checkout
+      const { error } = await stripe.redirectToCheckout({ sessionId: data.sessionId });
+      if (error) {
+        throw error;
+      }
+    } catch (error) {
+      console.error('Error en el proceso de pago:', error);
+      alert(error.message || 'Ocurrió un error durante el proceso de pago');
     }
-
-    const citaCreada = await resCita.json();
-
-    // Busca el precio del servicio seleccionado
-    const servicio = servicios.value.find(s => s.id === servicioSeleccionado.value)
-    const amount = servicio ? Math.round(servicio.precio * 100) : 1000 // en céntimos
-
-    // Crear la sesión de Stripe Checkout
-    const res = await fetch(`${API_URL}/api/cita/pago`, {
-      method: 'POST',
-      credentials: 'include',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ 
-        amount,
-        citaId: citaCreada.id
-      })
-    })
-    const data = await res.json()
-    if (!data.sessionId) {
-      alert('Error iniciando pago')
-      return
-    }
-
-    const stripe = await stripePromise
-    // Redirige a Stripe Checkout
-    const { error } = await stripe.redirectToCheckout({ sessionId: data.sessionId })
-    if (error) {
-      alert(error.message)
-    }
-    return
+    return;
   }
 
   // Si no paga ahora, reserva la cita normalmente

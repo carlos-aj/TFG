@@ -5,13 +5,28 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: '2025-05
 
 export async function createCheckoutSession(req: Request, res: Response) {
   const { amount, citaId } = req.body;
+  console.log('Creando sesión de pago:', { amount, citaId });
+  
+  if (!amount || !citaId) {
+    console.error('Faltan datos requeridos:', { amount, citaId });
+    return res.status(400).json({ message: 'Se requiere amount y citaId' });
+  }
+
   try {
+    console.log('Configuración de Stripe:', {
+      secretKey: process.env.STRIPE_SECRET_KEY ? 'Configurada' : 'No configurada',
+      frontendUrl: process.env.FRONTEND_URL
+    });
+
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
       line_items: [{
         price_data: {
           currency: 'eur',
-          product_data: { name: 'Reserva Barbería' },
+          product_data: { 
+            name: 'Reserva Barbería',
+            description: `Cita #${citaId}`
+          },
           unit_amount: amount,
         },
         quantity: 1,
@@ -23,9 +38,15 @@ export async function createCheckoutSession(req: Request, res: Response) {
         citaId: citaId.toString()
       }
     });
+    
+    console.log('Sesión de pago creada:', session.id);
     res.json({ sessionId: session.id });
-  } catch (err) {
-    console.error('Error creating payment session:', err);
-    res.status(500).json({ message: 'Error creando sesión de pago' });
+  } catch (err: any) {
+    console.error('Error detallado al crear sesión de pago:', {
+      message: err.message,
+      type: err.type,
+      stack: err.stack
+    });
+    res.status(500).json({ message: 'Error creando sesión de pago', error: err.message });
   }
 }
