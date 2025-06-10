@@ -15,10 +15,7 @@ import knex from './db/knex';
 const app = express();
 
 app.use(cors({
-  origin: [
-    'https://tfg-gamma.vercel.app',
-    'https://tfg-carlos-projects-a7022bc8.vercel.app'
-  ],
+  origin: process.env.FRONTEND_URL || 'http://localhost:5173', // Cambia al puerto de tu frontend
   credentials: true
 }));
 app.use(express.json());
