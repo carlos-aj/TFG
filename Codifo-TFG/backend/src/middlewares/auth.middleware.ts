@@ -48,23 +48,22 @@ export const isAuthenticated = async (req: Request, res: Response, next: NextFun
 
 // Middleware para verificar roles específicos
 export const hasRole = (roles: string[]) => {
-  return (req: Request, res: Response, next: NextFunction): void => {
+  return async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      // Primero verificar si el usuario está autenticado
-      if (!req.user) {
-        res.status(401).json({ message: 'No autorizado: usuario no autenticado' });
+      const user = req.user as User;
+      if (!user) {
+        res.status(401).json({ message: 'User not authenticated' });
         return;
       }
-      
-      // Verificar si el usuario tiene el rol requerido
-      if (!roles.includes(req.user.rol)) {
-        res.status(403).json({ message: 'Prohibido: no tienes permisos suficientes' });
+
+      if (roles.includes(user.rol)) {
+        next();
         return;
       }
-      
-      next();
-    } catch (error) {
-      res.status(500).json({ message: 'Error en la verificación de roles' });
+
+      res.status(403).json({ message: 'Insufficient permissions' });
+    } catch (err) {
+      res.status(500).json({ message: 'Error checking permissions' });
     }
   };
 };
