@@ -8,20 +8,49 @@ import { barberoRouter } from './routes/barbero.routes';
 import { servicioRouter } from './routes/servicio.routes';
 import { citaRouter } from './routes/cita.routes';
 import { galeriaRouter } from './routes/galeria.routes';
+import rateLimit from 'express-rate-limit';
 
 import knex from './db/knex';
 const cors = require('cors');
 
 const app = express();
 
-// Asegurarse de que la URL no termine en /
-const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
-const cleanFrontendUrl = frontendUrl.endsWith('/') ? frontendUrl.slice(0, -1) : frontendUrl;
+// Configuración de CORS más segura
+const allowedOrigins = [
+  process.env.FRONTEND_URL || 'http://localhost:5173',
+  'https://tfg-gamma.vercel.app'
+];
+
+// Asegurarse de que las URLs no terminen en /
+const cleanAllowedOrigins = allowedOrigins.map(origin => 
+  origin.endsWith('/') ? origin.slice(0, -1) : origin
+);
 
 app.use(cors({
-  origin: cleanFrontendUrl,
+  origin: function(origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) {
+    // Permitir solicitudes sin origen (como aplicaciones móviles o curl)
+    if (!origin) return callback(null, true);
+    
+    if (cleanAllowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      callback(new Error('No permitido por CORS'));
+    }
+  },
   credentials: true
 }));
+
+// Configurar rate limiting
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutos
+  max: 100, // Límite de 100 solicitudes por ventana por IP
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+// Aplicar rate limiting a todas las rutas /api
+app.use('/api', apiLimiter);
+
 app.use(express.json());
 app.use(cookieParser());
 

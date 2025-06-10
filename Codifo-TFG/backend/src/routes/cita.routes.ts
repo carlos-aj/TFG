@@ -1,14 +1,19 @@
 import { Router } from 'express';
 import * as CitaController from '../controllers/cita.controller';
 import * as PaymentController from '../controllers/payment.controller';
+import { isAuthenticated, hasRole, isOwnerOrAdmin } from '../middlewares/auth.middleware';
 
 export const citaRouter = Router();
 
-citaRouter.get('/puede-invitar/check', CitaController.checkPuedeInvitar);
-citaRouter.get('/', CitaController.getAllCitas);
-citaRouter.get('/:id', CitaController.getCitaById);
-citaRouter.post('/', CitaController.createCita);
-citaRouter.put('/:id', CitaController.updateCita);
-citaRouter.delete('/:id', CitaController.deleteCita);
-citaRouter.get('/puede-invitar/check', CitaController.checkPuedeInvitar);
-citaRouter.post('/pago', PaymentController.createCheckoutSession);
+// Rutas que requieren autenticación
+citaRouter.get('/puede-invitar/check', isAuthenticated, CitaController.checkPuedeInvitar);
+citaRouter.post('/pago', isAuthenticated, PaymentController.createCheckoutSession);
+
+// Rutas para usuarios autenticados y admin
+citaRouter.get('/', isAuthenticated, CitaController.getAllCitas);
+citaRouter.post('/', isAuthenticated, CitaController.createCita);
+
+// Rutas que requieren ser propietario o admin
+citaRouter.get('/:id', isAuthenticated, isOwnerOrAdmin('id'), CitaController.getCitaById);
+citaRouter.put('/:id', isAuthenticated, isOwnerOrAdmin('id'), CitaController.updateCita);
+citaRouter.delete('/:id', isAuthenticated, isOwnerOrAdmin('id'), CitaController.deleteCita);

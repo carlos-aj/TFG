@@ -1,10 +1,14 @@
 import { Router } from 'express';
 import * as ServicoController from '../controllers/servicio.controller'
+import { isAuthenticated, hasRole } from '../middlewares/auth.middleware';
 
 export const servicioRouter = Router();
 
+// Rutas públicas
 servicioRouter.get('/', ServicoController.getAllServicios);
 servicioRouter.get('/:id', ServicoController.getServicioById);
-servicioRouter.post('/', ServicoController.createServicio);
-servicioRouter.delete('/:id', ServicoController.deleteServicio);
-servicioRouter.put('/:id', ServicoController.updateServicio);
+
+// Rutas protegidas para admin
+servicioRouter.post('/', isAuthenticated, hasRole(['admin']), ServicoController.createServicio);
+servicioRouter.delete('/:id', isAuthenticated, hasRole(['admin']), ServicoController.deleteServicio);
+servicioRouter.put('/:id', isAuthenticated, hasRole(['admin']), ServicoController.updateServicio);
