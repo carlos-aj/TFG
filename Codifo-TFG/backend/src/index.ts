@@ -14,8 +14,12 @@ const cors = require('cors');
 
 const app = express();
 
+// Asegurarse de que la URL no termine en /
+const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+const cleanFrontendUrl = frontendUrl.endsWith('/') ? frontendUrl.slice(0, -1) : frontendUrl;
+
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:5173', // Cambia al puerto de tu frontend
+  origin: cleanFrontendUrl,
   credentials: true
 }));
 app.use(express.json());
