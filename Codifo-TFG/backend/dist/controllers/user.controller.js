@@ -179,8 +179,8 @@ async function login(req, res) {
                     });
                     res.cookie('token', token, {
                         httpOnly: true,
-                        secure: process.env.NODE_ENV === 'production',
-                        sameSite: 'strict',
+                        secure: true,
+                        sameSite: 'none',
                         maxAge: 60 * 60 * 1000
                     });
                     res.json({ token, rol: user.rol, id: user.id });
@@ -192,8 +192,8 @@ async function login(req, res) {
 async function logout(req, res) {
     res.clearCookie('token', {
         httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict'
+        secure: true,
+        sameSite: 'none'
     });
     res.json({ message: 'Logout successful' });
 }
