@@ -9,11 +9,6 @@ const protectApi = (req, res, next) => {
     }
     // Verificar si la solicitud tiene un token de autenticación
     const token = req.cookies.token;
-    // Depuración: registrar información sobre la solicitud
-    console.log('Path:', req.path);
-    console.log('Method:', req.method);
-    console.log('Cookies:', req.cookies);
-    console.log('Token:', token);
     // Si no hay token y no es una ruta pública, denegar acceso
     if (!token && !isPublicRoute(req.path, req.method)) {
         res.status(401).json({
@@ -33,8 +28,7 @@ const publicRoutes = [
     '/api/galeria',
     '/galeria',
     '/api/barbero',
-    '/api/servicio',
-    '/api/cita' // Añadido temporalmente para pruebas
+    '/api/servicio'
 ];
 // Función para verificar si una ruta es pública
 const isPublicRoute = (path, method) => {

@@ -53,7 +53,6 @@ export async function getBarberoNombreById(id: number) {
 }
 
 export async function getCitasByBarberoYFecha(barbero_id: number, fecha: string) {
-  console.log('getCitasByBarberoYFecha', barbero_id, fecha);
   return await Cita.query()
     .where('barbero_id', barbero_id)
     .whereRaw('fecha::date = ?', [fecha]);

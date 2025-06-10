@@ -43,7 +43,8 @@ exports.citaRouter = (0, express_1.Router)();
 exports.citaRouter.get('/puede-invitar/check', auth_middleware_1.isAuthenticated, CitaController.checkPuedeInvitar);
 exports.citaRouter.post('/pago', auth_middleware_1.isAuthenticated, PaymentController.createCheckoutSession);
 // Rutas para usuarios autenticados y admin
-exports.citaRouter.get('/', auth_middleware_1.isAuthenticated, CitaController.getAllCitas);
+// Simplificamos esta ruta ya que protectApi ya verifica el token
+exports.citaRouter.get('/', CitaController.getAllCitas);
 exports.citaRouter.post('/', auth_middleware_1.isAuthenticated, CitaController.createCita);
 // Rutas que requieren ser propietario o admin
 exports.citaRouter.get('/:id', auth_middleware_1.isAuthenticated, (0, auth_middleware_1.isOwnerOrAdmin)('id'), CitaController.getCitaById);

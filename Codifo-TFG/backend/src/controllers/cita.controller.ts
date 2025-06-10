@@ -8,12 +8,10 @@ import { User } from '../models/User';
 export async function getAllCitas(req: Request, res: Response) {
   try {
     const { barbero_id, fecha } = req.query;
-    console.log('Controller params:', barbero_id, fecha);
     let citas;
     if (barbero_id && fecha) {
       citas = await CitaService.getCitasByBarberoYFecha(Number(barbero_id), String(fecha));
     } else {
-      console.log('No se proporcionaron parámetros de filtrado, devolviendo todas las citas');
       citas = await CitaService.getAllCitas();
     }
     res.json(citas);

@@ -46,7 +46,6 @@ const User_1 = require("../models/User");
 async function getAllCitas(req, res) {
     try {
         const { barbero_id, fecha } = req.query;
-        console.log('Controller params:', barbero_id, fecha);
         let citas;
         if (barbero_id && fecha) {
             citas = await CitaService.getCitasByBarberoYFecha(Number(barbero_id), String(fecha));
