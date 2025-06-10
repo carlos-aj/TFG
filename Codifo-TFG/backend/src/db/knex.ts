@@ -1,10 +1,12 @@
+import * as dotenv from 'dotenv';
+dotenv.config();
 import { Model } from 'objection';
 import knex from 'knex';
 import { Knex } from 'knex';
 
 const db: Knex = knex({
   client: 'pg',
-  connection: {
+  connection: process.env.DATABASE_URL || {
     host: 'db',
     user: 'postgres',
     password: 'postgres',
