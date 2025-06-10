@@ -67,6 +67,7 @@
 
 <script setup>
 import { ref, onMounted, computed } from 'vue'
+import { API_URL } from '../config'
 
 const servicios = ref([])
 const form = ref({ nombre: '', precio: 0, duracion: 0 })
@@ -88,12 +89,12 @@ const paginatedServicios = computed(() => {
 
 async function cargarServicios() {
   try {
-    const response = await fetch('http://localhost:3000/api/servicio', {
+    const response = await fetch(`${API_URL}/api/servicio`, {
       credentials: 'include'
     })
     if (response.ok) {
       servicios.value = await response.json()
-    if (currentPage.value > totalPages.value) currentPage.value = totalPages.value || 1
+      if (currentPage.value > totalPages.value) currentPage.value = totalPages.value || 1
     } else {
       servicios.value = []
     }
@@ -106,7 +107,7 @@ async function crearServicio() {
   mensaje.value = ''
   error.value = ''
   try {
-    const response = await fetch('http://localhost:3000/api/servicio', {
+    const response = await fetch(`${API_URL}/api/servicio`, {
       method: 'POST',
       credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
@@ -130,7 +131,7 @@ async function crearServicio() {
 async function eliminarServicio(id) {
   if (!confirm('¿Seguro que quieres eliminar este servicio?')) return
   try {
-    const response = await fetch(`http://localhost:3000/api/servicio/${id}`, {
+    const response = await fetch(`${API_URL}/api/servicio/${id}`, {
       method: 'DELETE',
       credentials: 'include'
     })
@@ -155,7 +156,7 @@ function cancelEdit() {
 }
 async function saveEdit(id) {
   try {
-    const response = await fetch(`http://localhost:3000/api/servicio/${id}`, {
+    const response = await fetch(`${API_URL}/api/servicio/${id}`, {
       method: 'PUT',
       credentials: 'include',
       headers: { 'Content-Type': 'application/json' },

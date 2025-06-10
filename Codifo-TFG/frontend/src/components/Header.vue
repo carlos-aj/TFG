@@ -1,6 +1,7 @@
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { API_URL } from '../config'
 
 const isOverDarkSection = ref(false)
 const isAuthenticated = ref(false)
@@ -14,7 +15,7 @@ function checkAuth() {
 }
 
 function logout() {
-  fetch('http://localhost:3000/api/user/logout', {
+  fetch(`${API_URL}/api/user/logout`, {
     method: 'POST',
     credentials: 'include'
   }).then(() => {

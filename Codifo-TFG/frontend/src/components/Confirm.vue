@@ -8,6 +8,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { API_URL } from '../config'
 
 const message = ref('')
 const route = useRoute()
@@ -20,7 +21,7 @@ onMounted(async () => {
     return
   }
   try {
-    const res = await fetch(`http://localhost:3000/api/user/confirm?token=${token}`)
+    const res = await fetch(`${API_URL}/api/user/confirm?token=${token}`)
     const data = await res.json()
     if (res.ok) {
       message.value = '¡Cuenta confirmada! Ya puedes iniciar sesión.'

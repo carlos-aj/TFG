@@ -45,6 +45,7 @@
 </template>
 <script setup>
 import { ref, reactive } from 'vue'
+import { API_URL } from '../config'
 
 const username = ref('')
 const surname = ref('')
@@ -128,28 +129,27 @@ const register = () => {
     rol: 'user'
   }
 
-
-    fetch('http://localhost:3000/api/user', {
-        method: 'POST',
-        headers: {
-        'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData),
-    })
-        .then((response) => {
-        if (!response.ok) {
-            throw new Error('Network response was not ok')
-        }
-        return response.json()
-        })
-        .then((data) => {
-            console.log('Success:', data)
-            successMessage.value = 'Registro exitoso. Por favor, revisa tu correo para validar tu cuenta.'
-            resetForm()
-        })
-        .catch((error) => {
-            console.error('Error:', error)
-        })
+  fetch(`${API_URL}/api/user`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(formData),
+  })
+  .then((response) => {
+    if (!response.ok) {
+      throw new Error('Network response was not ok')
+    }
+    return response.json()
+  })
+  .then((data) => {
+    console.log('Success:', data)
+    successMessage.value = 'Registro exitoso. Por favor, revisa tu correo para validar tu cuenta.'
+    resetForm()
+  })
+  .catch((error) => {
+    console.error('Error:', error)
+  })
 }
 </script>
 
