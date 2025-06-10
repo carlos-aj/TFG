@@ -10,7 +10,8 @@ citaRouter.get('/puede-invitar/check', isAuthenticated, CitaController.checkPued
 citaRouter.post('/pago', isAuthenticated, PaymentController.createCheckoutSession);
 
 // Rutas para usuarios autenticados y admin
-citaRouter.get('/', isAuthenticated, CitaController.getAllCitas);
+// Simplificamos esta ruta ya que protectApi ya verifica el token
+citaRouter.get('/', CitaController.getAllCitas);
 citaRouter.post('/', isAuthenticated, CitaController.createCita);
 
 // Rutas que requieren ser propietario o admin

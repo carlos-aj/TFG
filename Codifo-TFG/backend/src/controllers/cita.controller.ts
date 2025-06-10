@@ -13,6 +13,7 @@ export async function getAllCitas(req: Request, res: Response) {
     if (barbero_id && fecha) {
       citas = await CitaService.getCitasByBarberoYFecha(Number(barbero_id), String(fecha));
     } else {
+      console.log('No se proporcionaron parámetros de filtrado, devolviendo todas las citas');
       citas = await CitaService.getAllCitas();
     }
     res.json(citas);
