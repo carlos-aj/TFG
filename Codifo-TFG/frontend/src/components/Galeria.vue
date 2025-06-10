@@ -1,5 +1,6 @@
 <script setup>
 import { ref, onMounted } from 'vue'
+import { API_URL } from '../config'
 
 const galerias = ref([])
 const barberos = ref([])
@@ -25,12 +26,12 @@ const mezclado = ref(false);
 
 function getImgUrl(img) {
   if (img.startsWith('http')) return img
-  return `http://localhost:3000/galeria/${img}`
+  return `${API_URL}/galeria/${img}`
 }
 
 async function fetchGalerias() {
   loading.value = true
-  const res = await fetch(`http://localhost:3000/api/galeria?limit=${limit.value}`)
+  const res = await fetch(`${API_URL}/api/galeria?limit=${limit.value}`)
   const data = await res.json()
   if (!mezclado.value) {
     galerias.value = shuffleArray(data)
@@ -54,7 +55,7 @@ function shuffleArray(array) {
 }
 
 async function fetchBarberos() {
-  const res = await fetch('http://localhost:3000/api/barbero')
+  const res = await fetch(`${API_URL}/api/barbero`)
   barberos.value = await res.json()
 }
 
@@ -112,7 +113,7 @@ function toggleGrupo(id) {
 async function eliminarGruposSeleccionados() {
   await Promise.all(
     selectedGrupos.value.map(id =>
-      fetch(`http://localhost:3000/api/galeria/${id}`, { method: 'DELETE' })
+      fetch(`${API_URL}/api/galeria/${id}`, { method: 'DELETE' })
     )
   );
   mezclado.value = false; // <-- Añade esta línea
@@ -139,13 +140,13 @@ async function guardarNuevaImagen() {
     formData.append('imagenes', file)
   }
 
-  const res = await fetch(`http://localhost:3000/api/galeria/upload`, {
+  const res = await fetch(`${API_URL}/api/galeria/upload`, {
     method: 'POST',
     body: formData
   })
   const { filenames } = await res.json()
 
-  await fetch(`http://localhost:3000/api/galeria`, {
+  await fetch(`${API_URL}/api/galeria`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ barbero_id, imagenes: filenames })

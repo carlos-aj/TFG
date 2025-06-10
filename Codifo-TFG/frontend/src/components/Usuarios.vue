@@ -97,6 +97,7 @@
 
 <script setup>
 import { ref, onMounted, computed } from 'vue'
+import { API_URL } from '../config'
 
 const usuarios = ref([])
 const form = ref({
@@ -133,7 +134,7 @@ const paginatedServicios = computed(() => {
 
 async function cargarUsuarios() {
   try {
-    const response = await fetch('http://localhost:3000/api/user', {
+    const response = await fetch(`${API_URL}/api/user`, {
       credentials: 'include'
     })
     if (response.ok) {
@@ -155,7 +156,7 @@ async function crearUsuario() {
   mensaje.value = ''
   error.value = ''
   try {
-    const response = await fetch('http://localhost:3000/api/user', {
+    const response = await fetch(`${API_URL}/api/user`, {
       method: 'POST',
       credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
@@ -182,7 +183,7 @@ async function crearUsuario() {
 async function eliminarUsuario(id) {
   if (!confirm('¿Seguro que quieres eliminar este usuario?')) return
   try {
-    const response = await fetch(`http://localhost:3000/api/user/${id}`, {
+    const response = await fetch(`${API_URL}/api/user/${id}`, {
       method: 'DELETE',
       credentials: 'include'
     })
@@ -221,7 +222,7 @@ function cancelEdit() {
 }
 async function saveEdit(id) {
   try {
-    const response = await fetch(`http://localhost:3000/api/user/${id}`, {
+    const response = await fetch(`${API_URL}/api/user/${id}`, {
       method: 'PUT',
       credentials: 'include',
       headers: { 'Content-Type': 'application/json' },

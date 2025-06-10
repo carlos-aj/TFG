@@ -25,6 +25,7 @@
 <script setup>
 import { ref, reactive } from 'vue'
 import { useRouter } from 'vue-router'
+import { API_URL } from '../config'
 
 const correo = ref('')
 const contrasena = ref('')
@@ -53,7 +54,7 @@ async function login() {
   if (!validate()) return
 
   try {
-    const response = await fetch('http://localhost:3000/api/user/login', {
+    const response = await fetch(`${API_URL}/api/user/login`, {
       method: 'POST',
       credentials: 'include', 
       headers: { 'Content-Type': 'application/json' },

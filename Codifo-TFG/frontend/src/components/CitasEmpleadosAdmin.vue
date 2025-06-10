@@ -1,5 +1,6 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue'
+import { API_URL } from '../config'
 
 const citas = ref([])
 const usuarios = ref([])
@@ -15,20 +16,20 @@ const hoy = new Date().toISOString().split('T')[0]
 onMounted(async () => {
   try {
     // Cargar citas
-    const resCitas = await fetch('http://localhost:3000/api/cita')
+    const resCitas = await fetch(`${API_URL}/api/cita`)
     if (!resCitas.ok) throw new Error('Error al cargar citas')
     citas.value = await resCitas.json()
 
     // Cargar usuarios
-    const resUsuarios = await fetch('http://localhost:3000/api/user')
+    const resUsuarios = await fetch(`${API_URL}/api/user`)
     usuarios.value = await resUsuarios.json()
 
     // Cargar barberos
-    const resBarberos = await fetch('http://localhost:3000/api/barbero')
+    const resBarberos = await fetch(`${API_URL}/api/barbero`)
     barberos.value = await resBarberos.json()
 
     // Cargar servicios
-    const resServicios = await fetch('http://localhost:3000/api/servicio')
+    const resServicios = await fetch(`${API_URL}/api/servicio`)
     servicios.value = await resServicios.json()
   } catch (e) {
     error.value = e.message
@@ -62,7 +63,7 @@ const citasFiltradas = computed(() => {
 async function toggleEstado(cita) {
   const nuevoEstado = !cita.estado;
   try {
-    const res = await fetch(`http://localhost:3000/api/cita/${cita.id}`, {
+    const res = await fetch(`${API_URL}/api/cita/${cita.id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ estado: nuevoEstado }),
@@ -80,13 +81,13 @@ async function toggleEstado(cita) {
 async function sancionarUsuario(userId) {
   if (!confirm('¿Seguro que quieres sancionar a este usuario?')) return;
   try {
-    const res = await fetch(`http://localhost:3000/api/user/${userId}/sancionar`, {
+    const res = await fetch(`${API_URL}/api/user/${userId}/sancionar`, {
       method: 'POST',
     });
     if (res.ok) {
       alert('Usuario sancionado');
       // Opcional: recargar usuarios para ver la penalización actualizada
-      const resUsuarios = await fetch('http://localhost:3000/api/user');
+      const resUsuarios = await fetch(`${API_URL}/api/user`);
       usuarios.value = await resUsuarios.json();
     } else {
       alert('Error al sancionar usuario');

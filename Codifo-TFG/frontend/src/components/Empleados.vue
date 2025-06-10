@@ -64,6 +64,7 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue'
 import { GChart } from 'vue-google-charts'
+import { API_URL } from '../config'
 
 const citasStats = ref([])
 const barberosStats = ref([])
@@ -91,7 +92,7 @@ const editForm = ref({ nombre: '', especialidad: '' })
 
 async function cargarBarberos() {
   try {
-    const response = await fetch('http://localhost:3000/api/barbero', {
+    const response = await fetch(`${API_URL}/api/barbero`, {
       credentials: 'include'
     })
     if (response.ok) {
@@ -109,7 +110,7 @@ async function crearBarbero() {
   mensaje.value = ''
   error.value = ''
   try {
-    const response = await fetch('http://localhost:3000/api/barbero', {
+    const response = await fetch(`${API_URL}/api/barbero`, {
       method: 'POST',
       credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
@@ -132,7 +133,7 @@ async function crearBarbero() {
 async function eliminarBarbero(id) {
   if (!confirm('¿Seguro que quieres eliminar este empleado?')) return
   try {
-    const response = await fetch(`http://localhost:3000/api/barbero/${id}`, {
+    const response = await fetch(`${API_URL}/api/barbero/${id}`, {
       method: 'DELETE',
       credentials: 'include'
     })
@@ -157,7 +158,7 @@ function cancelEdit() {
 }
 async function saveEdit(id) {
   try {
-    const response = await fetch(`http://localhost:3000/api/barbero/${id}`, {
+    const response = await fetch(`${API_URL}/api/barbero/${id}`, {
       method: 'PUT',
       credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
@@ -202,7 +203,7 @@ const serviciosPorHora = computed(() => {
 
 const servicios = ref([])
 async function cargarServicios() {
-  const res = await fetch('http://localhost:3000/api/servicio', { credentials: 'include' })
+  const res = await fetch(`${API_URL}/api/servicio`, { credentials: 'include' })
   servicios.value = res.ok ? await res.json() : []
 }
 onMounted(cargarServicios)
@@ -221,8 +222,8 @@ const serviciosPorTipo = computed(() => {
 async function cargarEstadisticas() {
   // Obtén barberos y citas
   const [barberosRes, citasRes] = await Promise.all([
-    fetch('http://localhost:3000/api/barbero', { credentials: 'include' }),
-    fetch('http://localhost:3000/api/cita', { credentials: 'include' })
+    fetch(`${API_URL}/api/barbero`, { credentials: 'include' }),
+    fetch(`${API_URL}/api/cita`, { credentials: 'include' })
   ])
   barberosStats.value = barberosRes.ok ? await barberosRes.json() : []
   citasStats.value = citasRes.ok ? await citasRes.json() : []

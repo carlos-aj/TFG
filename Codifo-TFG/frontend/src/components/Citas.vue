@@ -1,6 +1,7 @@
 <script setup>
 import { ref, onMounted, watch } from 'vue'
 import { loadStripe } from '@stripe/stripe-js'
+import { API_URL } from '../config'
 
 const stripePromise = loadStripe('pk_test_51RWvazLB0prsJIjWVQS5RIPjXeWda2BHWUaW9e6d6ensZCGquMaFZoD5CTuet9S9d2dv72h5Nt1t5wDKYTvcMSE600HeM31aeT');
 const pagarAhora = ref(false) // NUEVO
@@ -51,9 +52,9 @@ function getBarberosDisponibles() {
 }
 
 onMounted(async () => {
-  const resServicios = await fetch('http://localhost:3000/api/servicio')
+  const resServicios = await fetch(`${API_URL}/api/servicio`)
   servicios.value = await resServicios.json()
-  const resBarberos = await fetch('http://localhost:3000/api/barbero')
+  const resBarberos = await fetch(`${API_URL}/api/barbero`)
   barberos.value = await resBarberos.json()
 })
 
@@ -72,7 +73,7 @@ async function checkPuedeInvitar() {
     fecha: fechaFormateada,
     hora: horaSeleccionada.value
   })
-  const res = await fetch(`http://localhost:3000/api/cita/puede-invitar/check?${params}`)
+  const res = await fetch(`${API_URL}/api/cita/puede-invitar/check?${params}`)
   const data = await res.json()
     console.log('Respuesta puedeInvitar:', data) // <-- Añade esto
 
@@ -89,7 +90,7 @@ watch([barberoSeleccionado, fechaSeleccionada], async () => {
     return;
   }
   const fechaFormateada = new Date(fechaSeleccionada.value).toISOString().split('T')[0];
-  const res = await fetch(`http://localhost:3000/api/cita?barbero_id=${barberoSeleccionado.value}&fecha=${fechaFormateada}`);
+  const res = await fetch(`${API_URL}/api/cita?barbero_id=${barberoSeleccionado.value}&fecha=${fechaFormateada}`);
   const citas = await res.json();
   // Normaliza a formato HH:mm
   horasOcupadas.value = citas.map(c => c.hora.slice(0,5));
@@ -101,7 +102,7 @@ watch([barberoInvitado, fechaSeleccionada], async () => {
     return;
   }
   const fechaFormateada = new Date(fechaSeleccionada.value).toISOString().split('T')[0];
-  const res = await fetch(`http://localhost:3000/api/cita?barbero_id=${barberoInvitado.value}&fecha=${fechaFormateada}`);
+  const res = await fetch(`${API_URL}/api/cita?barbero_id=${barberoInvitado.value}&fecha=${fechaFormateada}`);
   const citas = await res.json();
   horasOcupadasInvitado.value = citas.map(c => c.hora.slice(0,5));
 });
@@ -114,7 +115,7 @@ watch(fechaSeleccionada, async () => {
   const fechaFormateada = new Date(fechaSeleccionada.value).toISOString().split('T')[0];
   const ocupadas = {};
   for (const barbero of barberos.value) {
-    const res = await fetch(`http://localhost:3000/api/cita?barbero_id=${barbero.id}&fecha=${fechaFormateada}`);
+    const res = await fetch(`${API_URL}/api/cita?barbero_id=${barbero.id}&fecha=${fechaFormateada}`);
     const citas = await res.json();
     ocupadas[barbero.id] = citas.map(c => {
       if (typeof c.hora === 'string') return c.hora.slice(0,5);
@@ -185,7 +186,7 @@ async function reservarCita() {
     const amount = servicio ? Math.round(servicio.precio * 100) : 1000 // en céntimos
 
     // Llama a tu backend para crear la sesión de Stripe Checkout
-    const res = await fetch('http://localhost:3000/api/cita/pago', {
+    const res = await fetch(`${API_URL}/api/cita/pago`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ amount })
@@ -207,7 +208,7 @@ async function reservarCita() {
   }
 
   // Si no paga ahora, reserva la cita normalmente
-  const res = await fetch('http://localhost:3000/api/cita', {
+  const res = await fetch(`${API_URL}/api/cita`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',

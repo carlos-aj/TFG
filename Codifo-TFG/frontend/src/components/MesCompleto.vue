@@ -1,5 +1,6 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import { API_URL } from '../config'
 
 const citas = ref([])
 const loading = ref(true)
@@ -31,7 +32,7 @@ const firstDayOfWeek = computed(() => {
 
 onMounted(async () => {
   try {
-    const res = await fetch('http://localhost:3000/api/cita')
+    const res = await fetch(`${API_URL}/api/cita`)
     if (!res.ok) throw new Error('Error al cargar citas')
     const data = await res.json()
     citas.value = data
@@ -123,10 +124,9 @@ function getMaxCitas(day) {
 // Número de barberos (solo para admin)
 const numBarberos = ref(1);
 onMounted(async () => {
-  // ...código existente...
   if (rol === 'admin') {
     try {
-      const res = await fetch('http://localhost:3000/api/barbero');
+      const res = await fetch(`${API_URL}/api/barbero`);
       if (res.ok) {
         const barberos = await res.json();
         numBarberos.value = barberos.length;
