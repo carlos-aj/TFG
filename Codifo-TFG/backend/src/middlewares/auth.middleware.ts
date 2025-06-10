@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
+import { User } from '../models/User';
 
 // Extender la interfaz Request para incluir el usuario
 declare global {
@@ -10,26 +11,38 @@ declare global {
   }
 }
 
+interface JwtPayload {
+  userId: number;
+  role: string;
+}
+
 // Middleware para verificar si el usuario está autenticado
-export const isAuthenticated = (req: Request, res: Response, next: NextFunction): void => {
+export const isAuthenticated = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    // Verificar si hay un token en las cookies
-    const token = req.cookies.token;
-    if (!token) {
-      res.status(401).json({ message: 'No autorizado: token no proporcionado' });
+    const authHeader = req.headers.authorization;
+    if (!authHeader) {
+      res.status(401).json({ message: 'No token provided' });
       return;
     }
 
-    // Verificar el token
-    const secretKey = process.env.JWT_SECRET || 'tu_clave_secreta';
-    const decoded = jwt.verify(token, secretKey);
-    
-    // Añadir el usuario decodificado a la solicitud
-    req.user = decoded;
-    
+    const token = authHeader.split(' ')[1];
+    if (!token) {
+      res.status(401).json({ message: 'Invalid token format' });
+      return;
+    }
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET!) as JwtPayload;
+    const user = await User.query().findById(decoded.userId);
+
+    if (!user) {
+      res.status(401).json({ message: 'User not found' });
+      return;
+    }
+
+    req.user = user;
     next();
-  } catch (error) {
-    res.status(401).json({ message: 'No autorizado: token inválido' });
+  } catch (err) {
+    res.status(401).json({ message: 'Invalid token' });
   }
 };
 
@@ -57,32 +70,20 @@ export const hasRole = (roles: string[]) => {
 };
 
 // Middleware para verificar si el usuario es el propietario del recurso o un admin
-export const isOwnerOrAdmin = (idParamName: string = 'id') => {
-  return (req: Request, res: Response, next: NextFunction): void => {
+export const isOwnerOrAdmin = (paramName: string) => {
+  return async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      // Verificar si el usuario está autenticado
-      if (!req.user) {
-        res.status(401).json({ message: 'No autorizado: usuario no autenticado' });
-        return;
-      }
-      
-      // Si es admin o empleado, permitir acceso
-      if (req.user.rol === 'admin' || req.user.rol === 'empleado') {
+      const user = req.user as User;
+      const resourceId = parseInt(req.params[paramName]);
+
+      if (user.rol === 'admin' || user.id === resourceId) {
         next();
         return;
       }
-      
-      // Si es el propietario del recurso, permitir acceso
-      const resourceId = req.params[idParamName];
-      if (req.user.id === parseInt(resourceId)) {
-        next();
-        return;
-      }
-      
-      // Si no es ninguno de los anteriores, denegar acceso
-      res.status(403).json({ message: 'Prohibido: no tienes permisos suficientes' });
-    } catch (error) {
-      res.status(500).json({ message: 'Error en la verificación de permisos' });
+
+      res.status(403).json({ message: 'Unauthorized' });
+    } catch (err) {
+      res.status(500).json({ message: 'Error checking authorization' });
     }
   };
 }; 

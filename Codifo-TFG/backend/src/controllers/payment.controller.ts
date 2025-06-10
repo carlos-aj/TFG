@@ -1,15 +1,16 @@
 import Stripe from 'stripe';
-import { Request, Response } from 'express';
+import { Request, Response, NextFunction } from 'express';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: '2025-05-28.basil' });
 
-export async function createCheckoutSession(req: Request, res: Response) {
+export async function createCheckoutSession(req: Request, res: Response, next: NextFunction): Promise<void> {
   const { amount, citaId } = req.body;
   console.log('Creando sesión de pago:', { amount, citaId });
   
   if (!amount || !citaId) {
     console.error('Faltan datos requeridos:', { amount, citaId });
-    return res.status(400).json({ message: 'Se requiere amount y citaId' });
+    res.status(400).json({ message: 'Se requiere amount y citaId' });
+    return;
   }
 
   try {

@@ -1,11 +1,10 @@
-import { Request, Response } from 'express';
+import { Request, Response, NextFunction } from 'express';
 import * as CitaService from '../services/cita.service';
 import { sendCitaEmail } from '../utils/emailSender';
 import { Servicio } from '../models/Servicio';
 import { User } from '../models/User';
 
-
-export async function getAllCitas(req: Request, res: Response) {
+export async function getAllCitas(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     const { barbero_id, fecha } = req.query;
     let citas;
@@ -21,13 +20,14 @@ export async function getAllCitas(req: Request, res: Response) {
   }
 }
 
-export async function getCitaById(req: Request, res: Response) {
+export async function getCitaById(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     const id = parseInt(req.params.id);
     const cita = await CitaService.getCitaById(id);
 
     if (!cita) {
       res.status(404).json({ message: 'Appointment not found' });
+      return;
     }
 
     res.json(cita);
@@ -37,26 +37,24 @@ export async function getCitaById(req: Request, res: Response) {
   }
 }
 
-
-export async function createCita(req: Request, res: Response) {
+export async function createCita(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     const data = req.body;
 
-     if (data.user_id) {
+    if (data.user_id) {
       const user = await User.query().findById(data.user_id);
       if (user && user.penalizacion >= 3) {
         res.status(403).json({ message: 'No puedes reservar porque tienes 3 o más sanciones.' });
         return;
       }
     }
-    // Obtener duración del servicio principal
+
     const servicio = await Servicio.query().findById(data.servicio_id);
     if (!servicio) {
       res.status(400).json({ message: 'Servicio no encontrado' });
       return;
     }
 
-    // Calcular las franjas necesarias para el servicio principal
     const franjas = Math.ceil(servicio.duracion / 30);
     const horas = [];
     let [h, m] = data.hora.split(':').map(Number);
@@ -67,7 +65,6 @@ export async function createCita(req: Request, res: Response) {
       if (m >= 60) { h++; m = 0; }
     }
 
-    // Comprobar que todas las franjas están libres para el servicio principal
     for (const hora of horas) {
       const citaExistente = await CitaService.findCitaByBarberoFechaHora(
         data.barbero_id, data.fecha, hora
@@ -78,7 +75,6 @@ export async function createCita(req: Request, res: Response) {
       }
     }
 
-    // Crear la cita principal (solo campos válidos)
     const newCita = await CitaService.createCita({
       servicio_id: data.servicio_id,
       barbero_id: data.barbero_id,
@@ -90,7 +86,6 @@ export async function createCita(req: Request, res: Response) {
       nombre_invitado: undefined
     });
 
-    // Si hay datos de invitado, crear la cita del invitado
     let invitadoInfo = null;
     if (
       data.nombre_invitado &&
@@ -98,13 +93,12 @@ export async function createCita(req: Request, res: Response) {
       data.barbero_id_invitado &&
       data.hora_invitado
     ) {
-      // Obtener duración del servicio del invitado
       const servicioInvitado = await Servicio.query().findById(data.servicio_id_invitado);
       if (!servicioInvitado) {
         res.status(400).json({ message: 'Servicio de invitado no encontrado' });
         return;
       }
-      // Calcular franjas del invitado
+
       const franjasInv = Math.ceil(servicioInvitado.duracion / 30);
       const horasInv = [];
       let [hi, mi] = data.hora_invitado.split(':').map(Number);
@@ -114,7 +108,7 @@ export async function createCita(req: Request, res: Response) {
         mi += 30;
         if (mi >= 60) { hi++; mi = 0; }
       }
-      // Comprobar que todas las franjas están libres para el invitado
+
       for (const hora of horasInv) {
         const citaExistente = await CitaService.findCitaByBarberoFechaHora(
           data.barbero_id_invitado, data.fecha, hora
@@ -124,7 +118,7 @@ export async function createCita(req: Request, res: Response) {
           return;
         }
       }
-      // Crear cita invitado (solo campos válidos)
+
       await CitaService.createCita({
         servicio_id: data.servicio_id_invitado,
         barbero_id: data.barbero_id_invitado,
@@ -135,6 +129,7 @@ export async function createCita(req: Request, res: Response) {
         user_id: undefined,
         nombre_invitado: data.nombre_invitado
       });
+
       invitadoInfo = {
         nombre: data.nombre_invitado,
         servicio: servicioInvitado.nombre,
@@ -164,7 +159,7 @@ export async function createCita(req: Request, res: Response) {
   }
 }
 
-export async function updateCita(req: Request, res: Response) {
+export async function updateCita(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     const id = parseInt(req.params.id);
     const data = req.body;
@@ -172,6 +167,7 @@ export async function updateCita(req: Request, res: Response) {
 
     if (!updatedCita) {
       res.status(404).json({ message: 'Appointment not found' });
+      return;
     }
 
     res.json(updatedCita);
@@ -181,13 +177,14 @@ export async function updateCita(req: Request, res: Response) {
   }
 }
 
-export async function deleteCita(req: Request, res: Response) {
+export async function deleteCita(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     const id = parseInt(req.params.id);
     const deleted = await CitaService.deleteCita(id);
 
     if (deleted === 0) {
       res.status(404).json({ message: 'Appointment not found' });
+      return;
     }
 
     res.json({ message: 'Appointment deleted successfully' });
@@ -197,7 +194,7 @@ export async function deleteCita(req: Request, res: Response) {
   }
 }
 
-export async function checkPuedeInvitar(req: Request, res: Response) {
+export async function checkPuedeInvitar(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     const { barbero_id, fecha, hora } = req.query;
     const puede = await CitaService.puedeInvitar(Number(barbero_id), String(fecha), String(hora));

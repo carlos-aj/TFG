@@ -1,20 +1,21 @@
-import { Router } from 'express';
-import * as CitaController from '../controllers/cita.controller';
-import * as PaymentController from '../controllers/payment.controller';
-import { isAuthenticated, hasRole, isOwnerOrAdmin } from '../middlewares/auth.middleware';
+import express, { Router } from 'express';
+import * as citaController from '../controllers/cita.controller';
+import * as paymentController from '../controllers/payment.controller';
+import { isAuthenticated, isOwnerOrAdmin } from '../middlewares/auth.middleware';
 
-export const citaRouter = Router();
+const router: Router = express.Router();
 
-// Rutas que requieren autenticación
-citaRouter.get('/puede-invitar/check', isAuthenticated, CitaController.checkPuedeInvitar);
-citaRouter.post('/pago', isAuthenticated, PaymentController.createCheckoutSession);
+// Rutas públicas
+router.get('/', citaController.getAllCitas);
+router.get('/check/puede-invitar', citaController.checkPuedeInvitar);
+router.get('/:id', citaController.getCitaById);
 
-// Rutas para usuarios autenticados y admin
-// Simplificamos esta ruta ya que protectApi ya verifica el token
-citaRouter.get('/', CitaController.getAllCitas);
-citaRouter.post('/', isAuthenticated, CitaController.createCita);
+// Rutas protegidas
+router.post('/', isAuthenticated, citaController.createCita);
+router.put('/:id', isAuthenticated, isOwnerOrAdmin('id'), citaController.updateCita);
+router.delete('/:id', isAuthenticated, isOwnerOrAdmin('id'), citaController.deleteCita);
 
-// Rutas que requieren ser propietario o admin
-citaRouter.get('/:id', isAuthenticated, isOwnerOrAdmin('id'), CitaController.getCitaById);
-citaRouter.put('/:id', isAuthenticated, isOwnerOrAdmin('id'), CitaController.updateCita);
-citaRouter.delete('/:id', isAuthenticated, isOwnerOrAdmin('id'), CitaController.deleteCita);
+// Rutas de pago
+router.post('/pago', isAuthenticated, paymentController.createCheckoutSession);
+
+export default router;
