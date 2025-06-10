@@ -3,7 +3,7 @@ import { ref, onMounted, watch } from 'vue'
 import { loadStripe } from '@stripe/stripe-js'
 import { API_URL } from '../config'
 
-const stripePromise = loadStripe('pk_test_51RWvazLB0prsJIjWVQS5RIPjXeWda2BHWUaW9e6d6ensZCGquMaFZoD5CTuet9S9d2dv72h5Nt1t5wDKYTvcMSE600HeM31aeT');
+const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY);
 const pagarAhora = ref(false) // NUEVO
 const servicios = ref([])
 const barberos = ref([])
@@ -193,16 +193,37 @@ async function reservarCita() {
 
   // Si el usuario quiere pagar ahora, inicia Stripe Checkout
   if (pagarAhora.value) {
-    // Busca el precio del servicio seleccionado (ajusta según tu modelo)
+    // Primero crear la cita
+    const resCita = await fetch(`${API_URL}/api/cita`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(cita)
+    });
+
+    if (!resCita.ok) {
+      const errorData = await resCita.json();
+      alert(errorData.message || 'Error al crear la cita');
+      return;
+    }
+
+    const citaCreada = await resCita.json();
+
+    // Busca el precio del servicio seleccionado
     const servicio = servicios.value.find(s => s.id === servicioSeleccionado.value)
     const amount = servicio ? Math.round(servicio.precio * 100) : 1000 // en céntimos
 
-    // Llama a tu backend para crear la sesión de Stripe Checkout
+    // Crear la sesión de Stripe Checkout
     const res = await fetch(`${API_URL}/api/cita/pago`, {
       method: 'POST',
       credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ amount })
+      body: JSON.stringify({ 
+        amount,
+        citaId: citaCreada.id
+      })
     })
     const data = await res.json()
     if (!data.sessionId) {
@@ -216,7 +237,6 @@ async function reservarCita() {
     if (error) {
       alert(error.message)
     }
-    // El flujo continúa en el backend/webhook tras el pago
     return
   }
 

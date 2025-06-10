@@ -8,6 +8,7 @@ import { barberoRouter } from './routes/barbero.routes';
 import { servicioRouter } from './routes/servicio.routes';
 import { citaRouter } from './routes/cita.routes';
 import { galeriaRouter } from './routes/galeria.routes';
+import { webhookRouter } from './routes/webhook.routes';
 import { protectApi } from './middlewares/security.middleware';
 
 import knex from './db/knex';
@@ -40,6 +41,9 @@ app.use(cors({
   credentials: true
 }));
 
+// Configurar el webhook de Stripe antes de express.json()
+app.use('/webhook', express.raw({type: 'application/json'}));
+
 app.use(express.json());
 app.use(cookieParser());
 
@@ -61,6 +65,7 @@ app.use('/api/barbero', barberoRouter);
 app.use('/api/servicio', servicioRouter);
 app.use('/api/cita', citaRouter);
 app.use('/api/galeria', galeriaRouter);
+app.use('/webhook', webhookRouter);
 
 // Iniciar servidor
 const PORT = Number(process.env.PORT) || 3000;
