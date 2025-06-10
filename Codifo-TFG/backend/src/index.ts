@@ -1,10 +1,11 @@
 import express from 'express';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
-import { Model } from 'objection';
-import Knex from 'knex';
 import * as dotenv from 'dotenv';
 import { protectApi } from './middlewares/security.middleware';
+
+// Importar la conexión a la base de datos
+import './db/knex';
 
 // Importar rutas
 import { userRouter } from './routes/user.routes';
@@ -17,11 +18,6 @@ dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-
-// Inicializar Knex
-const knexConfig = require('./db/knexfile');
-const knex = Knex(knexConfig[process.env.NODE_ENV || 'development']);
-Model.knex(knex);
 
 // Middleware
 app.use(cors({

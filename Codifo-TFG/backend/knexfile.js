@@ -1,5 +1,5 @@
-const dotenv = require('dotenv');
-dotenv.config();
+require('dotenv').config();
+const path = require('path');
 /**
  * @type { Object.<string, import("knex").Knex.Config> }
  */
@@ -7,14 +7,19 @@ module.exports = {
 
   development: {
     client: 'pg',
-    connection: process.env.DATABASE_URL || {
-      host: 'db',
-      user: 'postgres',
-      password: 'postgres',
-      database: 'tfg_db'
+    connection: {
+      host: process.env.DB_HOST || 'localhost',
+      port: Number(process.env.DB_PORT) || 5432,
+      user: process.env.DB_USER || 'postgres',
+      password: process.env.DB_PASSWORD || 'postgres',
+      database: process.env.DB_NAME || 'barbershop'
     },
     migrations: {
-      directory: './migrations'
+      directory: path.join(__dirname, 'migrations'),
+      tableName: 'knex_migrations'
+    },
+    seeds: {
+      directory: path.join(__dirname, 'seeds')
     }
   },
 
@@ -36,12 +41,17 @@ module.exports = {
 
   production: {
     client: 'pg',
-    connection: process.env.DATABASE_URL, 
+    connection: process.env.DATABASE_URL,
     migrations: {
+      directory: path.join(__dirname, 'migrations'),
       tableName: 'knex_migrations'
     },
     seeds: {
-      directory: './seeds'
+      directory: path.join(__dirname, 'seeds')
+    },
+    pool: {
+      min: 2,
+      max: 10
     }
   }
 
