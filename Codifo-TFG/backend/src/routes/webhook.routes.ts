@@ -10,7 +10,7 @@ webhookRouter.post('/stripe', async (req: Request, res: Response) => {
   const sig = req.headers['stripe-signature'];
   const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
-  let event;
+  let event: Stripe.Event;
 
   try {
     event = stripe.webhooks.constructEvent(
@@ -18,8 +18,8 @@ webhookRouter.post('/stripe', async (req: Request, res: Response) => {
       sig as string,
       endpointSecret as string
     );
-  } catch (err) {
-    console.error('Error verificando webhook:', err);
+  } catch (err: any) {
+    console.error('Error verificando webhook:', err.message);
     res.status(400).send(`Webhook Error: ${err.message}`);
     return;
   }
@@ -27,14 +27,17 @@ webhookRouter.post('/stripe', async (req: Request, res: Response) => {
   // Manejar el evento
   switch (event.type) {
     case 'checkout.session.completed':
-      const session = event.data.object;
+      const session = event.data.object as Stripe.Checkout.Session;
       
       // Actualizar el estado de pago de la cita
       try {
-        const citaId = session.metadata.citaId;
-        await CitaService.updateCita(parseInt(citaId), { pagado: true });
-      } catch (err) {
-        console.error('Error actualizando cita:', err);
+        if (session.metadata && session.metadata.citaId) {
+          await CitaService.updateCita(parseInt(session.metadata.citaId), { pagado: true });
+        } else {
+          console.error('No se encontró el ID de la cita en los metadatos');
+        }
+      } catch (err: any) {
+        console.error('Error actualizando cita:', err.message);
       }
       break;
     default:
