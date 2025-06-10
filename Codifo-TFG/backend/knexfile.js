@@ -1,4 +1,4 @@
-import * as dotenv from 'dotenv';
+const dotenv = require('dotenv');
 dotenv.config();
 /**
  * @type { Object.<string, import("knex").Knex.Config> }
