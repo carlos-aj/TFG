@@ -2,6 +2,11 @@ import { Request, Response, NextFunction } from 'express';
 
 // Middleware para proteger las rutas de la API
 export const protectApi = (req: Request, res: Response, next: NextFunction): void => {
+  // Permitir solicitudes OPTIONS (preflight CORS)
+  if (req.method === 'OPTIONS') {
+    return next();
+  }
+
   // Verificar si la solicitud tiene un token de autenticación
   const token = req.cookies.token;
   
@@ -30,6 +35,11 @@ const publicRoutes = [
 
 // Función para verificar si una ruta es pública
 const isPublicRoute = (path: string, method: string): boolean => {
+  // Rutas de login y registro siempre son públicas
+  if (path === '/api/user/login') {
+    return true;
+  }
+  
   // Verificar si la ruta es exactamente una ruta pública
   if (publicRoutes.includes(path)) {
     return true;

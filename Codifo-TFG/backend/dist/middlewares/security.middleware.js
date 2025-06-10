@@ -3,6 +3,10 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.protectApi = void 0;
 // Middleware para proteger las rutas de la API
 const protectApi = (req, res, next) => {
+    // Permitir solicitudes OPTIONS (preflight CORS)
+    if (req.method === 'OPTIONS') {
+        return next();
+    }
     // Verificar si la solicitud tiene un token de autenticación
     const token = req.cookies.token;
     // Si no hay token y no es una ruta pública, denegar acceso
@@ -28,6 +32,10 @@ const publicRoutes = [
 ];
 // Función para verificar si una ruta es pública
 const isPublicRoute = (path, method) => {
+    // Rutas de login y registro siempre son públicas
+    if (path === '/api/user/login') {
+        return true;
+    }
     // Verificar si la ruta es exactamente una ruta pública
     if (publicRoutes.includes(path)) {
         return true;
