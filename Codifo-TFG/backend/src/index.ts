@@ -8,7 +8,7 @@ import { barberoRouter } from './routes/barbero.routes';
 import { servicioRouter } from './routes/servicio.routes';
 import { citaRouter } from './routes/cita.routes';
 import { galeriaRouter } from './routes/galeria.routes';
-import rateLimit from 'express-rate-limit';
+import { protectApi } from './middlewares/security.middleware';
 
 import knex from './db/knex';
 const cors = require('cors');
@@ -40,22 +40,15 @@ app.use(cors({
   credentials: true
 }));
 
-// Configurar rate limiting
-const apiLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutos
-  max: 100, // Límite de 100 solicitudes por ventana por IP
-  standardHeaders: true,
-  legacyHeaders: false,
-});
-
-// Aplicar rate limiting a todas las rutas /api
-app.use('/api', apiLimiter);
-
 app.use(express.json());
 app.use(cookieParser());
 
+// Servir archivos estáticos
 app.use('/galeria', express.static(path.join(__dirname, 'ApiGaleria')));
+app.use('/public', express.static(path.join(__dirname, '../../public')));
 
+// Aplicar middleware de seguridad para proteger todas las rutas de la API
+app.use(protectApi);
 
 // Conexión base de datos
 knex.raw('SELECT 1')
@@ -68,8 +61,6 @@ app.use('/api/barbero', barberoRouter);
 app.use('/api/servicio', servicioRouter);
 app.use('/api/cita', citaRouter);
 app.use('/api/galeria', galeriaRouter);
-
-app.use('/public', express.static(path.join(__dirname, '../../public')));
 
 // Iniciar servidor
 const PORT = Number(process.env.PORT) || 3000;
