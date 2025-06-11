@@ -3,6 +3,8 @@ import * as CitaService from '../services/cita.service';
 import { sendCitaEmail } from '../utils/emailSender';
 import { Servicio } from '../models/Servicio';
 import { User } from '../models/User';
+import { transaction } from 'objection';
+import { Cita } from '../models/Cita';
 
 export async function getAllCitas(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
@@ -122,36 +124,34 @@ export async function createCita(req: Request, res: Response, next: NextFunction
         }
       }
 
-      // Crear la cita principal
-      console.log('Creando cita principal...');
-      const newCita = await CitaService.createCita({
-        servicio_id: data.servicio_id,
-        barbero_id: data.barbero_id,
-        fecha: data.fecha,
-        hora: data.hora,
-        estado: false,
-        pagado: false,
-        user_id: data.user_id,
-        nombre_invitado: undefined
-      });
-      
-      console.log('Cita principal creada con ID:', newCita.id);
-
-      // Procesar invitado si existe
-      let invitadoInfo = null;
-      if (
-        data.nombre_invitado &&
-        data.servicio_id_invitado &&
-        data.barbero_id_invitado &&
-        data.hora_invitado
-      ) {
-        console.log('Procesando información de invitado...');
+      // Utilizar una transacción para asegurar la atomicidad de las operaciones
+      const newCita = await transaction(Cita.knex(), async (trx) => {
+        // Crear la cita principal
+        console.log('Creando cita principal...');
+        const citaPrincipal = await CitaService.createCita({
+          servicio_id: data.servicio_id,
+          barbero_id: data.barbero_id,
+          fecha: data.fecha,
+          hora: data.hora,
+          estado: false,
+          pagado: false,
+          user_id: data.user_id
+        }, trx); // Pasar la transacción al servicio
         
-        try {
-          const servicioInvitado = await Servicio.query().findById(data.servicio_id_invitado);
+        console.log('Cita principal creada con ID:', citaPrincipal.id);
+
+        // Procesar invitado si existe
+        if (
+          data.nombre_invitado &&
+          data.servicio_id_invitado &&
+          data.barbero_id_invitado &&
+          data.hora_invitado
+        ) {
+          console.log('Procesando información de invitado...');
+          
+          const servicioInvitado = await Servicio.query(trx).findById(data.servicio_id_invitado);
           if (!servicioInvitado) {
-            res.status(400).json({ message: 'Servicio de invitado no encontrado' });
-            return;
+            throw new Error('Servicio de invitado no encontrado');
           }
 
           const franjasInv = Math.ceil(servicioInvitado.duracion / 30);
@@ -169,54 +169,51 @@ export async function createCita(req: Request, res: Response, next: NextFunction
 
           for (const hora of horasInv) {
             const citaExistente = await CitaService.findCitaByBarberoFechaHora(
-              data.barbero_id_invitado, data.fecha, hora
+              data.barbero_id_invitado, data.fecha, hora, trx
             );
             
             if (citaExistente) {
-              console.log('Cita existente encontrada para invitado en hora:', hora);
-              res.status(400).json({ message: 'Ya existe una cita para ese barbero (invitado) en esa fecha y hora.' });
-              return;
+              throw new Error('Ya existe una cita para ese barbero (invitado) en esa fecha y hora.');
             }
           }
 
           console.log('Creando cita de invitado...');
-          const citaInvitado = await CitaService.createCita({
+          await CitaService.createCita({
             servicio_id: data.servicio_id_invitado,
             barbero_id: data.barbero_id_invitado,
             fecha: data.fecha,
             hora: data.hora_invitado,
             estado: false,
             pagado: false,
-            user_id: undefined,
             nombre_invitado: data.nombre_invitado
-          });
-          
-          console.log('Cita de invitado creada con ID:', citaInvitado.id);
-
-          invitadoInfo = {
-            nombre: data.nombre_invitado,
-            servicio: servicioInvitado.nombre,
-            barbero: (await CitaService.getBarberoNombreById(data.barbero_id_invitado)),
-            fecha: data.fecha,
-            hora: data.hora_invitado
-          };
-        } catch (invitadoErr) {
-          console.error('Error al procesar invitado:', invitadoErr);
-          // No fallamos aquí, continuamos con la cita principal
+          }, trx); // Pasar la transacción al servicio
         }
-      }
+        
+        return citaPrincipal;
+      });
 
-      // Enviar email
+      // Enviar email después de que la transacción ha sido exitosa
       try {
         console.log('Obteniendo información para email...');
         const { user, barbero, servicio: servicioObj } = await CitaService.getCitaInfoForEmail(data);
 
-        // Verificar que user es de tipo User y tiene email
+        let invitadoInfo = null;
+        if (data.nombre_invitado && data.servicio_id_invitado && data.barbero_id_invitado) {
+          const servicioInvitado = await Servicio.query().findById(data.servicio_id_invitado);
+          invitadoInfo = {
+            nombre: data.nombre_invitado,
+            servicio: servicioInvitado?.nombre || 'N/A',
+            barbero: (await CitaService.getBarberoNombreById(data.barbero_id_invitado)),
+            fecha: data.fecha,
+            hora: data.hora_invitado
+          };
+        }
+
         if (user && 'email' in user && user.email) {
           console.log('Enviando email a:', user.email);
           await sendCitaEmail(user.email, {
-            servicio: servicioObj?.nombre || data.servicio_id,
-            barbero: barbero?.nombre || data.barbero_id,
+            servicio: servicioObj?.nombre || 'N/A',
+            barbero: barbero?.nombre || 'N/A',
             fecha: data.fecha,
             hora: data.hora,
             importe_pagado: data.importe_pagado || null,

@@ -21,7 +21,7 @@ export async function getCitaById(id: number) {
   }
 }
 
-export async function createCita(data: Partial<ICita>) {
+export async function createCita(data: Partial<ICita>, trx?: import('knex').Knex.Transaction) {
   try {
     console.log('Creando cita con datos:', JSON.stringify(data, null, 2));
     
@@ -30,7 +30,8 @@ export async function createCita(data: Partial<ICita>) {
       data.user_id = null as any; // Necesario para compatibilidad con la base de datos
     }
     
-    const result = await Cita.query().insert(data);
+    const query = Cita.query(trx).insert(data);
+    const result = await query;
     console.log('Cita creada correctamente:', result.id);
     return result;
   } catch (error) {
@@ -57,9 +58,9 @@ export async function deleteCita(id: number) {
   }
 }
 
-export async function findCitaByBarberoFechaHora(barbero_id: number, fecha: string, hora: string) {
+export async function findCitaByBarberoFechaHora(barbero_id: number, fecha: string, hora: string, trx?: import('knex').Knex.Transaction) {
   try {
-    return await Cita.query().where({ barbero_id, fecha, hora }).first();
+    return await Cita.query(trx).where({ barbero_id, fecha, hora }).first();
   } catch (error) {
     console.error(`Error al buscar cita por barbero ${barbero_id}, fecha ${fecha}, hora ${hora}:`, error);
     throw error;

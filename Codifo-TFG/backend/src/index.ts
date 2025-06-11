@@ -4,9 +4,7 @@ import express from 'express';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import { protectApi } from './middlewares/security.middleware';
-
-// Importar la conexión a la base de datos
-import './db/knex';
+import knex from './db/knex'; // Asegúrate de que la exportación de knex lo permita
 
 // Importar rutas
 import { userRouter } from './routes/user.routes';
@@ -53,7 +51,18 @@ app.use('/api/barbero', barberoRouter);
 app.use('/api/galeria', galeriaRouter);
 app.use('/webhook', webhookRouter);
 
+// Función para sincronizar la secuencia de la tabla 'cita'
+async function syncCitaSequence() {
+  try {
+    const result = await knex.raw("SELECT setval('cita_id_seq', COALESCE((SELECT MAX(id) FROM cita), 1), false);");
+    console.log('Secuencia de ID de citas sincronizada correctamente.', result);
+  } catch (error) {
+    console.error('Error al sincronizar la secuencia de citas:', error);
+  }
+}
+
 // Iniciar servidor
-app.listen(PORT, '0.0.0.0', () => {
+app.listen(PORT, '0.0.0.0', async () => {
   console.log(`Servidor en puerto ${PORT}`);
+  await syncCitaSequence();
 });
