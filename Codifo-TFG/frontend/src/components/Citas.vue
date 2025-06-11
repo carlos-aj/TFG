@@ -167,18 +167,16 @@ async function reservarCita() {
     return
   }
 
-  // Formatear la fecha correctamente (YYYY-MM-DD) para evitar errores de validación en el backend.
-  const fecha = new Date(fechaSeleccionada.value);
-  const year = fecha.getFullYear();
-  const month = String(fecha.getMonth() + 1).padStart(2, '0'); // Los meses son base 0
-  const day = String(fecha.getDate()).padStart(2, '0');
-  const fechaFormateada = `${year}-${month}-${day}`;
+  // El backend espera la fecha en formato YYYY-MM-DD.
+  // v-date-picker puede devolver un objeto Date o un string ISO, así que lo formateamos.
+  const fechaObj = new Date(fechaSeleccionada.value);
+  const fechaFormateada = fechaObj.toISOString().split('T')[0];
 
   // Prepara el objeto cita
   const cita = {
     servicio_id: servicioSeleccionado.value,
     barbero_id: barberoSeleccionado.value,
-    fecha: fechaFormateada,
+    fecha: fechaFormateada, // Usar la fecha formateada
     hora: horaSeleccionada.value,
     estado: false,
     pagado: false,

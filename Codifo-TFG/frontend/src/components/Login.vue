@@ -73,22 +73,20 @@ async function login() {
     const data = await response.json();
     console.log('Respuesta de login:', data);
 
-    // Usar la utilidad para guardar los datos de autenticación
     saveAuthData(data);
     
-    // Esperar al siguiente ciclo de actualización para que el estado de autenticación se propague
     await nextTick();
 
+    const destination = (data.rol === 'admin' || data.rol === 'empleado') 
+      ? { name: 'citas-empleados-admin' } 
+      : { name: 'citas' };
+
     try {
-      // Redirigir según el rol, reemplazando la entrada de historial
-      if (data.rol === 'admin' || data.rol === 'empleado') {
-        router.replace({ name: 'citas-empleados-admin' });
-      } else {
-        router.replace({ name: 'citas' });
-      }
-    } catch (navError) {
-      console.error('Error en navegación después de login:', navError);
+      await router.replace(destination);
+    } catch (error) {
+      console.error(`Error de navegación manejado al ir a '${destination.name}':`, error);
     }
+
   } catch (err) {
     console.error('Error en login:', err);
     errors.general = 'Error de conexión con el servidor';
