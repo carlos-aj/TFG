@@ -7,38 +7,42 @@
 export const saveAuthData = (data) => {
   if (!data) return;
   
-  // Store token properly
-  if (data.token) {
-    localStorage.setItem('token', data.token);
+  try {
+    // Store token properly
+    if (data.token) {
+      localStorage.setItem('token', data.token);
+    }
+    
+    // Store user role
+    if (data.rol) {
+      localStorage.setItem('role', data.rol);
+    }
+    
+    // Store user ID
+    if (data.id) {
+      localStorage.setItem('user_id', data.id.toString());
+    }
+    
+    // Store user name
+    if (data.nombre) {
+      localStorage.setItem('nombre', data.nombre);
+    }
+    
+    // Store user last name
+    if (data.apellidos) {
+      localStorage.setItem('apellidos', data.apellidos);
+    }
+    
+    // Store email
+    if (data.email) {
+      localStorage.setItem('email', data.email);
+    }
+    
+    // Dispatch storage event to notify other components
+    window.dispatchEvent(new Event('storage'));
+  } catch (error) {
+    console.error('Error saving auth data:', error);
   }
-  
-  // Store user role
-  if (data.rol) {
-    localStorage.setItem('role', data.rol);
-  }
-  
-  // Store user ID
-  if (data.id) {
-    localStorage.setItem('user_id', data.id.toString());
-  }
-  
-  // Store user name
-  if (data.nombre) {
-    localStorage.setItem('nombre', data.nombre);
-  }
-  
-  // Store user last name
-  if (data.apellidos) {
-    localStorage.setItem('apellidos', data.apellidos);
-  }
-  
-  // Store email
-  if (data.email) {
-    localStorage.setItem('email', data.email);
-  }
-  
-  // Dispatch storage event to notify other components
-  window.dispatchEvent(new Event('storage'));
 };
 
 /**
@@ -46,7 +50,12 @@ export const saveAuthData = (data) => {
  * @returns {string|null} - JWT token or null if not found
  */
 export const getToken = () => {
-  return localStorage.getItem('token');
+  try {
+    return localStorage.getItem('token') || null;
+  } catch (error) {
+    console.error('Error getting token:', error);
+    return null;
+  }
 };
 
 /**
@@ -54,8 +63,13 @@ export const getToken = () => {
  * @returns {boolean} - True if user is authenticated
  */
 export const checkAuthenticated = () => {
-  const token = getToken();
-  return !!token && token !== 'true' && token !== 'undefined' && token !== 'null';
+  try {
+    const token = getToken();
+    return Boolean(token && token !== 'true' && token !== 'undefined' && token !== 'null');
+  } catch (error) {
+    console.error('Error checking authentication:', error);
+    return false;
+  }
 };
 
 /**
@@ -63,22 +77,31 @@ export const checkAuthenticated = () => {
  * @returns {string} - User role or empty string if not found
  */
 export const getUserRole = () => {
-  return localStorage.getItem('role') || '';
+  try {
+    return localStorage.getItem('role') || '';
+  } catch (error) {
+    console.error('Error getting user role:', error);
+    return '';
+  }
 };
 
 /**
  * Clear authentication data
  */
 export const clearAuthData = () => {
-  localStorage.removeItem('token');
-  localStorage.removeItem('role');
-  localStorage.removeItem('user_id');
-  localStorage.removeItem('nombre');
-  localStorage.removeItem('apellidos');
-  localStorage.removeItem('email');
-  
-  // Dispatch storage event to notify other components
-  window.dispatchEvent(new Event('storage'));
+  try {
+    localStorage.removeItem('token');
+    localStorage.removeItem('role');
+    localStorage.removeItem('user_id');
+    localStorage.removeItem('nombre');
+    localStorage.removeItem('apellidos');
+    localStorage.removeItem('email');
+    
+    // Dispatch storage event to notify other components
+    window.dispatchEvent(new Event('storage'));
+  } catch (error) {
+    console.error('Error clearing auth data:', error);
+  }
 };
 
 /**
@@ -86,6 +109,11 @@ export const clearAuthData = () => {
  * @returns {Object} - Headers with Authorization token
  */
 export const getAuthHeaders = () => {
-  const token = getToken();
-  return token ? { Authorization: `Bearer ${token}` } : {};
+  try {
+    const token = getToken();
+    return token ? { Authorization: `Bearer ${token}` } : {};
+  } catch (error) {
+    console.error('Error getting auth headers:', error);
+    return {};
+  }
 }; 

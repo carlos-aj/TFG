@@ -76,12 +76,15 @@ async function login() {
     // Usar la utilidad para guardar los datos de autenticación
     saveAuthData(data);
     
-    // Redirigir según el rol
-    if (data.rol === 'admin' || data.rol === 'empleado') {
-      router.push('/citas-empleados-admin');
-    } else {
-      router.push('/citas');
-    }
+    // Esperar un momento antes de redirigir para asegurar que los datos se han guardado
+    setTimeout(() => {
+      // Redirigir según el rol
+      if (data.rol === 'admin' || data.rol === 'empleado') {
+        router.push({ path: '/citas-empleados-admin', replace: true });
+      } else {
+        router.push({ path: '/citas', replace: true });
+      }
+    }, 100);
   } catch (err) {
     console.error('Error en login:', err);
     errors.general = 'Error de conexión con el servidor';

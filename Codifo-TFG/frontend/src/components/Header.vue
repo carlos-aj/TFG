@@ -22,14 +22,14 @@ function logout() {
     clearAuthData()
     isAuthenticated.value = false
     userRole.value = null
-    router.push('/login')
+    router.push({ name: 'login' })
   }).catch(error => {
     console.error('Error al cerrar sesión:', error)
     // Limpiar datos de autenticación incluso si hay error
     clearAuthData()
     isAuthenticated.value = false
     userRole.value = null
-    router.push('/login')
+    router.push({ name: 'login' })
   })
 }
 
@@ -56,7 +56,7 @@ onUnmounted(() => {
 <template>
   <section :class="{ 'header-dark': isOverDarkSection }">
     <div>
-      <router-link to="/">
+      <router-link :to="{ name: 'home' }">
         <img class="imagen1" src="../assets/Logo.png" alt="Logo">
       </router-link>
     </div>
@@ -65,29 +65,29 @@ onUnmounted(() => {
         <!-- Caso 1: No registrado -->
         <template v-if="!isAuthenticated">
           <li class="nav-item">
-            <router-link class="nav-link" to="/conocenos" active-class="active" exact-active-class="active">Conócenos</router-link>
+            <router-link class="nav-link" :to="{ name: 'conocenos' }" active-class="active" exact-active-class="active">Conócenos</router-link>
           </li>
           <li class="nav-item">
-            <router-link class="nav-link" to="/galeria" active-class="active" exact-active-class="active">Galería</router-link>
+            <router-link class="nav-link" :to="{ name: 'galeria' }" active-class="active" exact-active-class="active">Galería</router-link>
           </li>
           <li class="nav-item">
-            <router-link class="nav-link" to="/citas" active-class="active" exact-active-class="active">Citas</router-link>
+            <router-link class="nav-link" :to="{ name: 'citas' }" active-class="active" exact-active-class="active">Citas</router-link>
           </li>
           <li class="nav-item">
-            <router-link class="nav-link" to="/login" active-class="active" exact-active-class="active">LogIn</router-link>
+            <router-link class="nav-link" :to="{ name: 'login' }" active-class="active" exact-active-class="active">LogIn</router-link>
           </li>
         </template>
 
         <!-- Caso 2: Registrado user -->
         <template v-else-if="userRole === 'user' || userRole === 'cliente'">
           <li class="nav-item">
-            <router-link class="nav-link" to="/conocenos" active-class="active" exact-active-class="active">Conócenos</router-link>
+            <router-link class="nav-link" :to="{ name: 'conocenos' }" active-class="active" exact-active-class="active">Conócenos</router-link>
           </li>
           <li class="nav-item">
-            <router-link class="nav-link" to="/galeria" active-class="active" exact-active-class="active">Galería</router-link>
+            <router-link class="nav-link" :to="{ name: 'galeria' }" active-class="active" exact-active-class="active">Galería</router-link>
           </li>
           <li class="nav-item">
-            <router-link class="nav-link" to="/citas" active-class="active" exact-active-class="active">Citas</router-link>
+            <router-link class="nav-link" :to="{ name: 'citas' }" active-class="active" exact-active-class="active">Citas</router-link>
           </li>
           <li class="nav-item">
             <a class="nav-link" href="#" @click.prevent="logout">Logout</a>
@@ -97,10 +97,10 @@ onUnmounted(() => {
         <!-- Caso 3: Registrado empleado -->
         <template v-else-if="userRole === 'empleado'">
           <li class="nav-item">
-            <router-link class="nav-link" to="/citas-empleados-admin" active-class="active" exact-active-class="active">Citas</router-link>
+            <router-link class="nav-link" :to="{ name: 'citas-empleados-admin' }" active-class="active" exact-active-class="active">Citas</router-link>
           </li>
           <li class="nav-item">
-            <router-link class="nav-link" to="/mes-completo" active-class="active" exact-active-class="active">Mes Completo</router-link>
+            <router-link class="nav-link" :to="{ name: 'mes-completo' }" active-class="active" exact-active-class="active">Mes Completo</router-link>
           </li>
           <li class="nav-item">
             <a class="nav-link" href="#" @click.prevent="logout">Logout</a>
@@ -110,22 +110,22 @@ onUnmounted(() => {
         <!-- Caso 4: Registrado admin -->
         <template v-else-if="userRole === 'admin'">
           <li class="nav-item">
-            <router-link class="nav-link" to="/empleados" active-class="active" exact-active-class="active">Empleados</router-link>
+            <router-link class="nav-link" :to="{ name: 'empleados' }" active-class="active" exact-active-class="active">Empleados</router-link>
           </li>
           <li class="nav-item">
-            <router-link class="nav-link" to="/servicios" active-class="active" exact-active-class="active">Servicios</router-link>
+            <router-link class="nav-link" :to="{ name: 'servicios' }" active-class="active" exact-active-class="active">Servicios</router-link>
           </li>
           <li class="nav-item">
-            <router-link class="nav-link" to="/citas-empleados-admin" active-class="active" exact-active-class="active">Citas</router-link>
+            <router-link class="nav-link" :to="{ name: 'citas-empleados-admin' }" active-class="active" exact-active-class="active">Citas</router-link>
           </li>
           <li class="nav-item">
-            <router-link class="nav-link" to="/mes-completo" active-class="active" exact-active-class="active">Mes Completo</router-link>
+            <router-link class="nav-link" :to="{ name: 'mes-completo' }" active-class="active" exact-active-class="active">Mes Completo</router-link>
           </li>
           <li class="nav-item">
-            <router-link class="nav-link" to="/usuarios" active-class="active" exact-active-class="active">Usuarios</router-link>
+            <router-link class="nav-link" :to="{ name: 'usuarios' }" active-class="active" exact-active-class="active">Usuarios</router-link>
           </li>
           <li class="nav-item">
-            <router-link class="nav-link" to="/galeria" active-class="active" exact-active-class="active">Galeria</router-link>
+            <router-link class="nav-link" :to="{ name: 'galeria' }" active-class="active" exact-active-class="active">Galeria</router-link>
           </li>
           <li class="nav-item">
             <a class="nav-link" href="#" @click.prevent="logout">Logout</a>
