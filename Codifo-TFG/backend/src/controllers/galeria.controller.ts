@@ -39,11 +39,12 @@ export async function deleteGaleria(req: Request, res: Response) {
 
 export async function getImagenByName(req: Request, res: Response) {
   const { filename } = req.params;
-  const imagePath = path.resolve(process.cwd(), 'ApiGaleria', filename);
-  
+  const imagePath = path.join(__dirname, '../ApiGaleria', filename);
+
   res.sendFile(imagePath, (err) => {
     if (err) {
       console.error('Error al enviar imagen:', err);
+      console.error('Path intentado:', imagePath);
       res.status(404).send('Imagen no encontrada');
     }
   });

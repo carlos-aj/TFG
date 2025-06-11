@@ -15,11 +15,19 @@ const storage = multer.diskStorage({
 const upload = multer({ storage });
 
 export const galeriaRouter = Router();
-galeriaRouter.get('/:id', GaleriaController.getGaleriaById);
+
+// General routes
 galeriaRouter.get('/', GaleriaController.getGalerias);
 galeriaRouter.post('/', GaleriaController.createGaleria);
-galeriaRouter.put('/:id', GaleriaController.updateGaleria);
-galeriaRouter.delete('/:id', GaleriaController.deleteGaleria);
+
+// Upload route
 galeriaRouter.post('/upload', upload.array('imagenes'), UploadController.uploadImagen);
+
+// ID-specific routes with regex to match only numbers
+galeriaRouter.get('/:id(\\d+)', GaleriaController.getGaleriaById);
+galeriaRouter.put('/:id(\\d+)', GaleriaController.updateGaleria);
+galeriaRouter.delete('/:id(\\d+)', GaleriaController.deleteGaleria);
+
+// Filename route - will only be matched if the parameter is not a number
 galeriaRouter.get('/:filename', GaleriaController.getImagenByName);
 
