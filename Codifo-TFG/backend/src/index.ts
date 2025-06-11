@@ -18,8 +18,8 @@ import { galeriaRouter } from './routes/galeria.routes';
 const app = express();
 const PORT = Number(process.env.PORT) || 3000;
 
-// Servir archivos estáticos desde la carpeta 'uploads'
-app.use('/uploads', express.static(path.join(__dirname, '..', 'uploads')));
+// Servir archivos estáticos desde la carpeta 'uploads' en la raíz del proyecto
+app.use('/uploads', express.static(path.join(__dirname, '..', '..', 'uploads')));
 
 // Configurar CORS
 const allowedOrigins = [
