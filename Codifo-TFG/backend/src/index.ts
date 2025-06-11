@@ -55,7 +55,7 @@ app.use('/api/galeria', galeriaRouter);
 // Función para sincronizar la secuencia de la tabla 'cita'
 async function syncCitaSequence() {
   try {
-    const result = await knex.raw("SELECT setval('cita_id_seq', COALESCE((SELECT MAX(id) FROM cita), 1), false);");
+    const result = await knex.raw("SELECT setval('cita_id_seq', COALESCE((SELECT MAX(id) FROM cita), 0) + 1, false);");
     console.log('Secuencia de ID de citas sincronizada correctamente.', result);
   } catch (error) {
     console.error('Error al sincronizar la secuencia de citas:', error);
