@@ -245,41 +245,10 @@ export async function confirmarPagoCita(req: Request, res: Response): Promise<vo
 
   // Si no hay cita_id pero se solicita force_confirm, intentamos encontrar la cita más reciente
   if (!cita_id && force_confirm) {
-    try {
-      console.log('Solicitud de confirmación forzada sin ID específico');
-      
-      // Intentamos obtener el ID del usuario del token de autenticación
-      const userId = req.user?.id;
-      if (!userId) {
-        console.error('No se pudo identificar al usuario para la confirmación forzada');
-        res.status(400).json({ message: 'No se pudo identificar al usuario' });
-        return;
-      }
-      
-      // Buscamos la cita más reciente del usuario
-      const citasRecientes = await Cita.query()
-        .where('user_id', userId)
-        .where('pagado', false) // Solo citas no pagadas
-        .orderBy('created_at', 'desc')
-        .limit(1);
-      
-      if (citasRecientes.length === 0) {
-        console.error('No se encontraron citas pendientes para el usuario:', userId);
-        res.status(404).json({ message: 'No se encontraron citas pendientes' });
-        return;
-      }
-      
-      // Usamos la cita más reciente
-      const citaMasReciente = citasRecientes[0];
-      console.log('Cita más reciente encontrada:', citaMasReciente.id);
-      
-      // Continuamos con la confirmación usando esta cita
-      req.body.cita_id = citaMasReciente.id;
-    } catch (error) {
-      console.error('Error al buscar la cita más reciente:', error);
-      res.status(500).json({ message: 'Error al buscar la cita más reciente' });
-      return;
-    }
+    console.log('Solicitud de confirmación forzada sin ID específico');
+    console.log('Esta funcionalidad requiere autenticación. Devolviendo error.');
+    res.status(400).json({ message: 'Se requiere cita_id para confirmar el pago' });
+    return;
   }
   
   // A partir de aquí, continuamos con la lógica existente
@@ -318,9 +287,32 @@ export async function confirmarPagoCita(req: Request, res: Response): Promise<vo
       return;
     }
     
-    // 3. Enviar el email con los datos de la cita
+    // 3. Obtener la información completa del usuario y servicios
+    try {
+      // Cargar explícitamente las relaciones que necesitamos
+      const citaCompleta = await Cita.query()
+        .findById(citaId)
+        .withGraphFetched('[user, barbero, servicio]');
+        
+      if (!citaCompleta) {
+        console.error('No se pudo cargar la información completa de la cita');
+        res.status(404).json({ message: 'No se pudo cargar la información completa de la cita' });
+        return;
+      }
+      
+      // Actualizar nuestra variable cita con la información completa
+      cita = citaCompleta;
+      console.log('Relaciones de la cita cargadas correctamente');
+    } catch (relationsError) {
+      console.error('Error al cargar las relaciones de la cita:', relationsError);
+      // Continuamos con la información que tengamos
+    }
+    
+    // 4. Enviar el email con los datos de la cita
     try {
       if (cita.user && cita.user.email) {
+        console.log('Preparando para enviar email a:', cita.user.email);
+        
         let invitadoInfo = null;
         if (cita.nombre_invitado && cita.servicio_id_invitado && cita.barbero_id_invitado && cita.hora_invitado) {
           const servicioInvitado = await Servicio.query().findById(cita.servicio_id_invitado);
@@ -333,6 +325,13 @@ export async function confirmarPagoCita(req: Request, res: Response): Promise<vo
           };
         }
 
+        console.log('Enviando email con la siguiente información:');
+        console.log('- Servicio:', cita.servicio?.nombre || 'N/A');
+        console.log('- Barbero:', cita.barbero?.nombre || 'N/A');
+        console.log('- Fecha:', cita.fecha);
+        console.log('- Hora:', cita.hora);
+        console.log('- Importe pagado:', cita.servicio?.precio ? Number(cita.servicio.precio) : null);
+        
         await sendCitaEmail(cita.user.email, {
           servicio: cita.servicio?.nombre || 'N/A',
           barbero: cita.barbero?.nombre || 'N/A',

@@ -235,6 +235,12 @@ async function reservarCita() {
 
       const citaCreada = await resCita.json();
       console.log('Cita creada:', citaCreada);
+      
+      // Guardar el ID de la cita en localStorage para recuperarlo en CitaExito.vue
+      if (citaCreada && citaCreada.id) {
+        localStorage.setItem('ultima_cita_id', citaCreada.id.toString());
+        console.log('ID de cita guardado en localStorage:', citaCreada.id);
+      }
 
       // Busca el precio del servicio seleccionado
       const servicio = servicios.value.find(s => s.id === servicioSeleccionado.value)
@@ -300,6 +306,15 @@ async function reservarCita() {
     if (!res.ok) {
       const errorData = await res.json();
       throw new Error(errorData.message || 'Error al crear la cita');
+    }
+    
+    const citaCreada = await res.json();
+    console.log('Cita creada (sin pago):', citaCreada);
+    
+    // Guardar el ID de la cita en localStorage para recuperarlo si es necesario
+    if (citaCreada && citaCreada.id) {
+      localStorage.setItem('ultima_cita_id', citaCreada.id.toString());
+      console.log('ID de cita guardado en localStorage:', citaCreada.id);
     }
 
     // Redirige a la página de inicio

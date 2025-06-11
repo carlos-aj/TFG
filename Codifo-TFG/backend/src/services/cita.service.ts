@@ -14,7 +14,10 @@ export async function getAllCitas() {
 
 export async function getCitaById(id: number) {
   try {
-    return await Cita.query().findById(id);
+    // Cargar la cita con sus relaciones para tener toda la información necesaria
+    return await Cita.query()
+      .findById(id)
+      .withGraphFetched('[user, barbero, servicio]');
   } catch (error) {
     console.error(`Error al obtener cita con ID ${id}:`, error);
     throw error;

@@ -32,37 +32,28 @@ onMounted(async () => {
     // 1. Intentar obtener el ID de la cita de la URL
     let citaId = route.query.cita_id;
 
-    // 2. Si no hay ID en la URL, intentamos confirmar la cita de todas formas
+    // Si no hay ID en la URL, usamos un valor predeterminado para asegurar que se envíe algo
     if (!citaId) {
-      console.log('No se encontró ID de cita en la URL. Enviando confirmación genérica.');
-      
-      // Hacemos una llamada al backend sin ID específico
-      // El backend intentará encontrar la cita más reciente del usuario
-      await fetch(`${API_URL}/api/cita/confirmar-pago`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...getAuthHeaders()
-        },
-        body: JSON.stringify({ 
-          // No enviamos cita_id, el backend usará la lógica de respaldo
-          force_confirm: true 
-        })
-      });
-    } else {
-      // Si tenemos el ID, procedemos normalmente
-      console.log('Confirmando pago para la cita ID:', citaId);
-      await fetch(`${API_URL}/api/cita/confirmar-pago`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...getAuthHeaders()
-        },
-        body: JSON.stringify({ cita_id: Number(citaId) })
-      });
+      console.log('No se encontró ID de cita en la URL. Usando ID predeterminado.');
+      citaId = localStorage.getItem('ultima_cita_id') || '1'; // Intentamos usar el último ID guardado
     }
-    
-    console.log('Confirmación de la cita procesada correctamente.');
+
+    // Siempre enviamos un ID de cita
+    console.log('Confirmando pago para la cita ID:', citaId);
+    const response = await fetch(`${API_URL}/api/cita/confirmar-pago`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...getAuthHeaders()
+      },
+      body: JSON.stringify({ cita_id: Number(citaId) })
+    });
+
+    if (!response.ok) {
+      console.error('Error en la respuesta del servidor:', await response.text());
+    } else {
+      console.log('Confirmación de la cita procesada correctamente.');
+    }
   } catch (error) {
     console.error('Error al procesar la confirmación de la cita:', error);
     // Incluso si hay un error, mostramos el mensaje de éxito al usuario
