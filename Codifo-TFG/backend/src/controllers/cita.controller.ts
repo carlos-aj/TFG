@@ -211,7 +211,8 @@ export async function createCita(req: Request, res: Response, next: NextFunction
         console.log('Obteniendo información para email...');
         const { user, barbero, servicio: servicioObj } = await CitaService.getCitaInfoForEmail(data);
 
-        if (user && user.email) {
+        // Verificar que user es de tipo User y tiene email
+        if (user && 'email' in user && user.email) {
           console.log('Enviando email a:', user.email);
           await sendCitaEmail(user.email, {
             servicio: servicioObj?.nombre || data.servicio_id,

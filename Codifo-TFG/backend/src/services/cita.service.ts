@@ -75,7 +75,11 @@ export async function getCitaInfoForEmail(data: any) {
     ];
     
     const [user, barbero, servicio] = await Promise.all(promises);
-    return { user, barbero, servicio };
+    return { 
+      user: user as User | null, 
+      barbero: barbero as Barbero | null, 
+      servicio: servicio as Servicio | null 
+    };
   } catch (error) {
     console.error('Error al obtener información para email:', error);
     throw error;
