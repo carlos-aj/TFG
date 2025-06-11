@@ -60,9 +60,9 @@ export async function sendCitaEmail(to: string, citaInfo: CitaEmailInfo) {
       `;
     }
 
-    const importeHtml = citaInfo.importe_pagado
-      ? `<p><b>Importe pagado:</b> ${citaInfo.importe_pagado / 100} €</p>`
-      : '';
+    const estadoPagoHtml = citaInfo.importe_pagado && citaInfo.importe_pagado > 0
+      ? `<p><b>Estado del pago:</b> Pagado</p><p><b>Importe pagado:</b> ${citaInfo.importe_pagado / 100} €</p>`
+      : `<p><b>Estado del pago:</b> Pendiente de pago en el local</p>`;
 
     const info = await transporter.sendMail({
       from: '"Barbería" <no-reply@barberia.com>',
@@ -74,7 +74,7 @@ export async function sendCitaEmail(to: string, citaInfo: CitaEmailInfo) {
         <p><b>Barbero:</b> ${citaInfo.barbero}</p>
         <p><b>Fecha:</b> ${formatFecha(citaInfo.fecha)}</p>
         <p><b>Hora:</b> ${citaInfo.hora}</p>
-        ${importeHtml}
+        ${estadoPagoHtml}
         ${invitadoHtml}
       `,
     });
