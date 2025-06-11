@@ -24,7 +24,7 @@
 </template>
 
 <script setup>
-import { ref, reactive } from 'vue'
+import { ref, reactive, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { API_URL } from '../config'
 import { saveAuthData } from '../utils/auth'
@@ -76,31 +76,19 @@ async function login() {
     // Usar la utilidad para guardar los datos de autenticación
     saveAuthData(data);
     
-    // Esperar un momento antes de redirigir para asegurar que los datos se han guardado
-    setTimeout(() => {
-      try {
-        // Redirigir según el rol
-        if (data.rol === 'admin' || data.rol === 'empleado') {
-          router.push({ name: 'citas-empleados-admin' }).catch(err => {
-            console.error('Error al navegar a citas-empleados-admin:', err);
-            // Intentar navegar a la ruta por path como fallback
-            router.push('/citas-empleados-admin');
-          });
-        } else {
-          router.push({ name: 'citas' }).catch(err => {
-            console.error('Error al navegar a citas:', err);
-            // Intentar navegar a la ruta por path como fallback
-            router.push('/citas');
-          });
-        }
-      } catch (navError) {
-        console.error('Error en navegación después de login:', navError);
-        // Último recurso: recargar la página
-        window.location.href = data.rol === 'admin' || data.rol === 'empleado' 
-          ? '/citas-empleados-admin' 
-          : '/citas';
+    // Esperar al siguiente ciclo de actualización para que el estado de autenticación se propague
+    await nextTick();
+
+    try {
+      // Redirigir según el rol, reemplazando la entrada de historial
+      if (data.rol === 'admin' || data.rol === 'empleado') {
+        router.replace({ name: 'citas-empleados-admin' });
+      } else {
+        router.replace({ name: 'citas' });
       }
-    }, 100);
+    } catch (navError) {
+      console.error('Error en navegación después de login:', navError);
+    }
   } catch (err) {
     console.error('Error en login:', err);
     errors.general = 'Error de conexión con el servidor';

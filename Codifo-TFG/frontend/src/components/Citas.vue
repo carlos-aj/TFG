@@ -167,10 +167,12 @@ async function reservarCita() {
     return
   }
 
-  // Formatear la fecha correctamente (YYYY-MM-DD)
-  const fechaFormateada = fechaSeleccionada.value instanceof Date 
-    ? fechaSeleccionada.value.toISOString().split('T')[0] 
-    : new Date(fechaSeleccionada.value).toISOString().split('T')[0];
+  // Formatear la fecha correctamente (YYYY-MM-DD) para evitar errores de validación en el backend.
+  const fecha = new Date(fechaSeleccionada.value);
+  const year = fecha.getFullYear();
+  const month = String(fecha.getMonth() + 1).padStart(2, '0'); // Los meses son base 0
+  const day = String(fecha.getDate()).padStart(2, '0');
+  const fechaFormateada = `${year}-${month}-${day}`;
 
   // Prepara el objeto cita
   const cita = {
