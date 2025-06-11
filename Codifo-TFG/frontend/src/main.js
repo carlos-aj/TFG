@@ -5,7 +5,8 @@ import 'vuetify/styles'
 import { createVuetify } from 'vuetify'
 import * as components from 'vuetify/components'
 import * as directives from 'vuetify/directives'
-import { es } from 'vuetify/locale' // <-- Añade esta línea
+import { es } from 'vuetify/locale'
+import { checkAuthenticated, getUserRole } from './utils/auth'
 
 import Landing from './components/Landing.vue'
 import Login from './components/Login.vue'
@@ -21,7 +22,6 @@ import Servicios from './components/Servicios.vue'
 import CitasEmpleadosAdmin from './components/CitasEmpleadosAdmin.vue'
 import NotFound from './components/404.vue'
 
-
 // Define las rutas
 const routes = [
   { path: '/', component: Landing, meta: { requiresAuth: false } },
@@ -31,11 +31,11 @@ const routes = [
   { path: '/galeria', component: Galeria, meta: { requiresAuth: false } },
   { path: '/register', component: Register, meta: { requiresAuth: false } },
   { path: '/confirm', component: Confirm, meta: { requiresAuth: false } },
-  { path: '/empleados', component: Empleados, meta: { requiresAuth: true } },
-  { path: '/usuarios', component: Usuarios, meta: { requiresAuth: true } },
-  { path: '/mes-completo', component: MesCompleto, meta: { requiresAuth: true } },
-  { path: '/servicios', component: Servicios, meta: { requiresAuth: true } },
-  { path: '/citas-empleados-admin', component: CitasEmpleadosAdmin, meta: { requiresAuth: true } },
+  { path: '/empleados', component: Empleados, meta: { requiresAuth: true, requiredRole: 'admin' } },
+  { path: '/usuarios', component: Usuarios, meta: { requiresAuth: true, requiredRole: 'admin' } },
+  { path: '/mes-completo', component: MesCompleto, meta: { requiresAuth: true, requiredRole: ['admin', 'empleado'] } },
+  { path: '/servicios', component: Servicios, meta: { requiresAuth: true, requiredRole: 'admin' } },
+  { path: '/citas-empleados-admin', component: CitasEmpleadosAdmin, meta: { requiresAuth: true, requiredRole: ['admin', 'empleado'] } },
   { path: '/:pathMatch(.*)*', name: 'NotFound', component: NotFound }, 
 ]
 
@@ -47,33 +47,57 @@ const router = createRouter({
 
 router.beforeEach((to, from, next) => {
   // Verificar si el usuario está autenticado
-  const token = localStorage.getItem('token');
-  const isAuthenticated = token && token !== 'true' && token !== 'undefined' && token !== 'null';
+  const authenticated = checkAuthenticated();
+  const userRole = getUserRole();
   
-  console.log('Verificando autenticación:', { 
+  console.log('Navegación:', { 
     ruta: to.path, 
     requiereAuth: to.meta.requiresAuth, 
-    tieneToken: !!token,
-    tokenValido: isAuthenticated
+    autenticado: authenticated,
+    rol: userRole
   });
 
-  if (to.meta.requiresAuth && !isAuthenticated) {
+  // Si la ruta requiere autenticación y el usuario no está autenticado
+  if (to.meta.requiresAuth && !authenticated) {
     console.log('Redirigiendo a login: ruta protegida sin autenticación');
     next('/login');
-  } else if (to.path === '/login' && isAuthenticated) {
-    // Si el usuario ya está autenticado y trata de ir a login, redirigir según su rol
-    const role = localStorage.getItem('role');
-    if (role === 'admin' || role === 'empleado') {
+    return;
+  }
+  
+  // Si la ruta requiere un rol específico
+  if (to.meta.requiredRole && authenticated) {
+    const requiredRoles = Array.isArray(to.meta.requiredRole) 
+      ? to.meta.requiredRole 
+      : [to.meta.requiredRole];
+      
+    if (!requiredRoles.includes(userRole)) {
+      console.log('Acceso denegado: rol incorrecto');
+      // Redirigir según el rol actual
+      if (userRole === 'admin' || userRole === 'empleado') {
+        next('/citas-empleados-admin');
+      } else {
+        next('/citas');
+      }
+      return;
+    }
+  }
+  
+  // Si el usuario ya está autenticado y trata de ir a login
+  if (to.path === '/login' && authenticated) {
+    // Redirigir según el rol
+    if (userRole === 'admin' || userRole === 'empleado') {
       console.log('Usuario ya autenticado, redirigiendo a panel admin/empleado');
       next('/citas-empleados-admin');
     } else {
       console.log('Usuario ya autenticado, redirigiendo a citas');
       next('/citas');
     }
-  } else {
-    next();
+    return;
   }
-})
+  
+  // En cualquier otro caso, permitir la navegación
+  next();
+});
 
 const vuetify = createVuetify({
   components,

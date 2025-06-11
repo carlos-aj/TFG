@@ -4,13 +4,13 @@
     <form @submit.prevent="login">
       <div>
         <label for="correo">Correo:</label>
-        <input type="correo" id="correo" v-model="correo" />
+        <input type="email" id="correo" v-model="correo" />
         <p v-if="errors.correo" class="error">{{ errors.correo }}</p>
       </div>
 
       <div>
         <label for="contrasena">Contraseña:</label>
-        <input type="contrasena" id="contrasena" v-model="contrasena" />
+        <input type="password" id="contrasena" v-model="contrasena" />
         <p v-if="errors.contrasena" class="error">{{ errors.contrasena }}</p>
       </div>
       <div>
@@ -19,19 +19,20 @@
       </div>
       <button type="submit">Login</button>
     </form>
+    <p v-if="errors.general" class="error">{{ errors.general }}</p>
   </div>
-  <p v-if="errors.general" class="error">{{ errors.general }}</p>
 </template>
+
 <script setup>
 import { ref, reactive } from 'vue'
 import { useRouter } from 'vue-router'
 import { API_URL } from '../config'
+import { saveAuthData } from '../utils/auth'
 
 const correo = ref('')
 const contrasena = ref('')
 const errors = reactive({ correo: '', contrasena: '', general: '' })
 const router = useRouter()
-const error = ref('')
 
 const validate = () => {
   let valid = true
@@ -72,30 +73,8 @@ async function login() {
     const data = await response.json();
     console.log('Respuesta de login:', data);
 
-    // Verificar que data y token existen
-    if (!data || !data.token) {
-      errors.general = 'Respuesta inválida del servidor';
-      return;
-    }
-
-    // Almacenar datos en localStorage
-    localStorage.setItem('token', data.token);
-    localStorage.setItem('role', data.rol || 'cliente');
-    
-    if (data.id) {
-      localStorage.setItem('user_id', data.id);
-    }
-    
-    if (data.nombre) {
-      localStorage.setItem('nombre', data.nombre);
-    }
-    
-    if (data.apellidos) {
-      localStorage.setItem('apellidos', data.apellidos);
-    }
-    
-    // Notificar cambios en localStorage
-    window.dispatchEvent(new Event('storage'));
+    // Usar la utilidad para guardar los datos de autenticación
+    saveAuthData(data);
     
     // Redirigir según el rol
     if (data.rol === 'admin' || data.rol === 'empleado') {
@@ -111,4 +90,31 @@ async function login() {
 </script>
 
 <style scoped>
+.error {
+  color: red;
+  font-size: 0.8rem;
+  margin-top: 5px;
+}
+
+input {
+  width: 100%;
+  padding: 8px;
+  margin: 5px 0;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+button {
+  background-color: #4CAF50;
+  color: white;
+  padding: 10px 15px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-top: 10px;
+}
+
+button:hover {
+  background-color: #45a049;
+}
 </style>

@@ -2,6 +2,7 @@
 import { ref, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { API_URL } from '../config'
+import { checkAuthenticated, getUserRole, clearAuthData } from '../utils/auth'
 
 const isOverDarkSection = ref(false)
 const isAuthenticated = ref(false)
@@ -9,9 +10,8 @@ const userRole = ref(null)
 const router = useRouter()
 
 function checkAuth() {
-  const role = localStorage.getItem('role')
-  isAuthenticated.value = !!role
-  userRole.value = role
+  isAuthenticated.value = checkAuthenticated()
+  userRole.value = getUserRole()
 }
 
 function logout() {
@@ -19,12 +19,18 @@ function logout() {
     method: 'POST',
     credentials: 'include'
   }).then(() => {
-    localStorage.removeItem('role');
-    localStorage.removeItem('token'); 
-    isAuthenticated.value = false;
-    userRole.value = null;
-    router.push('/login');
-  });
+    clearAuthData()
+    isAuthenticated.value = false
+    userRole.value = null
+    router.push('/login')
+  }).catch(error => {
+    console.error('Error al cerrar sesión:', error)
+    // Limpiar datos de autenticación incluso si hay error
+    clearAuthData()
+    isAuthenticated.value = false
+    userRole.value = null
+    router.push('/login')
+  })
 }
 
 function onScroll() {
@@ -73,7 +79,7 @@ onUnmounted(() => {
         </template>
 
         <!-- Caso 2: Registrado user -->
-        <template v-else-if="userRole === 'user'">
+        <template v-else-if="userRole === 'user' || userRole === 'cliente'">
           <li class="nav-item">
             <router-link class="nav-link" to="/conocenos" active-class="active" exact-active-class="active">Conócenos</router-link>
           </li>
@@ -158,7 +164,6 @@ section.header-dark {
   color: #FFFFFF !important;
   font-size: 28px !important;
   transition: color 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
-
 }
 
 .nav-underline .nav-link::after {
