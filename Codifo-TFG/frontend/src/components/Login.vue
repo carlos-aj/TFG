@@ -53,6 +53,8 @@ const validate = () => {
 async function login() {
   if (!validate()) return
 
+  errors.general = '';
+
   try {
     const response = await fetch(`${API_URL}/api/user/login`, {
       method: 'POST',
@@ -60,25 +62,50 @@ async function login() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ correo: correo.value, contrasena: contrasena.value })
     });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      errors.general = errorData.message || 'Error al iniciar sesión';
+      return;
+    }
+
     const data = await response.json();
-    console.log(data);
-    if (response.ok) {
-      localStorage.setItem('role', data.rol || ''); 
-      localStorage.setItem('token', 'true');
-       if (data.id) {
-        localStorage.setItem('user_id', data.id); // <-- AÑADE ESTA LÍNEA
-      }
-      window.dispatchEvent(new Event('storage'));
-      if (data.rol === 'admin' || data.rol === 'empleado') {
-        router.push('/citas-empleados-admin');
-      } else {
-        router.push('/citas');
-      }
+    console.log('Respuesta de login:', data);
+
+    // Verificar que data y token existen
+    if (!data || !data.token) {
+      errors.general = 'Respuesta inválida del servidor';
+      return;
+    }
+
+    // Almacenar datos en localStorage
+    localStorage.setItem('token', data.token);
+    localStorage.setItem('role', data.rol || 'cliente');
+    
+    if (data.id) {
+      localStorage.setItem('user_id', data.id);
+    }
+    
+    if (data.nombre) {
+      localStorage.setItem('nombre', data.nombre);
+    }
+    
+    if (data.apellidos) {
+      localStorage.setItem('apellidos', data.apellidos);
+    }
+    
+    // Notificar cambios en localStorage
+    window.dispatchEvent(new Event('storage'));
+    
+    // Redirigir según el rol
+    if (data.rol === 'admin' || data.rol === 'empleado') {
+      router.push('/citas-empleados-admin');
     } else {
-      error.value = data.message || 'Error al iniciar sesión';
+      router.push('/citas');
     }
   } catch (err) {
-    error.value = 'Error de red';
+    console.error('Error en login:', err);
+    errors.general = 'Error de conexión con el servidor';
   }
 }
 </script>

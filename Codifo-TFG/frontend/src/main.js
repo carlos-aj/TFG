@@ -46,12 +46,32 @@ const router = createRouter({
 })
 
 router.beforeEach((to, from, next) => {
-  const isAuthenticated = !!localStorage.getItem('token') // O ajusta según tu lógica de auth
+  // Verificar si el usuario está autenticado
+  const token = localStorage.getItem('token');
+  const isAuthenticated = token && token !== 'true' && token !== 'undefined' && token !== 'null';
+  
+  console.log('Verificando autenticación:', { 
+    ruta: to.path, 
+    requiereAuth: to.meta.requiresAuth, 
+    tieneToken: !!token,
+    tokenValido: isAuthenticated
+  });
 
   if (to.meta.requiresAuth && !isAuthenticated) {
-    next('/login')
+    console.log('Redirigiendo a login: ruta protegida sin autenticación');
+    next('/login');
+  } else if (to.path === '/login' && isAuthenticated) {
+    // Si el usuario ya está autenticado y trata de ir a login, redirigir según su rol
+    const role = localStorage.getItem('role');
+    if (role === 'admin' || role === 'empleado') {
+      console.log('Usuario ya autenticado, redirigiendo a panel admin/empleado');
+      next('/citas-empleados-admin');
+    } else {
+      console.log('Usuario ya autenticado, redirigiendo a citas');
+      next('/citas');
+    }
   } else {
-    next()
+    next();
   }
 })
 

@@ -173,11 +173,15 @@ export async function login(req: Request, res: Response) {
       maxAge: 60 * 60 * 1000
     });
 
-    console.log('Login exitoso:', { id: user.id, rol });
+    console.log('Login exitoso:', { id: user.id, rol, token: token.substring(0, 20) + '...' });
     res.json({ 
+      success: true,
       token, 
       rol,
-      id: user.id 
+      id: user.id,
+      nombre: user.nombre,
+      apellidos: user.apellidos,
+      email: user.email
     });
   } catch (err) {
     console.error('Error en login:', err);
