@@ -92,7 +92,7 @@ export class Cita extends Model implements ICita {
         modelClass: Servicio,
         join: {
           from: 'cita.servicio_id',
-          to: 'servicio.id'
+          to: 'servicios.id'
         }
       }
     };

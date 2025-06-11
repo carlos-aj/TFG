@@ -19,7 +19,7 @@ export class Servicio extends Model implements IServicio {
   created_at!: string;
   updated_at!: string;
 
-  static tableName = 'servicio';
+  static tableName = 'servicios';
 
   // Usamos una función para definir las relaciones para evitar ciclos
   static get relationMappings() {
@@ -31,7 +31,7 @@ export class Servicio extends Model implements IServicio {
         relation: Model.HasManyRelation,
         modelClass: Cita,
         join: {
-          from: 'servicio.id',
+          from: 'servicios.id',
           to: 'cita.servicio_id'
         }
       }
