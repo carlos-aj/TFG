@@ -9,7 +9,7 @@ import path from 'path'; // Importar el módulo path
 
 // Importar rutas
 import { userRouter } from './routes/user.routes';
-import citaRouter from './routes/cita.routes';
+import { citaRouter } from './routes/cita.routes';
 import { servicioRouter } from './routes/servicio.routes';
 import { barberoRouter } from './routes/barbero.routes';
 import { publicRouter } from './routes/public.routes';
