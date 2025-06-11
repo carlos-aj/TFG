@@ -61,7 +61,7 @@ export async function sendCitaEmail(to: string, citaInfo: CitaEmailInfo) {
     }
 
     const estadoPagoHtml = citaInfo.importe_pagado && citaInfo.importe_pagado > 0
-      ? `<p><b>Estado del pago:</b> Pagado</p><p><b>Importe pagado:</b> ${citaInfo.importe_pagado / 100} €</p>`
+      ? `<p><b>Estado del pago:</b> Pagado</p><p><b>Importe pagado:</b> ${citaInfo.importe_pagado} €</p>`
       : `<p><b>Estado del pago:</b> Pendiente de pago en el local</p>`;
 
     const info = await transporter.sendMail({
