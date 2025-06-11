@@ -17,7 +17,8 @@
 <script setup>
 import { onMounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
-import api from '../utils/api'; // Ajusta la ruta si es necesario
+import { API_URL } from '../config'; // Importar la URL base correcta
+import { getAuthHeaders } from '../utils/auth'; // Importar los headers de autenticación
 
 const router = useRouter();
 const route = useRoute();
@@ -28,7 +29,14 @@ onMounted(async () => {
   if (citaId) {
     try {
       // Llama al backend para confirmar el pago y que se envíe el email
-      await api.post('/cita/confirmar-pago', { cita_id: Number(citaId) });
+      await fetch(`${API_URL}/api/cita/confirmar-pago`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...getAuthHeaders() // Añadir token de autenticación
+        },
+        body: JSON.stringify({ cita_id: Number(citaId) })
+      });
       console.log('Confirmación de la cita procesada correctamente.');
     } catch (error) {
       console.error('Error al procesar la confirmación de la cita:', error);
