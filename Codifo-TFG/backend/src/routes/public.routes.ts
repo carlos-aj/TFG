@@ -3,23 +3,18 @@ import Stripe from 'stripe';
 import { Request, Response } from 'express';
 import * as CitaService from '../services/cita.service';
 import { sendCitaEmail } from '../utils/emailSender';
-import { Servicio } from '../models/Servicio';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: '2025-05-28.basil' });
-export const webhookRouter = Router();
+export const publicRouter = Router();
 
-webhookRouter.post('/stripe', async (req: Request, res: Response) => {
+publicRouter.post('/stripe-webhook', async (req: Request, res: Response) => {
   const sig = req.headers['stripe-signature'];
   const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
   let event: Stripe.Event;
 
   try {
-    event = stripe.webhooks.constructEvent(
-      req.body,
-      sig as string,
-      endpointSecret as string
-    );
+    event = stripe.webhooks.constructEvent(req.body, sig as string, endpointSecret as string);
   } catch (err: any) {
     console.error('Error verificando webhook:', err.message);
     res.status(400).send(`Webhook Error: ${err.message}`);
@@ -38,11 +33,9 @@ webhookRouter.post('/stripe', async (req: Request, res: Response) => {
       }
       
       try {
-        // Marcar la cita como pagada
         await CitaService.updateCita(parseInt(citaId), { pagado: true });
         console.log(`Cita ${citaId} marcada como pagada.`);
 
-        // Obtener detalles completos de la cita para el email
         const cita = await CitaService.getCitaById(parseInt(citaId));
         if (!cita) {
           console.error(`Webhook Error: Cita with ID ${citaId} not found.`);
@@ -58,7 +51,7 @@ webhookRouter.post('/stripe', async (req: Request, res: Response) => {
             fecha: cita.fecha,
             hora: cita.hora,
             importe_pagado: session.amount_total || null,
-            invitado: null // La lógica de invitado no se maneja aquí por simplicidad
+            invitado: null
           });
           console.log(`Correo de confirmación enviado para la cita ${citaId}`);
         }

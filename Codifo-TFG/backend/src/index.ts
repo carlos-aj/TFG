@@ -11,11 +11,16 @@ import { userRouter } from './routes/user.routes';
 import citaRouter from './routes/cita.routes';
 import { servicioRouter } from './routes/servicio.routes';
 import { barberoRouter } from './routes/barbero.routes';
-import { webhookRouter } from './routes/webhook.routes';
+import { publicRouter } from './routes/public.routes';
 import { galeriaRouter } from './routes/galeria.routes';
 
 const app = express();
 const PORT = Number(process.env.PORT) || 3000;
+
+// Rutas públicas (Webhooks, etc.) ANTES de cualquier middleware de seguridad
+// Configurar el webhook de Stripe antes de express.json()
+app.use(express.raw({type: 'application/json'}));
+app.use('/', publicRouter);
 
 // Configurar CORS
 const allowedOrigins = [
@@ -33,11 +38,6 @@ app.use(cors({
   },
   credentials: true
 }));
-
-// Configurar el webhook de Stripe antes de express.json()
-app.use('/webhook', express.raw({type: 'application/json'}));
-// La ruta del webhook debe ser pública y no estar protegida por la autenticación
-app.use('/webhook', webhookRouter);
 
 app.use(cookieParser());
 app.use(express.json());
