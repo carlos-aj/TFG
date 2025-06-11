@@ -16,11 +16,27 @@
 
 <script setup>
 import { onMounted } from 'vue';
-import { useRouter } from 'vue-router';
+import { useRouter, useRoute } from 'vue-router';
+import api from '../utils/api'; // Ajusta la ruta si es necesario
 
 const router = useRouter();
+const route = useRoute();
 
-onMounted(() => {
+onMounted(async () => {
+  const citaId = route.query.cita_id;
+
+  if (citaId) {
+    try {
+      // Llama al backend para confirmar el pago y que se envíe el email
+      await api.post('/cita/confirmar-pago', { cita_id: Number(citaId) });
+      console.log('Confirmación de la cita procesada correctamente.');
+    } catch (error) {
+      console.error('Error al procesar la confirmación de la cita:', error);
+      // Opcional: Podrías mostrar un mensaje de error al usuario aquí
+    }
+  }
+
+  // Redirigir al inicio después de un tiempo
   setTimeout(() => {
     router.push('/');
   }, 4000); // Espera 4 segundos antes de redirigir

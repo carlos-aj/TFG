@@ -15,6 +15,9 @@ export interface ICita {
   created_at?: string;
   updated_at?: string;
   nombre_invitado?: string | null;
+  servicio_id_invitado?: number | null;
+  barbero_id_invitado?: number | null;
+  hora_invitado?: string | null;
 }
 
 export class Cita extends Model implements ICita {
@@ -26,9 +29,15 @@ export class Cita extends Model implements ICita {
   hora!: string;
   estado!: boolean;
   pagado!: boolean;
-  created_at?: string;
-  updated_at?: string;
   nombre_invitado?: string | null;
+  servicio_id_invitado?: number | null;
+  barbero_id_invitado?: number | null;
+  hora_invitado?: string | null;
+
+  // Propiedades de las relaciones (opcionales)
+  user?: User;
+  barbero?: Barbero;
+  servicio?: Servicio;
 
   static tableName = 'cita';
 
@@ -45,6 +54,9 @@ export class Cita extends Model implements ICita {
       estado: { type: 'boolean', default: false },
       pagado: { type: 'boolean', default: false },
       nombre_invitado: { type: ['string', 'null'] },
+      servicio_id_invitado: { type: ['integer', 'null'] },
+      barbero_id_invitado: { type: ['integer', 'null'] },
+      hora_invitado: { type: ['string', 'null'] },
       created_at: { type: 'string' },
       updated_at: { type: 'string' }
     }

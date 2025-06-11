@@ -240,6 +240,57 @@ export async function createCita(req: Request, res: Response, next: NextFunction
   }
 }
 
+export async function confirmarPagoCita(req: Request, res: Response): Promise<void> {
+  const { cita_id } = req.body;
+
+  if (!cita_id) {
+    res.status(400).json({ message: 'Falta el ID de la cita' });
+    return;
+  }
+
+  try {
+    // 1. Marcar la cita como pagada
+    await CitaService.updateCita(cita_id, { pagado: true });
+
+    // 2. Obtener la cita completa con sus relaciones
+    const cita = await CitaService.getCitaById(cita_id);
+    if (!cita) {
+      res.status(404).json({ message: 'Cita no encontrada después de actualizar' });
+      return;
+    }
+    
+    // 3. Enviar el email con los datos de la cita
+    if (cita.user && cita.user.email) {
+      let invitadoInfo = null;
+      if (cita.nombre_invitado && cita.servicio_id_invitado && cita.barbero_id_invitado && cita.hora_invitado) {
+          const servicioInvitado = await Servicio.query().findById(cita.servicio_id_invitado);
+          invitadoInfo = {
+              nombre: cita.nombre_invitado,
+              servicio: servicioInvitado?.nombre || 'N/A',
+              barbero: (await CitaService.getBarberoNombreById(cita.barbero_id_invitado)),
+              fecha: cita.fecha,
+              hora: cita.hora_invitado
+          };
+      }
+
+      await sendCitaEmail(cita.user.email, {
+        servicio: cita.servicio?.nombre || 'N/A',
+        barbero: cita.barbero?.nombre || 'N/A',
+        fecha: cita.fecha,
+        hora: cita.hora,
+        importe_pagado: cita.servicio?.precio ? Number(cita.servicio.precio) : null,
+        invitado: invitadoInfo
+      });
+    }
+
+    res.status(200).json({ message: 'Cita confirmada y email enviado' });
+
+  } catch (error) {
+    console.error('Error al confirmar el pago de la cita:', error);
+    res.status(500).json({ message: 'Error al confirmar el pago' });
+  }
+}
+
 export async function updateCita(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     const id = parseInt(req.params.id);
@@ -284,4 +335,5 @@ export async function checkPuedeInvitar(req: Request, res: Response, next: NextF
     res.status(500).json({ message: 'Error comprobando invitación' });
   }
 }
+
 
