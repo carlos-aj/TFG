@@ -14,16 +14,18 @@ import MesCompleto from '../components/MesCompleto.vue'
 import Servicios from '../components/Servicios.vue'
 import CitasEmpleadosAdmin from '../components/CitasEmpleadosAdmin.vue'
 import NotFound from '../components/404.vue'
+import CitaExito from '../components/CitaExito.vue'
 
 // Define las rutas
 const routes = [
   { path: '/', component: Landing, name: 'home', meta: { requiresAuth: false } },
   { path: '/login', component: Login, name: 'login', meta: { requiresAuth: false } },
-  { path: '/citas', component: Citas, name: 'citas', meta: { requiresAuth: true } },
+  { path: '/citas', component: Citas, name: 'citas', meta: { requiresAuth: true, roles: ['user', 'admin', 'empleado'] } },
   { path: '/conocenos', component: Conocenos, name: 'conocenos', meta: { requiresAuth: false } },
   { path: '/galeria', component: Galeria, name: 'galeria', meta: { requiresAuth: false } },
   { path: '/register', component: Register, name: 'register', meta: { requiresAuth: false } },
   { path: '/confirm', component: Confirm, name: 'confirm', meta: { requiresAuth: false } },
+  { path: '/cita-exito', component: CitaExito, name: 'cita-exito', meta: { requiresAuth: true, roles: ['user', 'admin', 'empleado'] } },
   { path: '/empleados', component: Empleados, name: 'empleados', meta: { requiresAuth: true, requiredRole: 'admin' } },
   { path: '/usuarios', component: Usuarios, name: 'usuarios', meta: { requiresAuth: true, requiredRole: 'admin' } },
   { path: '/mes-completo', component: MesCompleto, name: 'mes-completo', meta: { requiresAuth: true, requiredRole: ['admin', 'empleado'] } },

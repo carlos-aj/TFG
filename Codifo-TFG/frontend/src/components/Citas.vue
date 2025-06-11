@@ -21,6 +21,9 @@ const barberoInvitado = ref(null)
 const horasOcupadasInvitado = ref([]);
 const horasOcupadasPorBarbero = ref({});
 
+// Para el snackbar de confirmación
+const snackbar = ref(false);
+const snackbarText = ref('');
 
 // Para el diálogo del date picker
 const datePickerDialog = ref(false)
@@ -291,7 +294,11 @@ async function reservarCita() {
     }
 
     // Redirige a la página de inicio
-    router.push('/');
+    snackbarText.value = '¡Cita reservada! Revisa tu correo para la confirmación.';
+    snackbar.value = true;
+    setTimeout(() => {
+      router.push('/');
+    }, 3000); // Redirige después de 3 segundos
 
   } catch (error) {
     console.error('Error al reservar cita:', error);
@@ -413,4 +420,12 @@ function getHorasInvitado() {
       <button type="submit">Reservar</button>
     </form>
   </div>
+
+  <v-snackbar v-model="snackbar" :timeout="3000" color="success">
+    {{ snackbarText }}
+  </v-snackbar>
 </template>
+
+<style scoped>
+/* ... tus estilos ... */
+</style>
