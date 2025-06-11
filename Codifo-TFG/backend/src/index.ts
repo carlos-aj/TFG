@@ -36,20 +36,21 @@ app.use(cors({
 
 // Configurar el webhook de Stripe antes de express.json()
 app.use('/webhook', express.raw({type: 'application/json'}));
+// La ruta del webhook debe ser pública y no estar protegida por la autenticación
+app.use('/webhook', webhookRouter);
 
 app.use(cookieParser());
 app.use(express.json());
 
-// Aplicar middleware de seguridad para proteger todas las rutas de la API
+// Aplicar middleware de seguridad para proteger TODAS las rutas de la API definidas A CONTINUACIÓN
 app.use(protectApi);
 
-// Rutas
+// Rutas protegidas
 app.use('/api/user', userRouter);
 app.use('/api/cita', citaRouter);
 app.use('/api/servicio', servicioRouter);
 app.use('/api/barbero', barberoRouter);
 app.use('/api/galeria', galeriaRouter);
-app.use('/webhook', webhookRouter);
 
 // Función para sincronizar la secuencia de la tabla 'cita'
 async function syncCitaSequence() {
