@@ -17,24 +17,14 @@ import { galeriaRouter } from './routes/galeria.routes';
 const app = express();
 const PORT = Number(process.env.PORT) || 3000;
 
-// Middleware para procesar JSON en la mayoría de las rutas
-app.use(express.json());
-
-// Rutas públicas (Webhooks, etc.)
-// La ruta del webhook de Stripe necesita un parser de body diferente (raw)
-app.post('/stripe-webhook', express.raw({type: 'application/json'}), publicRouter);
-// Para otras rutas públicas, si las hubiera
-app.use('/', publicRouter);
-
 // Configurar CORS
 const allowedOrigins = [
   process.env.FRONTEND_URL || 'http://localhost:5173',
   'https://tfg-gamma.vercel.app'
 ];
-
 app.use(cors({
-  origin: function(origin, callback) {
-    if (!origin || allowedOrigins.indexOf(origin) !== -1) {
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
       callback(new Error('No permitido por CORS'));
@@ -43,12 +33,17 @@ app.use(cors({
   credentials: true
 }));
 
+// Middlewares generales
 app.use(cookieParser());
 
-// Aplicar middleware de seguridad para proteger TODAS las rutas de la API definidas A CONTINUACIÓN
-app.use(protectApi);
+// La ruta del webhook de Stripe necesita un parser de body diferente (raw) y no debe tener el parser de JSON global.
+app.use('/stripe-webhook', express.raw({ type: 'application/json' }), publicRouter);
 
-// Rutas protegidas
+// Para el resto de la API, usamos el parser de JSON.
+app.use(express.json());
+app.use(protectApi); // Middleware de seguridad
+
+// Rutas de la API
 app.use('/api/user', userRouter);
 app.use('/api/cita', citaRouter);
 app.use('/api/servicio', servicioRouter);
