@@ -4,6 +4,7 @@ import { loadStripe } from '@stripe/stripe-js'
 import { API_URL } from '../config'
 
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY);
+console.log('aaaaaaaaaaaaaa',stripePromise)
 const pagarAhora = ref(false) // NUEVO
 const servicios = ref([])
 const barberos = ref([])
