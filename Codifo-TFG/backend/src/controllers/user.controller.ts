@@ -28,7 +28,19 @@ export async function getUserById(req: Request, res: Response) {
 export async function getAllUsers(req: Request, res: Response) {
   try{
     const users = await UserService.getAllUsers();
-    res.json(users);
+    
+    // Si el usuario es empleado, filtrar la información sensible
+    if (req.user && req.user.rol === 'empleado') {
+      const filteredUsers = users.map(user => ({
+        id: user.id,
+        nombre: user.nombre,
+        apellidos: user.apellidos
+      }));
+      res.json(filteredUsers);
+    } else {
+      // Para admin, devolver todos los datos
+      res.json(users);
+    }
   }catch (err){
     console.error('Error getting users:', err);
     res.status(500).json({ message: 'Error getting users'});

@@ -10,6 +10,7 @@ const loading = ref(true)
 const error = ref('')
 const rol = localStorage.getItem('role')
 const barbero_id = localStorage.getItem('barbero_id')
+const user_id = localStorage.getItem('user_id')
 
 const hoy = new Date().toISOString().split('T')[0]
 
@@ -22,11 +23,25 @@ onMounted(async () => {
     if (!resCitas.ok) throw new Error('Error al cargar citas')
     citas.value = await resCitas.json()
 
-    // Cargar usuarios
-    const resUsuarios = await fetch(`${API_URL}/api/user`, {
-      credentials: 'include'
-    })
-    usuarios.value = await resUsuarios.json()
+    // Cargar usuarios solo si es admin
+    if (rol === 'admin') {
+      try {
+        const resUsuarios = await fetch(`${API_URL}/api/user`, {
+          credentials: 'include'
+        })
+        if (resUsuarios.ok) {
+          usuarios.value = await resUsuarios.json()
+        } else {
+          console.log('No se pudieron cargar los usuarios - acceso restringido')
+          usuarios.value = []
+        }
+      } catch (e) {
+        console.error('Error al cargar usuarios:', e)
+        usuarios.value = []
+      }
+    } else {
+      usuarios.value = []
+    }
 
     // Cargar barberos
     const resBarberos = await fetch(`${API_URL}/api/barbero`, {
@@ -48,19 +63,34 @@ onMounted(async () => {
 
 // Funciones para obtener nombres por id
 function getNombreUsuario(id) {
+  // Si no tenemos acceso a la lista de usuarios o está vacía
+  if (!usuarios.value || !Array.isArray(usuarios.value) || usuarios.value.length === 0) {
+    return `Cliente #${id}`
+  }
   const u = usuarios.value.find(u => u.id === id)
-  return u ? u.nombre : id
+  return u ? u.nombre : `Cliente #${id}`
 }
 function getNombreBarbero(id) {
+  if (!barberos.value || !Array.isArray(barberos.value) || barberos.value.length === 0) {
+    return `Barbero #${id}`
+  }
   const b = barberos.value.find(b => b.id === id)
-  return b ? b.nombre : id
+  return b ? b.nombre : `Barbero #${id}`
 }
 function getNombreServicio(id) {
+  if (!servicios.value || !Array.isArray(servicios.value) || servicios.value.length === 0) {
+    return `Servicio #${id}`
+  }
   const s = servicios.value.find(s => s.id === id)
-  return s ? s.nombre : id
+  return s ? s.nombre : `Servicio #${id}`
 }
 
 const citasFiltradas = computed(() => {
+  // Asegurarse de que citas.value es un array
+  if (!citas.value || !Array.isArray(citas.value)) {
+    return [];
+  }
+  
   let filtradas = citas.value.filter(c => c.fecha && c.fecha.slice(0, 10) === hoy)
   if (rol === 'empleado' && barbero_id) {
     filtradas = filtradas.filter(c => String(c.barbero_id) === String(barbero_id))
@@ -88,6 +118,12 @@ async function toggleEstado(cita) {
 }
 
 async function sancionarUsuario(userId) {
+  // Solo permitir a administradores sancionar
+  if (rol !== 'admin') {
+    alert('Solo los administradores pueden sancionar usuarios');
+    return;
+  }
+  
   if (!confirm('¿Seguro que quieres sancionar a este usuario?')) return;
   try {
     const res = await fetch(`${API_URL}/api/user/${userId}/sancionar`, {
@@ -125,7 +161,7 @@ async function sancionarUsuario(userId) {
             <th>Hora</th>
             <th>Estado</th>
             <th>Pagado</th>
-            <th>Sancionar</th> <!-- Nueva columna -->
+            <th v-if="rol === 'admin'">Sancionar</th>
           </tr>
         </thead>
         <tbody>
@@ -151,7 +187,7 @@ async function sancionarUsuario(userId) {
             <td>
               {{ cita.pagado ? 'Sí' : 'No' }}
             </td>
-            <td>
+            <td v-if="rol === 'admin'">
               <button
                 v-if="cita.user_id"
                 @click="sancionarUsuario(cita.user_id)"

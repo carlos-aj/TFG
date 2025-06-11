@@ -11,8 +11,8 @@ userRouter.get('/confirm', UserController.confirmUser);
 userRouter.post('/login', UserController.login);
 userRouter.post('/logout', UserController.logout);
 
-// Rutas protegidas para admin
-userRouter.get('/', isAuthenticated, hasRole(['admin']), UserController.getAllUsers);
+// Rutas protegidas para admin y empleados
+userRouter.get('/', isAuthenticated, hasRole(['admin', 'empleado']), UserController.getAllUsers);
 
 // Ruta para verificar token
 userRouter.get('/verify-token', isAuthenticated, (req, res) => {
