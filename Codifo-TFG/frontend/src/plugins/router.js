@@ -36,6 +36,10 @@ const routes = [
 const router = createRouter({
   history: createWebHistory(),
   routes,
+  scrollBehavior() {
+    // Siempre vuelve al inicio cuando se navega
+    return { top: 0 }
+  }
 })
 
 // Navegación global
@@ -55,7 +59,7 @@ router.beforeEach((to, from, next) => {
     // Si la ruta requiere autenticación y el usuario no está autenticado
     if (to.meta.requiresAuth && !authenticated) {
       console.log('Redirigiendo a login: ruta protegida sin autenticación');
-      next({ name: 'login', replace: true });
+      next({ name: 'login' });
       return;
     }
     
@@ -69,9 +73,9 @@ router.beforeEach((to, from, next) => {
         console.log('Acceso denegado: rol incorrecto');
         // Redirigir según el rol actual
         if (userRole === 'admin' || userRole === 'empleado') {
-          next({ name: 'citas-empleados-admin', replace: true });
+          next({ name: 'citas-empleados-admin' });
         } else {
-          next({ name: 'citas', replace: true });
+          next({ name: 'citas' });
         }
         return;
       }
@@ -82,10 +86,10 @@ router.beforeEach((to, from, next) => {
       // Redirigir según el rol
       if (userRole === 'admin' || userRole === 'empleado') {
         console.log('Usuario ya autenticado, redirigiendo a panel admin/empleado');
-        next({ name: 'citas-empleados-admin', replace: true });
+        next({ name: 'citas-empleados-admin' });
       } else {
         console.log('Usuario ya autenticado, redirigiendo a citas');
-        next({ name: 'citas', replace: true });
+        next({ name: 'citas' });
       }
       return;
     }

@@ -167,11 +167,16 @@ async function reservarCita() {
     return
   }
 
+  // Formatear la fecha correctamente (YYYY-MM-DD)
+  const fechaFormateada = fechaSeleccionada.value instanceof Date 
+    ? fechaSeleccionada.value.toISOString().split('T')[0] 
+    : new Date(fechaSeleccionada.value).toISOString().split('T')[0];
+
   // Prepara el objeto cita
   const cita = {
     servicio_id: servicioSeleccionado.value,
     barbero_id: barberoSeleccionado.value,
-    fecha: fechaSeleccionada.value,
+    fecha: fechaFormateada,
     hora: horaSeleccionada.value,
     estado: false,
     pagado: false,

@@ -78,11 +78,27 @@ async function login() {
     
     // Esperar un momento antes de redirigir para asegurar que los datos se han guardado
     setTimeout(() => {
-      // Redirigir según el rol
-      if (data.rol === 'admin' || data.rol === 'empleado') {
-        router.push({ path: '/citas-empleados-admin', replace: true });
-      } else {
-        router.push({ path: '/citas', replace: true });
+      try {
+        // Redirigir según el rol
+        if (data.rol === 'admin' || data.rol === 'empleado') {
+          router.push({ name: 'citas-empleados-admin' }).catch(err => {
+            console.error('Error al navegar a citas-empleados-admin:', err);
+            // Intentar navegar a la ruta por path como fallback
+            router.push('/citas-empleados-admin');
+          });
+        } else {
+          router.push({ name: 'citas' }).catch(err => {
+            console.error('Error al navegar a citas:', err);
+            // Intentar navegar a la ruta por path como fallback
+            router.push('/citas');
+          });
+        }
+      } catch (navError) {
+        console.error('Error en navegación después de login:', navError);
+        // Último recurso: recargar la página
+        window.location.href = data.rol === 'admin' || data.rol === 'empleado' 
+          ? '/citas-empleados-admin' 
+          : '/citas';
       }
     }, 100);
   } catch (err) {
