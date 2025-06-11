@@ -70,7 +70,7 @@ onMounted(async () => {
 })
 
 async function checkPuedeInvitar() {
-  if (!barberoSeleccionado.value || !fechaSeleccionada.value || !horaSeleccionada.value) {
+  if (!barberoSeleccionado.value || !fechaSeleccionada.value || !horaSeleccionada.value || pagarAhora.value) {
     puedeInvitar.value = false
     return
   }
@@ -97,6 +97,23 @@ async function checkPuedeInvitar() {
 watch(puedeInvitar, (esPosible) => {
   if (!esPosible) {
     mostrarFormularioInvitado.value = false;
+  }
+});
+
+// Añadir un watcher para pagarAhora
+watch(pagarAhora, (valor) => {
+  if (valor) {
+    // Si se activa pagarAhora, desactivar la opción de invitados
+    puedeInvitar.value = false;
+    mostrarFormularioInvitado.value = false;
+    // Limpiar datos del invitado
+    nombreInvitado.value = '';
+    servicioInvitado.value = null;
+    barberoInvitado.value = null;
+    horaInvitado.value = '';
+  } else {
+    // Si se desactiva pagarAhora, verificar si puede invitar
+    checkPuedeInvitar();
   }
 });
 
@@ -202,6 +219,7 @@ async function reservarCita() {
   }
 
   if (
+    !pagarAhora.value && // Verificar que no se haya seleccionado pago online
     puedeInvitar.value &&
     nombreInvitado.value &&
     servicioInvitado.value &&
@@ -411,15 +429,23 @@ function getHorasInvitado() {
         </option>
       </select>
       
+      <label>
+        <input type="checkbox" v-model="pagarAhora" />
+        Pagar ahora
+      </label>
+      <div v-if="pagarAhora" class="info-message">
+        <p>Al seleccionar pago online, no se permite traer invitados.</p>
+      </div>
+      
       <!-- Botón para mostrar el formulario de invitación -->
-      <div v-if="puedeInvitar && !mostrarFormularioInvitado" class="text-center my-4">
+      <div v-if="puedeInvitar && !mostrarFormularioInvitado && !pagarAhora" class="text-center my-4">
         <v-btn @click="mostrarFormularioInvitado = true" color="primary">
           ¿Quieres traer a un amigo?
         </v-btn>
       </div>
 
       <!-- Formulario de invitación (ahora colapsable) -->
-      <div v-if="puedeInvitar && mostrarFormularioInvitado" style="margin-top: 2em; border: 1px solid #ccc; padding: 1em; border-radius: 8px;">
+      <div v-if="puedeInvitar && mostrarFormularioInvitado && !pagarAhora" style="margin-top: 2em; border: 1px solid #ccc; padding: 1em; border-radius: 8px;">
         <div class="d-flex justify-space-between align-center">
           <h3>Información del invitado</h3>
           <v-btn icon="mdi-close" variant="text" @click="mostrarFormularioInvitado = false"></v-btn>
@@ -449,11 +475,6 @@ function getHorasInvitado() {
         </select>
       </div>
 
-      <label>
-        <input type="checkbox" v-model="pagarAhora" />
-        Pagar ahora
-      </label>
-
       <button type="submit">Reservar</button>
     </form>
   </div>
@@ -464,5 +485,13 @@ function getHorasInvitado() {
 </template>
 
 <style scoped>
+.info-message {
+  background-color: #f8f9fa;
+  border-left: 4px solid #17a2b8;
+  padding: 10px;
+  margin: 10px 0;
+  font-size: 0.9em;
+  color: #495057;
+}
 /* ... tus estilos ... */
 </style>
