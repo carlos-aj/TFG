@@ -218,7 +218,7 @@ async function reservarCita() {
   if (pagarAhora.value) {
     try {
       // Primero crear la cita
-      console.log('Creando cita...');
+      console.log('DEBUG: Datos de la cita a enviar (pago online):', JSON.stringify(cita, null, 2));
       const resCita = await fetch(`${API_URL}/api/cita`, {
         method: 'POST',
         credentials: 'include',
@@ -287,6 +287,7 @@ async function reservarCita() {
 
   // Si no paga ahora, reserva la cita normalmente
   try {
+    console.log('DEBUG: Datos de la cita a enviar (sin pago):', JSON.stringify(cita, null, 2));
     const res = await fetch(`${API_URL}/api/cita`, {
       method: 'POST',
       credentials: 'include',
