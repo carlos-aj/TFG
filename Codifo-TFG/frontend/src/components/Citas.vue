@@ -408,20 +408,20 @@ function getHorasInvitado() {
           <h3>Información del invitado</h3>
           <v-btn icon="mdi-close" variant="text" @click="mostrarFormularioInvitado = false"></v-btn>
         </div>
-        <input v-model="nombreInvitado" placeholder="Nombre del invitado" required />
-        <select v-model="servicioInvitado" required>
+        <input v-model="nombreInvitado" placeholder="Nombre del invitado" />
+        <select v-model="servicioInvitado">
           <option disabled value="">Selecciona un servicio</option>
           <option v-for="servicio in servicios" :key="servicio.id" :value="servicio.id">
             {{ servicio.nombre }}
           </option>
         </select>
-        <select v-model="barberoInvitado" required>
+        <select v-model="barberoInvitado">
           <option disabled value="">Selecciona un barbero</option>
           <option v-for="barbero in barberos" :key="barbero.id" :value="barbero.id">
             {{ barbero.nombre }}
           </option>
         </select>
-        <select v-model="horaInvitado" required>
+        <select v-model="horaInvitado">
           <option disabled value="">Selecciona una hora</option>
           <option
             v-for="hora in getHorasInvitado()"
