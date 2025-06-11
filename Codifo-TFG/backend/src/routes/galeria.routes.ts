@@ -21,4 +21,5 @@ galeriaRouter.post('/', GaleriaController.createGaleria);
 galeriaRouter.put('/:id', GaleriaController.updateGaleria);
 galeriaRouter.delete('/:id', GaleriaController.deleteGaleria);
 galeriaRouter.post('/upload', upload.array('imagenes'), UploadController.uploadImagen);
+galeriaRouter.get('/:filename', GaleriaController.getImagenByName);
 

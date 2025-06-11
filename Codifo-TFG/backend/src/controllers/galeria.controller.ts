@@ -1,8 +1,9 @@
 import { Request, Response } from 'express';
 import * as GaleriaService from '../services/galeria.service';
+import path from 'path';
 
 export async function getGalerias(req: Request, res: Response) {
-  const limit = req.query.limit ? Number(req.query.limit) : undefined;
+  const limit = req.query.limit ? parseInt(req.query.limit as string) : undefined;
   const galerias = await GaleriaService.getGalerias(limit);
   res.json(galerias);
 }
@@ -34,4 +35,16 @@ export async function deleteGaleria(req: Request, res: Response) {
     }else{
         res.json({ message: 'Eliminada correctamente' });
     }
+}
+
+export async function getImagenByName(req: Request, res: Response) {
+  const { filename } = req.params;
+  const imagePath = path.resolve(process.cwd(), 'ApiGaleria', filename);
+  
+  res.sendFile(imagePath, (err) => {
+    if (err) {
+      console.error('Error al enviar imagen:', err);
+      res.status(404).send('Imagen no encontrada');
+    }
+  });
 }

@@ -18,9 +18,6 @@ import { galeriaRouter } from './routes/galeria.routes';
 const app = express();
 const PORT = Number(process.env.PORT) || 3000;
 
-// Servir archivos estáticos desde la carpeta 'ApiGaleria'.
-app.use('/ApiGaleria', express.static(path.join(process.cwd(), 'ApiGaleria')));
-
 // Configurar CORS
 const allowedOrigins = [
   process.env.FRONTEND_URL || 'http://localhost:5173',
