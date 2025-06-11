@@ -17,9 +17,13 @@ import { galeriaRouter } from './routes/galeria.routes';
 const app = express();
 const PORT = Number(process.env.PORT) || 3000;
 
-// Rutas públicas (Webhooks, etc.) ANTES de cualquier middleware de seguridad
-// Configurar el webhook de Stripe antes de express.json()
-app.use(express.raw({type: 'application/json'}));
+// Middleware para procesar JSON en la mayoría de las rutas
+app.use(express.json());
+
+// Rutas públicas (Webhooks, etc.)
+// La ruta del webhook de Stripe necesita un parser de body diferente (raw)
+app.post('/stripe-webhook', express.raw({type: 'application/json'}), publicRouter);
+// Para otras rutas públicas, si las hubiera
 app.use('/', publicRouter);
 
 // Configurar CORS
@@ -40,7 +44,6 @@ app.use(cors({
 }));
 
 app.use(cookieParser());
-app.use(express.json());
 
 // Aplicar middleware de seguridad para proteger TODAS las rutas de la API definidas A CONTINUACIÓN
 app.use(protectApi);
