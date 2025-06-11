@@ -15,6 +15,7 @@ const horaSeleccionada = ref('')
 const horasOcupadas = ref([])
 const horaInvitado = ref('');
 const puedeInvitar = ref(false)
+const mostrarFormularioInvitado = ref(false)
 const nombreInvitado = ref('')
 const servicioInvitado = ref(null)
 const barberoInvitado = ref(null)
@@ -91,6 +92,13 @@ async function checkPuedeInvitar() {
 
   puedeInvitar.value = data.puedeInvitar
 }
+
+// Ocultar el formulario de invitado si las condiciones cambian
+watch(puedeInvitar, (esPosible) => {
+  if (!esPosible) {
+    mostrarFormularioInvitado.value = false;
+  }
+});
 
 watch([barberoSeleccionado, fechaSeleccionada, horaSeleccionada], () => {
   checkPuedeInvitar();
@@ -386,8 +394,20 @@ function getHorasInvitado() {
           {{ hora }}
         </option>
       </select>
-      <div v-if="puedeInvitar" style="margin-top: 2em; border: 1px solid #ccc; padding: 1em;">
-        <h3>¿Quieres traer a un amigo?</h3>
+      
+      <!-- Botón para mostrar el formulario de invitación -->
+      <div v-if="puedeInvitar && !mostrarFormularioInvitado" class="text-center my-4">
+        <v-btn @click="mostrarFormularioInvitado = true" color="primary">
+          ¿Quieres traer a un amigo?
+        </v-btn>
+      </div>
+
+      <!-- Formulario de invitación (ahora colapsable) -->
+      <div v-if="puedeInvitar && mostrarFormularioInvitado" style="margin-top: 2em; border: 1px solid #ccc; padding: 1em; border-radius: 8px;">
+        <div class="d-flex justify-space-between align-center">
+          <h3>Información del invitado</h3>
+          <v-btn icon="mdi-close" variant="text" @click="mostrarFormularioInvitado = false"></v-btn>
+        </div>
         <input v-model="nombreInvitado" placeholder="Nombre del invitado" required />
         <select v-model="servicioInvitado" required>
           <option disabled value="">Selecciona un servicio</option>
@@ -412,6 +432,7 @@ function getHorasInvitado() {
           </option>
         </select>
       </div>
+
       <label>
         <input type="checkbox" v-model="pagarAhora" />
         Pagar ahora
