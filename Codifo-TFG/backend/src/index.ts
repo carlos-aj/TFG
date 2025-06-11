@@ -35,15 +35,20 @@ app.use(cors({
 
 // Middlewares generales
 app.use(cookieParser());
-app.use(express.json()); // JSON parser para la API
 
-// --- RUTAS ---
-
-// 1. Webhook de Stripe: PÚBLICO, con su propio parser de body (raw) y montado en su propia ruta.
+// La ruta del webhook de Stripe necesita un parser de body diferente (raw) y no debe tener el parser de JSON global.
 app.use('/stripe-webhook', express.raw({ type: 'application/json' }), publicRouter);
 
-// 2. Rutas de la API: PROTEGIDAS por el middleware de seguridad.
-app.use('/api', protectApi, [userRouter, citaRouter, servicioRouter, barberoRouter, galeriaRouter]);
+// Para el resto de la API, usamos el parser de JSON.
+app.use(express.json());
+app.use(protectApi); // Middleware de seguridad
+
+// Rutas de la API
+app.use('/api/user', userRouter);
+app.use('/api/cita', citaRouter);
+app.use('/api/servicio', servicioRouter);
+app.use('/api/barbero', barberoRouter);
+app.use('/api/galeria', galeriaRouter);
 
 // Función para sincronizar la secuencia de la tabla 'cita'
 async function syncCitaSequence() {
