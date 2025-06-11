@@ -186,6 +186,10 @@ async function reservarCita() {
     user_id: parseInt(user_id)
   }
 
+  if (pagarAhora.value) {
+    cita.pago_online = true;
+  }
+
   if (
     puedeInvitar.value &&
     nombreInvitado.value &&

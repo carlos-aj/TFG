@@ -192,40 +192,41 @@ export async function createCita(req: Request, res: Response, next: NextFunction
         return citaPrincipal;
       });
 
-      // Enviar email después de que la transacción ha sido exitosa
-      try {
-        console.log('Obteniendo información para email...');
-        const { user, barbero, servicio: servicioObj } = await CitaService.getCitaInfoForEmail(data);
+      // Enviar email solo si no es un flujo de pago online
+      if (!data.pago_online) {
+        try {
+          console.log('Obteniendo información para email (cita no pagada online)...');
+          const { user, barbero, servicio: servicioObj } = await CitaService.getCitaInfoForEmail(data);
 
-        let invitadoInfo = null;
-        if (data.nombre_invitado && data.servicio_id_invitado && data.barbero_id_invitado) {
-          const servicioInvitado = await Servicio.query().findById(data.servicio_id_invitado);
-          invitadoInfo = {
-            nombre: data.nombre_invitado,
-            servicio: servicioInvitado?.nombre || 'N/A',
-            barbero: (await CitaService.getBarberoNombreById(data.barbero_id_invitado)),
-            fecha: data.fecha,
-            hora: data.hora_invitado
-          };
-        }
+          let invitadoInfo = null;
+          if (data.nombre_invitado && data.servicio_id_invitado && data.barbero_id_invitado) {
+            const servicioInvitado = await Servicio.query().findById(data.servicio_id_invitado);
+            invitadoInfo = {
+              nombre: data.nombre_invitado,
+              servicio: servicioInvitado?.nombre || 'N/A',
+              barbero: (await CitaService.getBarberoNombreById(data.barbero_id_invitado)),
+              fecha: data.fecha,
+              hora: data.hora_invitado
+            };
+          }
 
-        if (user && 'email' in user && user.email) {
-          console.log('Enviando email a:', user.email);
-          await sendCitaEmail(user.email, {
-            servicio: servicioObj?.nombre || 'N/A',
-            barbero: barbero?.nombre || 'N/A',
-            fecha: data.fecha,
-            hora: data.hora,
-            importe_pagado: data.importe_pagado || null,
-            invitado: invitadoInfo
-          });
-          console.log('Email enviado correctamente');
-        } else {
-          console.log('No se envió email: usuario sin email');
+          if (user && 'email' in user && user.email) {
+            console.log('Enviando email a:', user.email);
+            await sendCitaEmail(user.email, {
+              servicio: servicioObj?.nombre || 'N/A',
+              barbero: barbero?.nombre || 'N/A',
+              fecha: data.fecha,
+              hora: data.hora,
+              importe_pagado: null, // No hay pago inmediato
+              invitado: invitadoInfo
+            });
+            console.log('Email enviado correctamente');
+          } else {
+            console.log('No se envió email: usuario sin email');
+          }
+        } catch (emailErr) {
+          console.error('Error al enviar email:', emailErr);
         }
-      } catch (emailErr) {
-        console.error('Error al enviar email:', emailErr);
-        // No fallamos aquí, continuamos con la respuesta
       }
 
       res.status(201).json(newCita);

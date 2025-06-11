@@ -2,6 +2,8 @@ import { Router } from 'express';
 import Stripe from 'stripe';
 import { Request, Response } from 'express';
 import * as CitaService from '../services/cita.service';
+import { sendCitaEmail } from '../utils/emailSender';
+import { Servicio } from '../models/Servicio';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: '2025-05-28.basil' });
 export const webhookRouter = Router();
@@ -28,16 +30,40 @@ webhookRouter.post('/stripe', async (req: Request, res: Response) => {
   switch (event.type) {
     case 'checkout.session.completed':
       const session = event.data.object as Stripe.Checkout.Session;
+      const citaId = session.metadata?.citaId;
+
+      if (!citaId) {
+        console.error('Webhook Error: No citaId in session metadata');
+        break;
+      }
       
-      // Actualizar el estado de pago de la cita
       try {
-        if (session.metadata && session.metadata.citaId) {
-          await CitaService.updateCita(parseInt(session.metadata.citaId), { pagado: true });
-        } else {
-          console.error('No se encontró el ID de la cita en los metadatos');
+        // Marcar la cita como pagada
+        await CitaService.updateCita(parseInt(citaId), { pagado: true });
+        console.log(`Cita ${citaId} marcada como pagada.`);
+
+        // Obtener detalles completos de la cita para el email
+        const cita = await CitaService.getCitaById(parseInt(citaId));
+        if (!cita) {
+          console.error(`Webhook Error: Cita with ID ${citaId} not found.`);
+          break;
+        }
+
+        const { user, barbero, servicio } = await CitaService.getCitaInfoForEmail(cita);
+
+        if (user && user.email) {
+          await sendCitaEmail(user.email, {
+            servicio: servicio?.nombre || 'N/A',
+            barbero: barbero?.nombre || 'N/A',
+            fecha: cita.fecha,
+            hora: cita.hora,
+            importe_pagado: session.amount_total || null,
+            invitado: null // La lógica de invitado no se maneja aquí por simplicidad
+          });
+          console.log(`Correo de confirmación enviado para la cita ${citaId}`);
         }
       } catch (err: any) {
-        console.error('Error actualizando cita:', err.message);
+        console.error(`Error al procesar el webhook para la cita ${citaId}:`, err.message);
       }
       break;
     default:
