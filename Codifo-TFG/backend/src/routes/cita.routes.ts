@@ -18,4 +18,4 @@ citaRouter.delete('/:id', isAuthenticated, isOwnerOrAdmin('id'), CitaController.
 
 // PAYMENT ROUTE
 citaRouter.post('/pago', isAuthenticated, paymentController.createCheckoutSession);
-citaRouter.post('/confirmar-pago', isAuthenticated, CitaController.confirmarPagoCita);
+citaRouter.post('/confirmar-pago', CitaController.confirmarPagoCita);

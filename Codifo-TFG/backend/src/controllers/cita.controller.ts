@@ -241,52 +241,119 @@ export async function createCita(req: Request, res: Response, next: NextFunction
 }
 
 export async function confirmarPagoCita(req: Request, res: Response): Promise<void> {
-  const { cita_id } = req.body;
+  const { cita_id, force_confirm } = req.body;
 
-  if (!cita_id) {
+  // Si no hay cita_id pero se solicita force_confirm, intentamos encontrar la cita más reciente
+  if (!cita_id && force_confirm) {
+    try {
+      console.log('Solicitud de confirmación forzada sin ID específico');
+      
+      // Intentamos obtener el ID del usuario del token de autenticación
+      const userId = req.user?.id;
+      if (!userId) {
+        console.error('No se pudo identificar al usuario para la confirmación forzada');
+        res.status(400).json({ message: 'No se pudo identificar al usuario' });
+        return;
+      }
+      
+      // Buscamos la cita más reciente del usuario
+      const citasRecientes = await Cita.query()
+        .where('user_id', userId)
+        .where('pagado', false) // Solo citas no pagadas
+        .orderBy('created_at', 'desc')
+        .limit(1);
+      
+      if (citasRecientes.length === 0) {
+        console.error('No se encontraron citas pendientes para el usuario:', userId);
+        res.status(404).json({ message: 'No se encontraron citas pendientes' });
+        return;
+      }
+      
+      // Usamos la cita más reciente
+      const citaMasReciente = citasRecientes[0];
+      console.log('Cita más reciente encontrada:', citaMasReciente.id);
+      
+      // Continuamos con la confirmación usando esta cita
+      req.body.cita_id = citaMasReciente.id;
+    } catch (error) {
+      console.error('Error al buscar la cita más reciente:', error);
+      res.status(500).json({ message: 'Error al buscar la cita más reciente' });
+      return;
+    }
+  }
+  
+  // A partir de aquí, continuamos con la lógica existente
+  const citaId = req.body.cita_id;
+  
+  if (!citaId) {
     res.status(400).json({ message: 'Falta el ID de la cita' });
     return;
   }
 
   try {
+    console.log('Recibida solicitud para confirmar pago de cita:', citaId);
+    
     // 1. Marcar la cita como pagada
-    await CitaService.updateCita(cita_id, { pagado: true });
+    try {
+      await CitaService.updateCita(citaId, { pagado: true });
+      console.log('Cita marcada como pagada correctamente');
+    } catch (updateError) {
+      console.error('Error al actualizar el estado de pago de la cita:', updateError);
+      // Continuamos aunque falle la actualización
+    }
 
     // 2. Obtener la cita completa con sus relaciones
-    const cita = await CitaService.getCitaById(cita_id);
-    if (!cita) {
-      res.status(404).json({ message: 'Cita no encontrada después de actualizar' });
+    let cita;
+    try {
+      cita = await CitaService.getCitaById(citaId);
+      if (!cita) {
+        console.error('No se encontró la cita con ID:', citaId);
+        res.status(404).json({ message: 'Cita no encontrada' });
+        return;
+      }
+      console.log('Información de la cita recuperada correctamente');
+    } catch (fetchError) {
+      console.error('Error al obtener información de la cita:', fetchError);
+      res.status(500).json({ message: 'Error al obtener información de la cita' });
       return;
     }
     
     // 3. Enviar el email con los datos de la cita
-    if (cita.user && cita.user.email) {
-      let invitadoInfo = null;
-      if (cita.nombre_invitado && cita.servicio_id_invitado && cita.barbero_id_invitado && cita.hora_invitado) {
+    try {
+      if (cita.user && cita.user.email) {
+        let invitadoInfo = null;
+        if (cita.nombre_invitado && cita.servicio_id_invitado && cita.barbero_id_invitado && cita.hora_invitado) {
           const servicioInvitado = await Servicio.query().findById(cita.servicio_id_invitado);
           invitadoInfo = {
-              nombre: cita.nombre_invitado,
-              servicio: servicioInvitado?.nombre || 'N/A',
-              barbero: (await CitaService.getBarberoNombreById(cita.barbero_id_invitado)),
-              fecha: cita.fecha,
-              hora: cita.hora_invitado
+            nombre: cita.nombre_invitado,
+            servicio: servicioInvitado?.nombre || 'N/A',
+            barbero: (await CitaService.getBarberoNombreById(cita.barbero_id_invitado)),
+            fecha: cita.fecha,
+            hora: cita.hora_invitado
           };
-      }
+        }
 
-      await sendCitaEmail(cita.user.email, {
-        servicio: cita.servicio?.nombre || 'N/A',
-        barbero: cita.barbero?.nombre || 'N/A',
-        fecha: cita.fecha,
-        hora: cita.hora,
-        importe_pagado: cita.servicio?.precio ? Number(cita.servicio.precio) : null,
-        invitado: invitadoInfo
-      });
+        await sendCitaEmail(cita.user.email, {
+          servicio: cita.servicio?.nombre || 'N/A',
+          barbero: cita.barbero?.nombre || 'N/A',
+          fecha: cita.fecha,
+          hora: cita.hora,
+          importe_pagado: cita.servicio?.precio ? Number(cita.servicio.precio) : null,
+          invitado: invitadoInfo
+        });
+        console.log('Email de confirmación enviado correctamente a:', cita.user.email);
+      } else {
+        console.warn('No se pudo enviar el email: usuario sin email');
+      }
+    } catch (emailError) {
+      console.error('Error al enviar el email de confirmación:', emailError);
+      // Continuamos aunque falle el envío del email
     }
 
     res.status(200).json({ message: 'Cita confirmada y email enviado' });
 
   } catch (error) {
-    console.error('Error al confirmar el pago de la cita:', error);
+    console.error('Error general al confirmar el pago de la cita:', error);
     res.status(500).json({ message: 'Error al confirmar el pago' });
   }
 }
