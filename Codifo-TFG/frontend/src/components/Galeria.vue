@@ -26,7 +26,7 @@ const mezclado = ref(false);
 
 function getImgUrl(img) {
   if (img.startsWith('http')) return img
-  return `${API_URL}/uploads/${img}`
+  return `${API_URL}/ApiGaleria/${img}`
 }
 
 async function fetchGalerias() {
