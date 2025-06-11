@@ -54,6 +54,7 @@ export const protectApi = (req: Request, res: Response, next: NextFunction): voi
 
 // Rutas que deben ser públicas (login, registro, etc.)
 const publicRoutes = [
+  '/webhook/stripe',
   '/api/user/login',
   '/api/user/logout',
   '/api/user/confirm',
