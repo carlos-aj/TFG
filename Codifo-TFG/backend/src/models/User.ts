@@ -1,5 +1,6 @@
 import { Model } from 'objection';
-import { Cita } from './Cita';
+// Eliminamos la importación directa para evitar ciclos
+// import { Cita } from './Cita';
 
 export interface IUser {
   id: number;
@@ -32,14 +33,20 @@ export class User extends Model implements IUser {
 
   static tableName = 'users';
 
-  static relationMappings = {
-    citas: {
-      relation: Model.HasManyRelation,
-      modelClass: Cita,
-      join: {
-        from: 'user.id',
-        to: 'cita.user_id'
+  // Usamos una función para definir las relaciones para evitar ciclos
+  static get relationMappings() {
+    // Importamos el modelo dentro de la función para evitar ciclos
+    const { Cita } = require('./Cita');
+    
+    return {
+      citas: {
+        relation: Model.HasManyRelation,
+        modelClass: Cita,
+        join: {
+          from: 'users.id', // Corregimos el nombre de la tabla
+          to: 'cita.user_id'
+        }
       }
-    }
-  };
+    };
+  }
 }

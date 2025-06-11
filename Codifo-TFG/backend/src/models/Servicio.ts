@@ -1,5 +1,6 @@
 import { Model } from 'objection';
-import { Cita } from './Cita';
+// Eliminamos la importación directa para evitar ciclos
+// import { Cita } from './Cita';
 
 export interface IServicio {
   id: number;
@@ -18,16 +19,22 @@ export class Servicio extends Model implements IServicio {
   created_at!: string;
   updated_at!: string;
 
-  static tableName = 'servicios';
+  static tableName = 'servicio';
 
-  static relationMappings = {
-    citas: {
-      relation: Model.HasManyRelation,
-      modelClass: Cita,
-      join: {
-        from: 'servicio.id',
-        to: 'cita.servicio_id'
+  // Usamos una función para definir las relaciones para evitar ciclos
+  static get relationMappings() {
+    // Importamos el modelo dentro de la función para evitar ciclos
+    const { Cita } = require('./Cita');
+    
+    return {
+      citas: {
+        relation: Model.HasManyRelation,
+        modelClass: Cita,
+        join: {
+          from: 'servicio.id',
+          to: 'cita.servicio_id'
+        }
       }
-    }
-  };
+    };
+  }
 }

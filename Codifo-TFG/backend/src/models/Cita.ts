@@ -1,7 +1,8 @@
 import { Model } from 'objection';
-import { User } from './User';
-import { Barbero } from './Barbero';
-import { Servicio } from './Servicio';
+// Eliminamos las importaciones directas para evitar ciclos
+// import { User } from './User';
+// import { Barbero } from './Barbero';
+// import { Servicio } from './Servicio';
 
 export interface ICita {
   id: number;
@@ -35,9 +36,9 @@ export class Cita extends Model implements ICita {
   hora_invitado?: string | null;
 
   // Propiedades de las relaciones (opcionales)
-  user?: User;
-  barbero?: Barbero;
-  servicio?: Servicio;
+  user?: any; // Tipado dinámico para evitar ciclos
+  barbero?: any;
+  servicio?: any;
 
   static tableName = 'cita';
 
@@ -62,30 +63,38 @@ export class Cita extends Model implements ICita {
     }
   };
 
-  static relationMappings = {
-    user: {
-      relation: Model.BelongsToOneRelation,
-      modelClass: User,
-      join: {
-        from: 'cita.user_id',
-        to: 'users.id'
+  // Usamos una función para definir las relaciones para evitar ciclos
+  static get relationMappings() {
+    // Importamos los modelos dentro de la función para evitar ciclos
+    const { User } = require('./User');
+    const { Barbero } = require('./Barbero');
+    const { Servicio } = require('./Servicio');
+    
+    return {
+      user: {
+        relation: Model.BelongsToOneRelation,
+        modelClass: User,
+        join: {
+          from: 'cita.user_id',
+          to: 'users.id'
+        }
+      },
+      barbero: {
+        relation: Model.BelongsToOneRelation,
+        modelClass: Barbero,
+        join: {
+          from: 'cita.barbero_id',
+          to: 'barbero.id'
+        }
+      },
+      servicio: {
+        relation: Model.BelongsToOneRelation,
+        modelClass: Servicio,
+        join: {
+          from: 'cita.servicio_id',
+          to: 'servicio.id'
+        }
       }
-    },
-    barbero: {
-      relation: Model.BelongsToOneRelation,
-      modelClass: Barbero,
-      join: {
-        from: 'cita.barbero_id',
-        to: 'barbero.id'
-      }
-    },
-    servicio: {
-      relation: Model.BelongsToOneRelation,
-      modelClass: Servicio,
-      join: {
-        from: 'cita.servicio_id',
-        to: 'servicio.id'
-      }
-    }
-  };
+    };
+  }
 }
