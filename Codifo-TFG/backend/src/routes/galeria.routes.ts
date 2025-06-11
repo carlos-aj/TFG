@@ -24,9 +24,9 @@ galeriaRouter.post('/', GaleriaController.createGaleria);
 galeriaRouter.post('/upload', upload.array('imagenes'), UploadController.uploadImagen);
 
 // ID-specific routes with regex to match only numbers
-galeriaRouter.get('/:id(\\d+)', GaleriaController.getGaleriaById);
-galeriaRouter.put('/:id(\\d+)', GaleriaController.updateGaleria);
-galeriaRouter.delete('/:id(\\d+)', GaleriaController.deleteGaleria);
+galeriaRouter.get('/:id([0-9]+)', GaleriaController.getGaleriaById);
+galeriaRouter.put('/:id([0-9]+)', GaleriaController.updateGaleria);
+galeriaRouter.delete('/:id([0-9]+)', GaleriaController.deleteGaleria);
 
 // Filename route - will only be matched if the parameter is not a number
 galeriaRouter.get('/:filename', GaleriaController.getImagenByName);
