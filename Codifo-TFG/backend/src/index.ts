@@ -5,6 +5,7 @@ import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import { protectApi } from './middlewares/security.middleware';
 import knex from './db/knex'; // Asegúrate de que la exportación de knex lo permita
+import path from 'path'; // Importar el módulo path
 
 // Importar rutas
 import { userRouter } from './routes/user.routes';
@@ -16,6 +17,9 @@ import { galeriaRouter } from './routes/galeria.routes';
 
 const app = express();
 const PORT = Number(process.env.PORT) || 3000;
+
+// Servir archivos estáticos desde la carpeta 'uploads'
+app.use('/uploads', express.static(path.join(__dirname, '..', 'uploads')));
 
 // Configurar CORS
 const allowedOrigins = [
