@@ -2,9 +2,9 @@
 import { ref, onMounted, watch } from 'vue'
 import { loadStripe } from '@stripe/stripe-js'
 import { API_URL } from '../config'
+import { useRouter } from 'vue-router'
 
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY);
-console.log('aaaaaaaaaaaaaa',stripePromise)
 const pagarAhora = ref(false) // NUEVO
 const servicios = ref([])
 const barberos = ref([])
@@ -24,6 +24,8 @@ const horasOcupadasPorBarbero = ref({});
 
 // Para el diálogo del date picker
 const datePickerDialog = ref(false)
+
+const router = useRouter()
 
 function getHorasDisponibles() {
   if (!fechaSeleccionada.value) return [];
@@ -269,24 +271,27 @@ async function reservarCita() {
   }
 
   // Si no paga ahora, reserva la cita normalmente
-  const res = await fetch(`${API_URL}/api/cita`, {
-    method: 'POST',
-    credentials: 'include',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(cita)
-  })
+  try {
+    const res = await fetch(`${API_URL}/api/cita`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(cita)
+    });
 
-  if (res.ok) {
-    alert('¡Cita reservada con éxito!')
-    nombreInvitado.value = ''
-    servicioInvitado.value = null
-    barberoInvitado.value = null
-    pagarAhora.value = false
-  } else {
-    const errorData = await res.json();
-    alert(errorData.message || 'Error al reservar la cita.');
+    if (!res.ok) {
+      const errorData = await res.json();
+      throw new Error(errorData.message || 'Error al crear la cita');
+    }
+
+    // Redirige a la página de inicio
+    router.push('/');
+
+  } catch (error) {
+    console.error('Error al reservar cita:', error);
+    alert(error.message || 'Ocurrió un error al reservar la cita');
   }
 }
 

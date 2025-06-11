@@ -33,8 +33,8 @@ export async function createCheckoutSession(req: Request, res: Response, next: N
         quantity: 1,
       }],
       mode: 'payment',
-      success_url: `${process.env.FRONTEND_URL}/cita-exito`,
-      cancel_url: `${process.env.FRONTEND_URL}/cita-cancelada`,
+      success_url: `${process.env.FRONTEND_URL}/`,
+      cancel_url: `${process.env.FRONTEND_URL}/`,
       metadata: {
         citaId: citaId.toString()
       }
