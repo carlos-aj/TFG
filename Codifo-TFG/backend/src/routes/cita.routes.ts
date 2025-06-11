@@ -7,7 +7,7 @@ export const citaRouter = Router();
 
 // PUBLIC ROUTES
 // Specific routes must come before generic ones
-citaRouter.get('/check/puede-invitar', CitaController.checkPuedeInvitar);
+citaRouter.get('/puede-invitar/check', CitaController.checkPuedeInvitar);
 citaRouter.get('/', CitaController.getAllCitas);
 citaRouter.get('/:id', CitaController.getCitaById);
 
