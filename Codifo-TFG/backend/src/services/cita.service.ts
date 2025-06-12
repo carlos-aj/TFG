@@ -123,14 +123,42 @@ export async function getBarberoNombreById(id: number) {
 
 export async function getCitasByBarberoYFecha(barbero_id: number, fecha: string) {
   try {
-    console.log(`Buscando citas para barbero ${barbero_id} en fecha ${fecha}`);
+    console.log(`[DEBUG FECHAS] Buscando citas para barbero ${barbero_id} en fecha ${fecha}`);
+    
+    // Obtener todas las citas del barbero primero
+    const todasCitas = await Cita.query()
+      .where('barbero_id', barbero_id);
+    
+    console.log(`[DEBUG FECHAS] Total citas para barbero ${barbero_id}: ${todasCitas.length}`);
+    
+    // Mostrar las fechas de las citas para depuración
+    todasCitas.forEach(cita => {
+      console.log(`[DEBUG FECHAS] Cita ID ${cita.id}, fecha en BD: ${cita.fecha}, fecha formateada: ${new Date(cita.fecha).toISOString().split('T')[0]}`);
+    });
+    
+    // Filtrar manualmente para ver qué está pasando
+    const citasFiltradas = todasCitas.filter(cita => {
+      const fechaCita = new Date(cita.fecha);
+      const fechaStr = `${fechaCita.getFullYear()}-${String(fechaCita.getMonth() + 1).padStart(2, '0')}-${String(fechaCita.getDate()).padStart(2, '0')}`;
+      const coincide = fechaStr === fecha;
+      console.log(`[DEBUG FECHAS] Cita ID ${cita.id}, fecha formateada manual: ${fechaStr}, coincide con ${fecha}: ${coincide}`);
+      return coincide;
+    });
+    
+    console.log(`[DEBUG FECHAS] Citas filtradas manualmente: ${citasFiltradas.length}`);
     
     // Usar una comparación de fecha sin considerar la hora para evitar problemas de zona horaria
     const citas = await Cita.query()
       .where('barbero_id', barbero_id)
       .whereRaw('TO_CHAR(fecha::date, \'YYYY-MM-DD\') = ?', [fecha]);
     
-    console.log(`Encontradas ${citas.length} citas`);
+    console.log(`[DEBUG FECHAS] Citas encontradas con whereRaw: ${citas.length}`);
+    
+    // Comparar los resultados
+    if (citasFiltradas.length !== citas.length) {
+      console.log(`[DEBUG FECHAS] ¡ALERTA! Los resultados son diferentes: filtrado manual ${citasFiltradas.length} vs query ${citas.length}`);
+    }
+    
     return citas;
   } catch (error) {
     console.error(`Error al obtener citas por barbero ${barbero_id} y fecha ${fecha}:`, error);

@@ -18,7 +18,21 @@ const showBarberoSelector = ref(false)
 
 // Corregir el cálculo de la fecha actual para evitar problemas de zona horaria
 const fechaActual = new Date()
-const hoy = `${fechaActual.getFullYear()}-${String(fechaActual.getMonth() + 1).padStart(2, '0')}-${String(fechaActual.getDate()).padStart(2, '0')}`
+console.log('[DEBUG FECHAS] Fecha actual como objeto Date:', fechaActual);
+console.log('[DEBUG FECHAS] Fecha actual como ISO string:', fechaActual.toISOString());
+console.log('[DEBUG FECHAS] Fecha actual local:', `${fechaActual.getFullYear()}-${String(fechaActual.getMonth() + 1).padStart(2, '0')}-${String(fechaActual.getDate()).padStart(2, '0')}`);
+console.log('[DEBUG FECHAS] Fecha actual con toLocaleDateString:', fechaActual.toLocaleDateString());
+
+// Probar diferentes formas de obtener la fecha actual
+const fechaISO = fechaActual.toISOString().split('T')[0];
+console.log('[DEBUG FECHAS] Fecha actual como ISO string partido:', fechaISO);
+
+// SOLUCIÓN: Ajustar la fecha para compensar el desplazamiento de zona horaria
+// Crear una nueva fecha con el día actual y ajustarla para compensar el desplazamiento
+const fechaAjustada = new Date(fechaActual);
+fechaAjustada.setDate(fechaAjustada.getDate() - 1); // Restar un día para compensar
+const hoy = `${fechaAjustada.getFullYear()}-${String(fechaAjustada.getMonth() + 1).padStart(2, '0')}-${String(fechaAjustada.getDate()).padStart(2, '0')}`;
+console.log('[DEBUG FECHAS] Fecha HOY AJUSTADA que se usará para filtrar:', hoy);
 
 onMounted(async () => {
   try {
@@ -104,11 +118,25 @@ async function cargarCitas() {
       citasUrl += `?barbero_id=${empleadoBarberoId.value}`;
     }
     
+    console.log(`[DEBUG FECHAS] Cargando citas con URL: ${citasUrl}`);
     const resCitas = await fetch(citasUrl, {
       credentials: 'include'
     })
     if (!resCitas.ok) throw new Error('Error al cargar citas')
     citas.value = await resCitas.json()
+    
+    // Analizar las fechas de las citas recibidas
+    console.log(`[DEBUG FECHAS] Total citas recibidas: ${citas.value.length}`);
+    citas.value.forEach(cita => {
+      const fechaCita = new Date(cita.fecha);
+      console.log(`[DEBUG FECHAS] Cita ID ${cita.id}:`);
+      console.log(`  - Fecha en BD: ${cita.fecha}`);
+      console.log(`  - Fecha como objeto Date: ${fechaCita}`);
+      console.log(`  - Fecha ISO: ${fechaCita.toISOString()}`);
+      console.log(`  - Fecha ISO partido: ${fechaCita.toISOString().split('T')[0]}`);
+      console.log(`  - Fecha local: ${fechaCita.getFullYear()}-${String(fechaCita.getMonth() + 1).padStart(2, '0')}-${String(fechaCita.getDate()).padStart(2, '0')}`);
+      console.log(`  - Coincide con HOY (${hoy}): ${fechaCita.toISOString().split('T')[0] === hoy}`);
+    });
   } catch (e) {
     console.error('Error al cargar citas:', e);
     error.value = e.message;
@@ -176,23 +204,37 @@ const citasFiltradas = computed(() => {
     return [];
   }
   
-  console.log(`Filtrando citas para la fecha: ${hoy}`);
+  console.log(`[DEBUG FECHAS] Filtrando citas para la fecha: ${hoy}`);
+  console.log(`[DEBUG FECHAS] Total citas antes de filtrar: ${citas.value.length}`);
   
   // Filtrar por fecha (hoy)
   let filtradas = citas.value.filter(c => {
     if (!c.fecha) return false;
-    const fechaCita = c.fecha.slice(0, 10);
-    const coincide = fechaCita === hoy;
-    console.log(`Cita ID ${c.id}, fecha ${fechaCita}, coincide con hoy (${hoy}): ${coincide}`);
-    return coincide;
+    
+    // Ajustar la fecha para compensar el desplazamiento de zona horaria
+    const fechaCita = new Date(c.fecha);
+    const fechaAjustada = new Date(fechaCita);
+    fechaAjustada.setDate(fechaAjustada.getDate() + 1); // Sumar un día para compensar
+    
+    // Formatear la fecha ajustada
+    const fechaAjustadaStr = `${fechaAjustada.getFullYear()}-${String(fechaAjustada.getMonth() + 1).padStart(2, '0')}-${String(fechaAjustada.getDate()).padStart(2, '0')}`;
+    
+    console.log(`[DEBUG FECHAS] Cita ID ${c.id}:`);
+    console.log(`  - Fecha original: ${c.fecha.slice(0, 10)}`);
+    console.log(`  - Fecha ajustada: ${fechaAjustadaStr}`);
+    console.log(`  - Coincide con HOY (${hoy}): ${fechaAjustadaStr === hoy}`);
+    
+    // Usar la fecha ajustada para filtrar
+    return fechaAjustadaStr === hoy;
   });
   
-  console.log(`Encontradas ${filtradas.length} citas para hoy`);
+  console.log(`[DEBUG FECHAS] Encontradas ${filtradas.length} citas para hoy`);
   
   // Si es empleado y tenemos el barbero correspondiente, filtrar por ese barbero
   if (rol === 'empleado' && empleadoBarberoId.value) {
-    console.log(`Filtrando citas para barbero_id: ${empleadoBarberoId.value}`);
+    console.log(`[DEBUG FECHAS] Filtrando citas para barbero_id: ${empleadoBarberoId.value}`);
     filtradas = filtradas.filter(c => c.barbero_id === empleadoBarberoId.value);
+    console.log(`[DEBUG FECHAS] Citas finales después de filtrar por barbero: ${filtradas.length}`);
   }
   
   return filtradas;

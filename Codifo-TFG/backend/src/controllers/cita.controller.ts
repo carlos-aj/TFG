@@ -9,15 +9,34 @@ import { Cita } from '../models/Cita';
 export async function getAllCitas(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     const { barbero_id, fecha } = req.query;
+    console.log(`[DEBUG FECHAS] getAllCitas - Parámetros recibidos: barbero_id=${barbero_id}, fecha=${fecha}`);
+    
     let citas;
     if (barbero_id && fecha) {
+      console.log(`[DEBUG FECHAS] getAllCitas - Buscando citas por barbero y fecha`);
       citas = await CitaService.getCitasByBarberoYFecha(Number(barbero_id), String(fecha));
     } else if (barbero_id) {
       // Añadimos filtro por barbero_id incluso cuando no hay fecha
+      console.log(`[DEBUG FECHAS] getAllCitas - Buscando citas solo por barbero`);
       citas = await CitaService.getCitasByBarbero(Number(barbero_id));
     } else {
+      console.log(`[DEBUG FECHAS] getAllCitas - Buscando todas las citas`);
       citas = await CitaService.getAllCitas();
     }
+    
+    // Añadir información de depuración
+    if (citas && Array.isArray(citas)) {
+      console.log(`[DEBUG FECHAS] getAllCitas - Total citas encontradas: ${citas.length}`);
+      if (citas.length > 0) {
+        const primeraFecha = citas[0].fecha;
+        console.log(`[DEBUG FECHAS] getAllCitas - Primera cita fecha: ${primeraFecha}`);
+        const fechaObj = new Date(primeraFecha);
+        console.log(`[DEBUG FECHAS] getAllCitas - Primera cita fecha como objeto: ${fechaObj}`);
+        console.log(`[DEBUG FECHAS] getAllCitas - Primera cita fecha ISO: ${fechaObj.toISOString()}`);
+        console.log(`[DEBUG FECHAS] getAllCitas - Primera cita fecha local: ${fechaObj.getFullYear()}-${String(fechaObj.getMonth() + 1).padStart(2, '0')}-${String(fechaObj.getDate()).padStart(2, '0')}`);
+      }
+    }
+    
     res.json(citas);
   } catch (err) {
     console.error('Error fetching appointments:', err);
@@ -45,11 +64,20 @@ export async function getCitaById(req: Request, res: Response, next: NextFunctio
 export async function createCita(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     const data = req.body;
-    console.log('Datos recibidos para crear cita:', JSON.stringify(data, null, 2));
+    console.log('[DEBUG FECHAS] createCita - Datos recibidos para crear cita:', JSON.stringify(data, null, 2));
+    console.log(`[DEBUG FECHAS] createCita - Fecha recibida: ${data.fecha}`);
+    
+    if (data.fecha) {
+      // Analizar la fecha recibida
+      const fechaObj = new Date(data.fecha);
+      console.log(`[DEBUG FECHAS] createCita - Fecha como objeto Date: ${fechaObj}`);
+      console.log(`[DEBUG FECHAS] createCita - Fecha ISO: ${fechaObj.toISOString()}`);
+      console.log(`[DEBUG FECHAS] createCita - Fecha local: ${fechaObj.getFullYear()}-${String(fechaObj.getMonth() + 1).padStart(2, '0')}-${String(fechaObj.getDate()).padStart(2, '0')}`);
+    }
 
     // Validar datos requeridos
     if (!data.servicio_id || !data.barbero_id || !data.fecha || !data.hora) {
-      console.error('Faltan datos requeridos para la cita:', { 
+      console.error('[DEBUG FECHAS] createCita - Faltan datos requeridos para la cita:', { 
         servicio_id: data.servicio_id, 
         barbero_id: data.barbero_id, 
         fecha: data.fecha, 

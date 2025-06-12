@@ -146,10 +146,22 @@ const citasFiltradas = computed(() => {
   let filtradas = citas.value.filter(c => {
     // Solo citas del mes y año actual
     if (!c.fecha) return false
-    const [cYear, cMonth] = c.fecha.split('-')
-    if (parseInt(cYear) !== year.value || parseInt(cMonth) !== month.value + 1) return false
-    // Si es barbero o empleado, solo sus citas (ya vienen filtradas del backend)
-    return true
+    
+    // Ajustar la fecha para compensar el desplazamiento de zona horaria
+    const fechaCita = new Date(c.fecha);
+    const fechaAjustada = new Date(fechaCita);
+    fechaAjustada.setDate(fechaAjustada.getDate() + 1); // Sumar un día para compensar
+    
+    // Comparar con el mes y año seleccionados
+    const mesAjustado = fechaAjustada.getMonth() + 1; // getMonth() es 0-indexed
+    const anioAjustado = fechaAjustada.getFullYear();
+    
+    console.log(`[DEBUG FECHAS] Cita ID ${c.id}, fecha original: ${c.fecha}, mes: ${parseInt(c.fecha.split('-')[1])}, año: ${parseInt(c.fecha.split('-')[0])}`);
+    console.log(`[DEBUG FECHAS] Cita ID ${c.id}, fecha ajustada: ${fechaAjustada.toISOString()}, mes ajustado: ${mesAjustado}, año ajustado: ${anioAjustado}`);
+    console.log(`[DEBUG FECHAS] Comparando con mes: ${month.value + 1}, año: ${year.value}`);
+    
+    // Usar la fecha ajustada para filtrar
+    return anioAjustado === year.value && mesAjustado === month.value + 1;
   })
   return filtradas
 })
@@ -179,9 +191,24 @@ const citasDelDia = computed(() => {
   if (!selectedDay.value) return []
   
   // Crear la fecha correctamente sin usar toISOString para evitar problemas de zona horaria
-  const fechaStr = `${year.value}-${monthString.value}-${String(selectedDay.value).padStart(2, '0')}`
+  const fechaStr = `${year.value}-${monthString.value}-${String(selectedDay.value).padStart(2, '0')}`;
+  console.log(`[DEBUG FECHAS] Fecha seleccionada original: ${fechaStr}`);
   
-  return citasFiltradas.value.filter(c => c.fecha && c.fecha.slice(0, 10) === fechaStr)
+  // SOLUCIÓN: Ajustar la fecha para compensar el desplazamiento de zona horaria
+  // Crear una fecha ajustada para compensar el desplazamiento
+  const fechaObj = new Date(year.value, month.value, selectedDay.value);
+  const fechaAjustada = new Date(fechaObj);
+  fechaAjustada.setDate(fechaAjustada.getDate() - 1); // Restar un día para compensar
+  const fechaAjustadaStr = `${fechaAjustada.getFullYear()}-${String(fechaAjustada.getMonth() + 1).padStart(2, '0')}-${String(fechaAjustada.getDate()).padStart(2, '0')}`;
+  console.log(`[DEBUG FECHAS] Fecha ajustada: ${fechaAjustadaStr}`);
+  
+  // Usar la fecha ajustada para filtrar
+  return citasFiltradas.value.filter(c => {
+    if (!c.fecha) return false;
+    const fechaCita = c.fecha.slice(0, 10);
+    console.log(`[DEBUG FECHAS] Comparando cita fecha ${fechaCita} con fecha ajustada ${fechaAjustadaStr}`);
+    return fechaCita === fechaAjustadaStr;
+  });
 })
 
 function prevMonth() {
