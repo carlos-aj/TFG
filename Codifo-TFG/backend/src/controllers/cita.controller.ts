@@ -15,13 +15,22 @@ export async function getAllCitas(req: Request, res: Response, next: NextFunctio
     if (barbero_id && fecha_inicio && fecha_fin) {
       console.log(`[DEBUG FECHAS] getAllCitas - Buscando citas por barbero y rango de fechas`);
       citas = await CitaService.getCitasByBarberoYFecha(Number(barbero_id), String(fecha_inicio), String(fecha_fin));
-    } else if (barbero_id && fecha) {
+    } else if (barbero_id && fecha_inicio) {
       console.log(`[DEBUG FECHAS] getAllCitas - Buscando citas por barbero y fecha específica`);
+      citas = await CitaService.getCitasByBarberoYFecha(Number(barbero_id), String(fecha_inicio));
+    } else if (barbero_id && fecha) {
+      // Mantener compatibilidad con el parámetro fecha
+      console.log(`[DEBUG FECHAS] getAllCitas - Buscando citas por barbero y fecha específica (parámetro legacy)`);
       citas = await CitaService.getCitasByBarberoYFecha(Number(barbero_id), String(fecha));
     } else if (barbero_id) {
       // Añadimos filtro por barbero_id incluso cuando no hay fecha
       console.log(`[DEBUG FECHAS] getAllCitas - Buscando citas solo por barbero`);
       citas = await CitaService.getCitasByBarbero(Number(barbero_id));
+    } else if (fecha_inicio && fecha_fin) {
+      // Buscar por rango de fechas sin filtrar por barbero
+      console.log(`[DEBUG FECHAS] getAllCitas - Buscando citas por rango de fechas sin filtrar por barbero`);
+      // Implementar esta función si es necesario
+      citas = await CitaService.getAllCitas(); // Por ahora devolvemos todas
     } else {
       console.log(`[DEBUG FECHAS] getAllCitas - Buscando todas las citas`);
       citas = await CitaService.getAllCitas();
@@ -33,7 +42,17 @@ export async function getAllCitas(req: Request, res: Response, next: NextFunctio
       if (citas.length > 0) {
         const primeraFecha = citas[0].fecha;
         console.log(`[DEBUG FECHAS] getAllCitas - Primera cita fecha: ${primeraFecha}`);
-        console.log(`[DEBUG FECHAS] getAllCitas - Primera cita fecha formateada: ${primeraFecha ? primeraFecha.slice(0, 10) : 'N/A'}`);
+        
+        // Verificar el tipo de dato antes de usar slice
+        try {
+          if (primeraFecha && typeof primeraFecha === 'string') {
+            console.log(`[DEBUG FECHAS] getAllCitas - Primera cita fecha formateada: ${primeraFecha.slice(0, 10)}`);
+          } else {
+            console.log(`[DEBUG FECHAS] getAllCitas - Primera cita fecha formateada: N/A (tipo: ${typeof primeraFecha})`);
+          }
+        } catch (e) {
+          console.log(`[DEBUG FECHAS] getAllCitas - Error al formatear fecha: ${e}`);
+        }
       }
     }
     

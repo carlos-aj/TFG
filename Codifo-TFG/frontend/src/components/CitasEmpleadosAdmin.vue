@@ -142,6 +142,7 @@ async function cargarCitas() {
     });
     
     if (!res.ok) {
+      console.error(`[DEBUG FECHAS] Error al cargar citas: ${res.status} ${res.statusText}`);
       throw new Error('Error al cargar citas');
     }
     

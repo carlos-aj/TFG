@@ -148,8 +148,16 @@ export async function getCitasByBarberoYFecha(barbero_id: number, fecha_inicio: 
 
 export async function getCitasByBarbero(barbero_id: number) {
   try {
-    return await Cita.query()
-      .where('barbero_id', barbero_id);
+    console.log(`[DEBUG FECHAS] Buscando todas las citas para barbero ${barbero_id}`);
+    
+    // Usar la misma estructura que getCitasByBarberoYFecha pero sin filtro de fecha
+    const citas = await Cita.query()
+      .where('barbero_id', barbero_id)
+      .orderBy('fecha', 'asc');
+    
+    console.log(`[DEBUG FECHAS] Encontradas ${citas.length} citas para barbero ${barbero_id}`);
+    
+    return citas;
   } catch (error) {
     console.error(`Error al obtener citas por barbero ${barbero_id}:`, error);
     throw error;
