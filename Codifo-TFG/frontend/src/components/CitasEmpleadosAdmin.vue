@@ -27,33 +27,26 @@ console.log('[DEBUG FECHAS] Fecha actual con toLocaleDateString:', fechaActual.t
 const fechaISO = fechaActual.toISOString().split('T')[0];
 console.log('[DEBUG FECHAS] Fecha actual como ISO string partido:', fechaISO);
 
-// SOLUCIÓN: Ajustar la fecha para compensar el desplazamiento de zona horaria
-// Crear una nueva fecha con el día actual y ajustarla para compensar el desplazamiento
-const fechaAjustada = new Date(fechaActual);
-fechaAjustada.setDate(fechaAjustada.getDate() - 1); // Restar un día para compensar
-const hoy = `${fechaAjustada.getFullYear()}-${String(fechaAjustada.getMonth() + 1).padStart(2, '0')}-${String(fechaAjustada.getDate()).padStart(2, '0')}`;
-console.log('[DEBUG FECHAS] Fecha HOY AJUSTADA que se usará para filtrar:', hoy);
+// CORRECCIÓN: Usar la fecha actual sin ajustes
+// Si hoy es 12 de junio de 2025, usamos esa fecha directamente
+const hoy = `${fechaActual.getFullYear()}-${String(fechaActual.getMonth() + 1).padStart(2, '0')}-${String(fechaActual.getDate()).padStart(2, '0')}`;
+console.log('[DEBUG FECHAS] Fecha HOY corregida:', hoy);
 
 onMounted(async () => {
   try {
     // Cargar barberos primero para poder asociar el empleado con su barbero
     const resBarberos = await fetch(`${API_URL}/api/barbero`, {
       credentials: 'include'
-    })
-    barberos.value = await resBarberos.json()
+    });
+    barberos.value = await resBarberos.json();
     
-    // Si el usuario es empleado, buscar el barbero correspondiente por nombre o usar el barbero_id guardado
-    if (rol === 'empleado') {
-      if (barbero_id && barbero_id !== '0' && barbero_id !== 'null') {
-        // Usar el barbero_id guardado en localStorage
-        empleadoBarberoId.value = Number(barbero_id);
-        console.log(`Empleado usando barbero_id guardado: ${empleadoBarberoId.value}`);
-        
+    // Si el usuario es empleado/barbero, verificar si tiene un barbero asignado
+    if (rol === 'empleado' || rol === 'barbero') {
+      if (empleadoBarberoId.value) {
         // Verificar que el barbero existe
-        const barberoExiste = barberos.value.find(b => b.id === Number(barbero_id));
+        const barberoExiste = barberos.value.find(b => b.id === Number(empleadoBarberoId.value));
         if (!barberoExiste) {
-          console.log(`El barbero_id ${barbero_id} no existe en la lista de barberos`);
-          empleadoBarberoId.value = null;
+          console.log(`El barbero_id ${empleadoBarberoId.value} no existe en la lista de barberos`);
           showBarberoSelector.value = true;
         }
       } else if (nombre) {
@@ -65,7 +58,6 @@ onMounted(async () => {
         if (barberoCorrespondiente) {
           console.log(`Empleado ${nombre} asociado automáticamente con barbero ${barberoCorrespondiente.nombre} (ID: ${barberoCorrespondiente.id})`);
           empleadoBarberoId.value = barberoCorrespondiente.id;
-          // Guardar en localStorage para futuras sesiones
           localStorage.setItem('barbero_id', barberoCorrespondiente.id.toString());
         } else {
           console.log(`No se encontró un barbero correspondiente para el empleado ${nombre}`);
@@ -75,9 +67,17 @@ onMounted(async () => {
         showBarberoSelector.value = true;
       }
     }
-
-    // Cargar citas - si es empleado/barbero, filtrar por su barbero_id
+    
+    // Cargar citas
     await cargarCitas();
+    
+    // Logs adicionales para depurar
+    console.log('[DEBUG FECHAS] Fecha actual completa:', new Date());
+    console.log('[DEBUG FECHAS] Fecha actual ISO:', new Date().toISOString());
+    console.log('[DEBUG FECHAS] Fecha actual local:', new Date().toLocaleDateString());
+    console.log('[DEBUG FECHAS] Fecha HOY que se usa para filtrar:', hoy);
+    console.log('[DEBUG FECHAS] Citas cargadas:', citas.value.length);
+    console.log('[DEBUG FECHAS] Citas filtradas para hoy:', citasFiltradas.value.length);
     
     // Cargar usuarios solo si es admin
     if (rol === 'admin') {
@@ -113,33 +113,52 @@ onMounted(async () => {
 
 async function cargarCitas() {
   try {
+    loading.value = true;
+    
+    // Construir la URL base
     let citasUrl = `${API_URL}/api/cita`;
+    const params = new URLSearchParams();
+    
+    // Añadir el barbero_id si es empleado
     if (rol === 'empleado' && empleadoBarberoId.value) {
-      citasUrl += `?barbero_id=${empleadoBarberoId.value}`;
+      params.append('barbero_id', empleadoBarberoId.value.toString());
+      console.log(`[DEBUG FECHAS] Filtrando citas para barbero_id: ${empleadoBarberoId.value}`);
     }
     
-    console.log(`[DEBUG FECHAS] Cargando citas con URL: ${citasUrl}`);
-    const resCitas = await fetch(citasUrl, {
-      credentials: 'include'
-    })
-    if (!resCitas.ok) throw new Error('Error al cargar citas')
-    citas.value = await resCitas.json()
+    // Añadir la fecha actual como fecha_inicio y fecha_fin
+    params.append('fecha_inicio', hoy);
+    params.append('fecha_fin', hoy);
+    console.log(`[DEBUG FECHAS] Filtrando citas para fecha: ${hoy}`);
     
-    // Analizar las fechas de las citas recibidas
-    console.log(`[DEBUG FECHAS] Total citas recibidas: ${citas.value.length}`);
-    citas.value.forEach(cita => {
-      const fechaCita = new Date(cita.fecha);
-      console.log(`[DEBUG FECHAS] Cita ID ${cita.id}:`);
-      console.log(`  - Fecha en BD: ${cita.fecha}`);
-      console.log(`  - Fecha como objeto Date: ${fechaCita}`);
-      console.log(`  - Fecha ISO: ${fechaCita.toISOString()}`);
-      console.log(`  - Fecha ISO partido: ${fechaCita.toISOString().split('T')[0]}`);
-      console.log(`  - Fecha local: ${fechaCita.getFullYear()}-${String(fechaCita.getMonth() + 1).padStart(2, '0')}-${String(fechaCita.getDate()).padStart(2, '0')}`);
-      console.log(`  - Coincide con HOY (${hoy}): ${fechaCita.toISOString().split('T')[0] === hoy}`);
+    // Añadir los parámetros a la URL
+    if (params.toString()) {
+      citasUrl += `?${params.toString()}`;
+    }
+    
+    console.log(`[DEBUG FECHAS] URL completa: ${citasUrl}`);
+    
+    const res = await fetch(citasUrl, {
+      credentials: 'include'
+    });
+    
+    if (!res.ok) {
+      throw new Error('Error al cargar citas');
+    }
+    
+    citas.value = await res.json();
+    console.log(`[DEBUG FECHAS] Citas cargadas: ${citas.value.length}`);
+    
+    // Mostrar las fechas de las citas para depuración
+    citas.value.forEach(c => {
+      if (c.fecha) {
+        console.log(`[DEBUG FECHAS] Cita ID ${c.id}, fecha: ${c.fecha.slice(0, 10)}, barbero_id: ${c.barbero_id}`);
+      }
     });
   } catch (e) {
     console.error('Error al cargar citas:', e);
     error.value = e.message;
+  } finally {
+    loading.value = false;
   }
 }
 
@@ -211,21 +230,15 @@ const citasFiltradas = computed(() => {
   let filtradas = citas.value.filter(c => {
     if (!c.fecha) return false;
     
-    // Ajustar la fecha para compensar el desplazamiento de zona horaria
-    const fechaCita = new Date(c.fecha);
-    const fechaAjustada = new Date(fechaCita);
-    fechaAjustada.setDate(fechaAjustada.getDate() + 1); // Sumar un día para compensar
-    
-    // Formatear la fecha ajustada
-    const fechaAjustadaStr = `${fechaAjustada.getFullYear()}-${String(fechaAjustada.getMonth() + 1).padStart(2, '0')}-${String(fechaAjustada.getDate()).padStart(2, '0')}`;
+    // Obtener la fecha de la cita sin ajustes
+    const fechaOriginal = c.fecha.slice(0, 10);
     
     console.log(`[DEBUG FECHAS] Cita ID ${c.id}:`);
-    console.log(`  - Fecha original: ${c.fecha.slice(0, 10)}`);
-    console.log(`  - Fecha ajustada: ${fechaAjustadaStr}`);
-    console.log(`  - Coincide con HOY (${hoy}): ${fechaAjustadaStr === hoy}`);
+    console.log(`  - Fecha original: ${fechaOriginal}`);
+    console.log(`  - Coincide con HOY (${hoy}): ${fechaOriginal === hoy}`);
     
-    // Usar la fecha ajustada para filtrar
-    return fechaAjustadaStr === hoy;
+    // Comparar directamente la fecha original
+    return fechaOriginal === hoy;
   });
   
   console.log(`[DEBUG FECHAS] Encontradas ${filtradas.length} citas para hoy`);

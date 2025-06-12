@@ -71,7 +71,7 @@ onMounted(async () => {
     }
     
     // Cargar citas
-    await cargarCitas();
+    await loadCitas();
   } catch (e) {
     error.value = e.message
   } finally {
@@ -79,36 +79,47 @@ onMounted(async () => {
   }
 })
 
-async function cargarCitas() {
+const loadCitas = async () => {
   try {
-    // Si es empleado/barbero, filtrar por su barbero_id
-    let citasUrl = `${API_URL}/api/cita`;
-    const barberoIdActual = localStorage.getItem('barbero_id');
-    if ((rol === 'empleado' || rol === 'barbero') && barberoIdActual && barberoIdActual !== '0' && barberoIdActual !== 'null') {
-      citasUrl += `?barbero_id=${barberoIdActual}`;
-      console.log(`Filtrando citas para barbero_id: ${barberoIdActual}`);
+    loading.value = true;
+    
+    // Crear la fecha del primer día del mes
+    const primerDia = `${year.value}-${monthString.value}-01`;
+    console.log(`[DEBUG FECHAS] Primer día del mes: ${primerDia}`);
+    
+    // Calcular el último día del mes
+    const ultimoDia = new Date(year.value, month.value + 1, 0);
+    const ultimoDiaStr = `${year.value}-${monthString.value}-${String(ultimoDia.getDate()).padStart(2, '0')}`;
+    console.log(`[DEBUG FECHAS] Último día del mes: ${ultimoDiaStr}`);
+    
+    // Obtener las citas directamente sin ajustes de fechas
+    let data;
+    if (rol === 'empleado' && barbero_id) {
+      const response = await fetch(`${API_URL}/api/cita?barbero_id=${barbero_id}&fecha_inicio=${primerDia}&fecha_fin=${ultimoDiaStr}`, {
+        credentials: 'include'
+      });
+      console.log(`[DEBUG FECHAS] Obteniendo citas para barbero ${barbero_id} del ${primerDia} al ${ultimoDiaStr}`);
+      if (!response.ok) throw new Error('Error al cargar citas');
+      data = await response.json();
+    } else {
+      const response = await fetch(`${API_URL}/api/cita?fecha_inicio=${primerDia}&fecha_fin=${ultimoDiaStr}`, {
+        credentials: 'include'
+      });
+      console.log(`[DEBUG FECHAS] Obteniendo todas las citas del ${primerDia} al ${ultimoDiaStr}`);
+      if (!response.ok) throw new Error('Error al cargar citas');
+      data = await response.json();
     }
     
-    const res = await fetch(citasUrl, {
-      credentials: 'include'
-    })
-    if (!res.ok) throw new Error('Error al cargar citas')
-    const data = await res.json()
-    citas.value = data
+    citas.value = data;
+    console.log(`[DEBUG FECHAS] Citas obtenidas: ${citas.value.length}`);
     
-    // Añadir logs para depurar el problema de fechas
-    if (data.length > 0) {
-      console.log('Primera cita cargada:', data[0]);
-      console.log('Fecha de la primera cita:', data[0].fecha);
-      const fechaObj = new Date(data[0].fecha);
-      console.log('Fecha convertida a objeto Date:', fechaObj);
-      console.log('Fecha local:', `${fechaObj.getFullYear()}-${String(fechaObj.getMonth() + 1).padStart(2, '0')}-${String(fechaObj.getDate()).padStart(2, '0')}`);
-    }
-    
-    console.log(`Cargadas ${data.length} citas`);
-  } catch (e) {
-    console.error('Error al cargar citas:', e);
-    error.value = e.message;
+    // Procesar las citas para el calendario
+    processCitasForCalendar();
+  } catch (error) {
+    console.error('Error al cargar citas:', error);
+    toast.error('Error al cargar las citas');
+  } finally {
+    loading.value = false;
   }
 }
 
@@ -139,7 +150,7 @@ async function seleccionarBarbero() {
   }
   
   showBarberoSelector.value = false;
-  await cargarCitas();
+  await loadCitas();
 }
 
 const citasFiltradas = computed(() => {
@@ -147,21 +158,16 @@ const citasFiltradas = computed(() => {
     // Solo citas del mes y año actual
     if (!c.fecha) return false
     
-    // Ajustar la fecha para compensar el desplazamiento de zona horaria
-    const fechaCita = new Date(c.fecha);
-    const fechaAjustada = new Date(fechaCita);
-    fechaAjustada.setDate(fechaAjustada.getDate() + 1); // Sumar un día para compensar
+    // Obtener el mes y año directamente de la fecha original
+    const fechaOriginal = c.fecha.slice(0, 10);
+    const anio = parseInt(fechaOriginal.split('-')[0]);
+    const mes = parseInt(fechaOriginal.split('-')[1]);
     
-    // Comparar con el mes y año seleccionados
-    const mesAjustado = fechaAjustada.getMonth() + 1; // getMonth() es 0-indexed
-    const anioAjustado = fechaAjustada.getFullYear();
-    
-    console.log(`[DEBUG FECHAS] Cita ID ${c.id}, fecha original: ${c.fecha}, mes: ${parseInt(c.fecha.split('-')[1])}, año: ${parseInt(c.fecha.split('-')[0])}`);
-    console.log(`[DEBUG FECHAS] Cita ID ${c.id}, fecha ajustada: ${fechaAjustada.toISOString()}, mes ajustado: ${mesAjustado}, año ajustado: ${anioAjustado}`);
+    console.log(`[DEBUG FECHAS] Cita ID ${c.id}, fecha original: ${fechaOriginal}, mes: ${mes}, año: ${anio}`);
     console.log(`[DEBUG FECHAS] Comparando con mes: ${month.value + 1}, año: ${year.value}`);
     
-    // Usar la fecha ajustada para filtrar
-    return anioAjustado === year.value && mesAjustado === month.value + 1;
+    // Usar la fecha original para filtrar
+    return anio === year.value && mes === month.value + 1;
   })
   return filtradas
 })
@@ -192,22 +198,14 @@ const citasDelDia = computed(() => {
   
   // Crear la fecha correctamente sin usar toISOString para evitar problemas de zona horaria
   const fechaStr = `${year.value}-${monthString.value}-${String(selectedDay.value).padStart(2, '0')}`;
-  console.log(`[DEBUG FECHAS] Fecha seleccionada original: ${fechaStr}`);
+  console.log(`[DEBUG FECHAS] Fecha seleccionada: ${fechaStr}`);
   
-  // SOLUCIÓN: Ajustar la fecha para compensar el desplazamiento de zona horaria
-  // Crear una fecha ajustada para compensar el desplazamiento
-  const fechaObj = new Date(year.value, month.value, selectedDay.value);
-  const fechaAjustada = new Date(fechaObj);
-  fechaAjustada.setDate(fechaAjustada.getDate() - 1); // Restar un día para compensar
-  const fechaAjustadaStr = `${fechaAjustada.getFullYear()}-${String(fechaAjustada.getMonth() + 1).padStart(2, '0')}-${String(fechaAjustada.getDate()).padStart(2, '0')}`;
-  console.log(`[DEBUG FECHAS] Fecha ajustada: ${fechaAjustadaStr}`);
-  
-  // Usar la fecha ajustada para filtrar
+  // Usar la fecha sin ajustes para filtrar
   return citasFiltradas.value.filter(c => {
     if (!c.fecha) return false;
     const fechaCita = c.fecha.slice(0, 10);
-    console.log(`[DEBUG FECHAS] Comparando cita fecha ${fechaCita} con fecha ajustada ${fechaAjustadaStr}`);
-    return fechaCita === fechaAjustadaStr;
+    console.log(`[DEBUG FECHAS] Comparando cita fecha ${fechaCita} con fecha seleccionada ${fechaStr}`);
+    return fechaCita === fechaStr;
   });
 })
 
@@ -261,6 +259,26 @@ onMounted(async () => {
     } catch {}
   }
 });
+
+const processCitasForCalendar = () => {
+  // Esta función se llama después de cargar las citas para hacer cualquier procesamiento adicional
+  console.log('[DEBUG FECHAS] Procesando citas para el calendario');
+  
+  // Aquí podemos hacer cualquier procesamiento adicional de las citas para el calendario
+  // Por ejemplo, agrupar por día, etc.
+  
+  // Por ahora, solo registramos algunas estadísticas
+  if (citas.value.length > 0) {
+    const diasConCitas = new Set(citas.value.map(c => c.fecha ? c.fecha.slice(0, 10) : null).filter(Boolean));
+    console.log(`[DEBUG FECHAS] Citas distribuidas en ${diasConCitas.size} días diferentes`);
+    
+    // Mostrar la primera cita como ejemplo
+    const primeraCita = citas.value[0];
+    if (primeraCita && primeraCita.fecha) {
+      console.log(`[DEBUG FECHAS] Primera cita: ID ${primeraCita.id}, fecha ${primeraCita.fecha.slice(0, 10)}, hora ${primeraCita.hora}`);
+    }
+  }
+}
 </script>
 
 <template>

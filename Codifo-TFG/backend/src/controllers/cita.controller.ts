@@ -8,12 +8,15 @@ import { Cita } from '../models/Cita';
 
 export async function getAllCitas(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
-    const { barbero_id, fecha } = req.query;
-    console.log(`[DEBUG FECHAS] getAllCitas - Parámetros recibidos: barbero_id=${barbero_id}, fecha=${fecha}`);
+    const { barbero_id, fecha, fecha_inicio, fecha_fin } = req.query;
+    console.log(`[DEBUG FECHAS] getAllCitas - Parámetros recibidos: barbero_id=${barbero_id}, fecha=${fecha}, fecha_inicio=${fecha_inicio}, fecha_fin=${fecha_fin}`);
     
     let citas;
-    if (barbero_id && fecha) {
-      console.log(`[DEBUG FECHAS] getAllCitas - Buscando citas por barbero y fecha`);
+    if (barbero_id && fecha_inicio && fecha_fin) {
+      console.log(`[DEBUG FECHAS] getAllCitas - Buscando citas por barbero y rango de fechas`);
+      citas = await CitaService.getCitasByBarberoYFecha(Number(barbero_id), String(fecha_inicio), String(fecha_fin));
+    } else if (barbero_id && fecha) {
+      console.log(`[DEBUG FECHAS] getAllCitas - Buscando citas por barbero y fecha específica`);
       citas = await CitaService.getCitasByBarberoYFecha(Number(barbero_id), String(fecha));
     } else if (barbero_id) {
       // Añadimos filtro por barbero_id incluso cuando no hay fecha
@@ -30,10 +33,7 @@ export async function getAllCitas(req: Request, res: Response, next: NextFunctio
       if (citas.length > 0) {
         const primeraFecha = citas[0].fecha;
         console.log(`[DEBUG FECHAS] getAllCitas - Primera cita fecha: ${primeraFecha}`);
-        const fechaObj = new Date(primeraFecha);
-        console.log(`[DEBUG FECHAS] getAllCitas - Primera cita fecha como objeto: ${fechaObj}`);
-        console.log(`[DEBUG FECHAS] getAllCitas - Primera cita fecha ISO: ${fechaObj.toISOString()}`);
-        console.log(`[DEBUG FECHAS] getAllCitas - Primera cita fecha local: ${fechaObj.getFullYear()}-${String(fechaObj.getMonth() + 1).padStart(2, '0')}-${String(fechaObj.getDate()).padStart(2, '0')}`);
+        console.log(`[DEBUG FECHAS] getAllCitas - Primera cita fecha formateada: ${primeraFecha ? primeraFecha.slice(0, 10) : 'N/A'}`);
       }
     }
     
