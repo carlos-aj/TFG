@@ -13,7 +13,9 @@ const nombre = localStorage.getItem('nombre')
 const selectedBarbero = ref(null)
 const showBarberoSelector = ref(false)
 
-const today = new Date()
+// IMPORTANTE: Forzar la fecha a 12 de junio de 2025 para depuración
+// const today = new Date()
+const today = new Date('2025-06-12T12:00:00')
 const year = ref(today.getFullYear())
 const month = ref(today.getMonth()) // 0-indexed
 const selectedDay = ref(null)
@@ -154,22 +156,61 @@ async function seleccionarBarbero() {
 }
 
 const citasFiltradas = computed(() => {
+  console.log(`[DEBUG FECHAS] Filtrando citas para mes: ${month.value + 1}, año: ${year.value}`);
+  console.log(`[DEBUG FECHAS] Total citas a filtrar: ${citas.value.length}`);
+  
   let filtradas = citas.value.filter(c => {
     // Solo citas del mes y año actual
-    if (!c.fecha) return false
+    if (!c.fecha) {
+      console.log(`[DEBUG FECHAS] Ignorando cita sin fecha`);
+      return false;
+    }
     
     // Obtener el mes y año directamente de la fecha original
-    const fechaOriginal = c.fecha.slice(0, 10);
-    const anio = parseInt(fechaOriginal.split('-')[0]);
-    const mes = parseInt(fechaOriginal.split('-')[1]);
+    let fechaOriginal;
+    try {
+      // Intentar obtener la fecha como string
+      if (typeof c.fecha === 'string') {
+        fechaOriginal = c.fecha.slice(0, 10);
+      } else if (c.fecha instanceof Date) {
+        // Si es un objeto Date
+        fechaOriginal = `${c.fecha.getFullYear()}-${String(c.fecha.getMonth() + 1).padStart(2, '0')}-${String(c.fecha.getDate()).padStart(2, '0')}`;
+      } else {
+        // Si es otro tipo de dato, convertirlo a string
+        fechaOriginal = String(c.fecha);
+        console.log(`[DEBUG FECHAS] Formato de fecha desconocido: ${typeof c.fecha}`, c.fecha);
+      }
+    } catch (e) {
+      console.log(`[DEBUG FECHAS] Error al procesar fecha: ${e}`);
+      return false;
+    }
     
-    console.log(`[DEBUG FECHAS] Cita ID ${c.id}, fecha original: ${fechaOriginal}, mes: ${mes}, año: ${anio}`);
-    console.log(`[DEBUG FECHAS] Comparando con mes: ${month.value + 1}, año: ${year.value}`);
-    
-    // Usar la fecha original para filtrar
-    return anio === year.value && mes === month.value + 1;
-  })
-  return filtradas
+    // Intentar extraer año y mes
+    try {
+      const fechaParts = fechaOriginal.split('-');
+      if (fechaParts.length !== 3) {
+        console.log(`[DEBUG FECHAS] Formato de fecha inválido: ${fechaOriginal}`);
+        return false;
+      }
+      
+      const anio = parseInt(fechaParts[0]);
+      const mes = parseInt(fechaParts[1]);
+      
+      console.log(`[DEBUG FECHAS] Cita ID ${c.id}, fecha original: ${fechaOriginal}, mes: ${mes}, año: ${anio}`);
+      console.log(`[DEBUG FECHAS] Comparando con mes: ${month.value + 1}, año: ${year.value}`);
+      
+      // Usar la fecha original para filtrar
+      const coincide = anio === year.value && mes === month.value + 1;
+      console.log(`[DEBUG FECHAS] Coincide: ${coincide}`);
+      return coincide;
+    } catch (e) {
+      console.log(`[DEBUG FECHAS] Error al extraer componentes de fecha: ${e}`);
+      return false;
+    }
+  });
+  
+  console.log(`[DEBUG FECHAS] Total citas filtradas para este mes: ${filtradas.length}`);
+  return filtradas;
 })
 
 const citasPorDia = computed(() => {
@@ -199,14 +240,39 @@ const citasDelDia = computed(() => {
   // Crear la fecha correctamente sin usar toISOString para evitar problemas de zona horaria
   const fechaStr = `${year.value}-${monthString.value}-${String(selectedDay.value).padStart(2, '0')}`;
   console.log(`[DEBUG FECHAS] Fecha seleccionada: ${fechaStr}`);
+  console.log(`[DEBUG FECHAS] Total citas filtradas para el mes: ${citasFiltradas.value.length}`);
   
   // Usar la fecha sin ajustes para filtrar
-  return citasFiltradas.value.filter(c => {
-    if (!c.fecha) return false;
-    const fechaCita = c.fecha.slice(0, 10);
-    console.log(`[DEBUG FECHAS] Comparando cita fecha ${fechaCita} con fecha seleccionada ${fechaStr}`);
+  const citasDelDiaActual = citasFiltradas.value.filter(c => {
+    if (!c.fecha) {
+      console.log(`[DEBUG FECHAS] Cita sin fecha`);
+      return false;
+    }
+    
+    let fechaCita;
+    try {
+      // Intentar obtener la fecha como string
+      if (typeof c.fecha === 'string') {
+        fechaCita = c.fecha.slice(0, 10);
+      } else if (c.fecha instanceof Date) {
+        // Si es un objeto Date
+        fechaCita = `${c.fecha.getFullYear()}-${String(c.fecha.getMonth() + 1).padStart(2, '0')}-${String(c.fecha.getDate()).padStart(2, '0')}`;
+      } else {
+        // Si es otro tipo de dato, convertirlo a string
+        fechaCita = String(c.fecha);
+        console.log(`[DEBUG FECHAS] Formato de fecha desconocido: ${typeof c.fecha}`, c.fecha);
+      }
+    } catch (e) {
+      console.log(`[DEBUG FECHAS] Error al procesar fecha: ${e}`);
+      return false;
+    }
+    
+    console.log(`[DEBUG FECHAS] Comparando cita ID ${c.id} fecha ${fechaCita} con fecha seleccionada ${fechaStr}`);
     return fechaCita === fechaStr;
   });
+  
+  console.log(`[DEBUG FECHAS] Encontradas ${citasDelDiaActual.length} citas para el día ${fechaStr}`);
+  return citasDelDiaActual;
 })
 
 function prevMonth() {

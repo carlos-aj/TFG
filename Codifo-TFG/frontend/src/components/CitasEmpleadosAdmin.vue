@@ -16,8 +16,9 @@ const barbero_id = localStorage.getItem('barbero_id')
 const selectedBarbero = ref(null)
 const showBarberoSelector = ref(false)
 
-// Corregir el cálculo de la fecha actual para evitar problemas de zona horaria
-const fechaActual = new Date()
+// IMPORTANTE: Forzar la fecha a 12 de junio de 2025 para depuración
+// const fechaActual = new Date();
+const fechaActual = new Date('2025-06-12T12:00:00');
 console.log('[DEBUG FECHAS] Fecha actual como objeto Date:', fechaActual);
 console.log('[DEBUG FECHAS] Fecha actual como ISO string:', fechaActual.toISOString());
 console.log('[DEBUG FECHAS] Fecha actual local:', `${fechaActual.getFullYear()}-${String(fechaActual.getMonth() + 1).padStart(2, '0')}-${String(fechaActual.getDate()).padStart(2, '0')}`);
@@ -224,25 +225,11 @@ const citasFiltradas = computed(() => {
     return [];
   }
   
-  console.log(`[DEBUG FECHAS] Filtrando citas para la fecha: ${hoy}`);
-  console.log(`[DEBUG FECHAS] Total citas antes de filtrar: ${citas.value.length}`);
+  console.log(`[DEBUG FECHAS] Total citas cargadas: ${citas.value.length}`);
   
-  // Filtrar por fecha (hoy)
-  let filtradas = citas.value.filter(c => {
-    if (!c.fecha) return false;
-    
-    // Obtener la fecha de la cita sin ajustes
-    const fechaOriginal = c.fecha.slice(0, 10);
-    
-    console.log(`[DEBUG FECHAS] Cita ID ${c.id}:`);
-    console.log(`  - Fecha original: ${fechaOriginal}`);
-    console.log(`  - Coincide con HOY (${hoy}): ${fechaOriginal === hoy}`);
-    
-    // Comparar directamente la fecha original
-    return fechaOriginal === hoy;
-  });
-  
-  console.log(`[DEBUG FECHAS] Encontradas ${filtradas.length} citas para hoy`);
+  // CORRECCIÓN: Ya no filtramos por fecha en el cliente, confiamos en el servidor
+  // Solo filtramos por barbero si es necesario
+  let filtradas = citas.value;
   
   // Si es empleado y tenemos el barbero correspondiente, filtrar por ese barbero
   if (rol === 'empleado' && empleadoBarberoId.value) {

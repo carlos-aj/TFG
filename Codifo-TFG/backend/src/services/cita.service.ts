@@ -5,7 +5,22 @@ import { Servicio } from '../models/Servicio';
 
 export async function getAllCitas() {
   try {
-    return await Cita.query();
+    const citas = await Cita.query();
+    
+    // Transformar las fechas a string ISO para evitar problemas
+    const citasFormateadas = citas.map(c => {
+      if (c.fecha && typeof c.fecha !== 'string') {
+        // Si es un objeto Date, convertirlo a string ISO
+        const fecha = new Date(c.fecha);
+        return {
+          ...c,
+          fecha: `${fecha.getFullYear()}-${String(fecha.getMonth() + 1).padStart(2, '0')}-${String(fecha.getDate()).padStart(2, '0')}`
+        };
+      }
+      return c;
+    });
+    
+    return citasFormateadas;
   } catch (error) {
     console.error('Error al obtener todas las citas:', error);
     throw error;
@@ -139,7 +154,20 @@ export async function getCitasByBarberoYFecha(barbero_id: number, fecha_inicio: 
     const citas = await query;
     console.log(`[DEBUG FECHAS] Encontradas ${citas.length} citas para barbero ${barbero_id}`);
     
-    return citas;
+    // Transformar las fechas a string ISO para evitar problemas
+    const citasFormateadas = citas.map(c => {
+      if (c.fecha && typeof c.fecha !== 'string') {
+        // Si es un objeto Date, convertirlo a string ISO
+        const fecha = new Date(c.fecha);
+        return {
+          ...c,
+          fecha: `${fecha.getFullYear()}-${String(fecha.getMonth() + 1).padStart(2, '0')}-${String(fecha.getDate()).padStart(2, '0')}`
+        };
+      }
+      return c;
+    });
+    
+    return citasFormateadas;
   } catch (error) {
     console.error(`Error al obtener citas por barbero ${barbero_id} y fechas ${fecha_inicio} - ${fecha_fin || fecha_inicio}:`, error);
     throw error;
@@ -157,7 +185,20 @@ export async function getCitasByBarbero(barbero_id: number) {
     
     console.log(`[DEBUG FECHAS] Encontradas ${citas.length} citas para barbero ${barbero_id}`);
     
-    return citas;
+    // Transformar las fechas a string ISO para evitar problemas
+    const citasFormateadas = citas.map(c => {
+      if (c.fecha && typeof c.fecha !== 'string') {
+        // Si es un objeto Date, convertirlo a string ISO
+        const fecha = new Date(c.fecha);
+        return {
+          ...c,
+          fecha: `${fecha.getFullYear()}-${String(fecha.getMonth() + 1).padStart(2, '0')}-${String(fecha.getDate()).padStart(2, '0')}`
+        };
+      }
+      return c;
+    });
+    
+    return citasFormateadas;
   } catch (error) {
     console.error(`Error al obtener citas por barbero ${barbero_id}:`, error);
     throw error;
