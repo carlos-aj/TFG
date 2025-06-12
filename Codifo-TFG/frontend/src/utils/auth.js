@@ -38,6 +38,14 @@ export const saveAuthData = (data) => {
       localStorage.setItem('email', data.email);
     }
     
+    // Store barbero_id if present (for empleados)
+    if (data.barbero_id) {
+      localStorage.setItem('barbero_id', data.barbero_id.toString());
+    } else if (data.rol === 'empleado') {
+      // Si es empleado pero no tiene barbero_id, guardar un valor por defecto
+      localStorage.setItem('barbero_id', '0');
+    }
+    
     // Dispatch storage event to notify other components
     window.dispatchEvent(new Event('storage'));
   } catch (error) {

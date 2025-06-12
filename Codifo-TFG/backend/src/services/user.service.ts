@@ -1,4 +1,5 @@
 import { User, IUser } from '../models/User';
+import { Barbero } from '../models/Barbero';
 import { sendConfirmationEmail } from '../utils/emailSender';
 import crypto from 'crypto';
 import bcrypt from 'bcrypt';
@@ -49,4 +50,8 @@ export async function confirmUser(token: string) {
 
 export async function getUserByEmail(email: string) {
     return await User.query().findOne({ email });
+}
+
+export async function getBarberoById(id: number) {
+    return await Barbero.query().findById(id);
 }

@@ -13,6 +13,7 @@ import Usuarios from '../components/Usuarios.vue'
 import MesCompleto from '../components/MesCompleto.vue'
 import Servicios from '../components/Servicios.vue'
 import CitasEmpleadosAdmin from '../components/CitasEmpleadosAdmin.vue'
+import AsignarBarberos from '../components/AsignarBarberos.vue'
 import NotFound from '../components/404.vue'
 import CitaExito from '../components/CitaExito.vue'
 
@@ -31,6 +32,7 @@ const routes = [
   { path: '/mes-completo', component: MesCompleto, name: 'mes-completo', meta: { requiresAuth: true, requiredRole: ['admin', 'empleado'] } },
   { path: '/servicios', component: Servicios, name: 'servicios', meta: { requiresAuth: true, requiredRole: 'admin' } },
   { path: '/citas-empleados-admin', component: CitasEmpleadosAdmin, name: 'citas-empleados-admin', meta: { requiresAuth: true, requiredRole: ['admin', 'empleado'] } },
+  { path: '/asignar-barberos', component: AsignarBarberos, name: 'asignar-barberos', meta: { requiresAuth: true, requiredRole: 'admin' } },
   { path: '/:pathMatch(.*)*', name: 'NotFound', component: NotFound }, 
 ]
 

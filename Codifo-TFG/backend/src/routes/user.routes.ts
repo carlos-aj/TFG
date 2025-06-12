@@ -21,6 +21,9 @@ userRouter.get('/verify-token', isAuthenticated, (req, res) => {
 
 userRouter.post('/:id/sancionar', isAuthenticated, hasRole(['admin']), UserController.sancionarUsuario);
 
+// Asignar barbero a empleado (solo admin)
+userRouter.post('/:id/asignar-barbero', isAuthenticated, hasRole(['admin']), UserController.asignarBarbero);
+
 // Rutas protegidas para el propietario o admin
 userRouter.get('/:id', isAuthenticated, isOwnerOrAdmin('id'), UserController.getUserById);
 userRouter.put('/:id', isAuthenticated, isOwnerOrAdmin('id'), UserController.updateUser);

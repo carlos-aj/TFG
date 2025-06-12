@@ -185,8 +185,8 @@ export async function login(req: Request, res: Response) {
       maxAge: 60 * 60 * 1000
     });
 
-    console.log('Login exitoso:', { id: user.id, rol, token: token.substring(0, 20) + '...' });
-    res.json({ 
+    // Preparar la respuesta
+    const responseData: any = { 
       success: true,
       token, 
       rol,
@@ -194,7 +194,21 @@ export async function login(req: Request, res: Response) {
       nombre: user.nombre,
       apellidos: user.apellidos,
       email: user.email
+    };
+
+    // Incluir barbero_id solo si el usuario es empleado y tiene un barbero asignado
+    if (rol === 'empleado' && user.barbero_id) {
+      responseData.barbero_id = user.barbero_id;
+    }
+
+    console.log('Login exitoso:', { 
+      id: user.id, 
+      rol, 
+      barbero_id: user.barbero_id || 'N/A',
+      token: token.substring(0, 20) + '...' 
     });
+
+    res.json(responseData);
   } catch (err) {
     console.error('Error en login:', err);
     res.status(500).json({ message: 'Error en el servidor' });
@@ -223,5 +237,46 @@ export async function sancionarUsuario(req: Request, res: Response) {
     }
   } catch (err) {
     res.status(500).json({ message: 'Error sancionando usuario' });
+  }
+}
+
+export async function asignarBarbero(req: Request, res: Response) {
+  try {
+    const userId = parseInt(req.params.id);
+    const { barbero_id } = req.body;
+    
+    if (!barbero_id) {
+      return res.status(400).json({ message: 'El ID del barbero es obligatorio' });
+    }
+    
+    const user = await UserService.getUserById(userId);
+    if (!user) {
+      return res.status(404).json({ message: 'Usuario no encontrado' });
+    }
+    
+    if (user.rol !== 'empleado') {
+      return res.status(400).json({ message: 'Solo se puede asignar un barbero a usuarios con rol "empleado"' });
+    }
+    
+    // Verificar que el barbero existe
+    const barbero = await UserService.getBarberoById(parseInt(barbero_id));
+    if (!barbero) {
+      return res.status(404).json({ message: 'Barbero no encontrado' });
+    }
+    
+    // Actualizar el usuario con el barbero_id
+    const updated = await UserService.updateUser({ barbero_id: parseInt(barbero_id) }, userId);
+    
+    res.json({ 
+      message: 'Barbero asignado correctamente', 
+      user: updated,
+      barbero: {
+        id: barbero.id,
+        nombre: barbero.nombre
+      }
+    });
+  } catch (err) {
+    console.error('Error al asignar barbero:', err);
+    res.status(500).json({ message: 'Error al asignar barbero' });
   }
 }

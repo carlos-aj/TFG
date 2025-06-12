@@ -13,6 +13,7 @@ export interface IUser {
   rol: string;
   auth_token?: string | null;
   is_verified: boolean;
+  barbero_id?: number | null;
   created_at: string;
   updated_at: string;
 }
@@ -28,6 +29,7 @@ export class User extends Model implements IUser {
   rol!: string;
   auth_token?: string | null;
   is_verified!: boolean;
+  barbero_id?: number | null;
   created_at!: string;
   updated_at!: string;
 
@@ -37,6 +39,7 @@ export class User extends Model implements IUser {
   static get relationMappings() {
     // Importamos el modelo dentro de la función para evitar ciclos
     const { Cita } = require('./Cita');
+    const { Barbero } = require('./Barbero');
     
     return {
       citas: {
@@ -45,6 +48,14 @@ export class User extends Model implements IUser {
         join: {
           from: 'users.id', // Corregimos el nombre de la tabla
           to: 'cita.user_id'
+        }
+      },
+      barbero: {
+        relation: Model.BelongsToOneRelation,
+        modelClass: Barbero,
+        join: {
+          from: 'users.barbero_id',
+          to: 'barbero.id'
         }
       }
     };

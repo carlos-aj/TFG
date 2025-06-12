@@ -9,13 +9,35 @@ const servicios = ref([])
 const loading = ref(true)
 const error = ref('')
 const rol = localStorage.getItem('role')
-const barbero_id = localStorage.getItem('barbero_id')
 const user_id = localStorage.getItem('user_id')
+const nombre = localStorage.getItem('nombre')
+const empleadoBarberoId = ref(null)
 
 const hoy = new Date().toISOString().split('T')[0]
 
 onMounted(async () => {
   try {
+    // Cargar barberos primero para poder asociar el empleado con su barbero
+    const resBarberos = await fetch(`${API_URL}/api/barbero`, {
+      credentials: 'include'
+    })
+    barberos.value = await resBarberos.json()
+    
+    // Si el usuario es empleado, buscar el barbero correspondiente por nombre
+    if (rol === 'empleado' && nombre) {
+      const barberoCorrespondiente = barberos.value.find(
+        b => b.nombre.includes(nombre) || nombre.includes(b.nombre)
+      );
+      
+      if (barberoCorrespondiente) {
+        console.log(`Empleado ${nombre} asociado automáticamente con barbero ${barberoCorrespondiente.nombre} (ID: ${barberoCorrespondiente.id})`);
+        empleadoBarberoId.value = barberoCorrespondiente.id;
+      } else {
+        console.log(`No se encontró un barbero correspondiente para el empleado ${nombre}`);
+        error.value = `No se encontró un barbero correspondiente para ti. Contacta con el administrador.`;
+      }
+    }
+
     // Cargar citas
     const resCitas = await fetch(`${API_URL}/api/cita`, {
       credentials: 'include'
@@ -42,12 +64,6 @@ onMounted(async () => {
     } else {
       usuarios.value = []
     }
-
-    // Cargar barberos
-    const resBarberos = await fetch(`${API_URL}/api/barbero`, {
-      credentials: 'include'
-    })
-    barberos.value = await resBarberos.json()
 
     // Cargar servicios
     const resServicios = await fetch(`${API_URL}/api/servicio`, {
@@ -91,10 +107,15 @@ const citasFiltradas = computed(() => {
     return [];
   }
   
+  // Filtrar por fecha (hoy)
   let filtradas = citas.value.filter(c => c.fecha && c.fecha.slice(0, 10) === hoy)
-  if (rol === 'empleado' && barbero_id) {
-    filtradas = filtradas.filter(c => String(c.barbero_id) === String(barbero_id))
+  
+  // Si es empleado y tenemos el barbero correspondiente, filtrar por ese barbero
+  if (rol === 'empleado' && empleadoBarberoId.value) {
+    console.log(`Filtrando citas para barbero_id: ${empleadoBarberoId.value}`);
+    filtradas = filtradas.filter(c => c.barbero_id === empleadoBarberoId.value)
   }
+  
   return filtradas
 })
 
@@ -150,9 +171,12 @@ async function sancionarUsuario(userId) {
   <div class="landing">
     <h1>Citas del día</h1>
     <div v-if="loading">Cargando...</div>
-    <div v-else-if="error">{{ error }}</div>
+    <div v-else-if="error" class="error-message">{{ error }}</div>
     <div v-else>
-      <table v-if="citasFiltradas.length">
+      <div v-if="rol === 'empleado' && !empleadoBarberoId" class="warning-message">
+        <p>No se encontró un barbero correspondiente para ti. Contacta con el administrador.</p>
+      </div>
+      <table v-else-if="citasFiltradas.length">
         <thead>
           <tr>
             <th>Cliente</th>
@@ -198,7 +222,7 @@ async function sancionarUsuario(userId) {
           </tr>
         </tbody>
       </table>
-      <div v-else>No hay citas para hoy.</div>
+      <div v-else class="info-message">No hay citas para hoy.</div>
     </div>
   </div>
 </template>
@@ -213,5 +237,26 @@ table {
 th, td {
   border: 1px solid #ccc;
   padding: 8px 12px;
+}
+.error-message {
+  color: #d32f2f;
+  background-color: #ffebee;
+  padding: 10px;
+  border-radius: 4px;
+  margin: 10px 0;
+}
+.warning-message {
+  color: #ff6f00;
+  background-color: #fff8e1;
+  padding: 10px;
+  border-radius: 4px;
+  margin: 10px 0;
+}
+.info-message {
+  color: #0288d1;
+  background-color: #e1f5fe;
+  padding: 10px;
+  border-radius: 4px;
+  margin: 10px 0;
 }
 </style>
