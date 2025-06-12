@@ -12,6 +12,9 @@ export async function getAllCitas(req: Request, res: Response, next: NextFunctio
     let citas;
     if (barbero_id && fecha) {
       citas = await CitaService.getCitasByBarberoYFecha(Number(barbero_id), String(fecha));
+    } else if (barbero_id) {
+      // Añadimos filtro por barbero_id incluso cuando no hay fecha
+      citas = await CitaService.getCitasByBarbero(Number(barbero_id));
     } else {
       citas = await CitaService.getAllCitas();
     }

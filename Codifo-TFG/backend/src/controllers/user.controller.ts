@@ -196,9 +196,9 @@ export async function login(req: Request, res: Response) {
       email: user.email
     };
 
-    // Incluir barbero_id solo si el usuario es empleado y tiene un barbero asignado
-    if (rol === 'empleado' && user.barbero_id) {
-      responseData.barbero_id = user.barbero_id;
+    // Incluir barbero_id para usuarios con rol empleado (incluso si es null)
+    if (rol === 'empleado') {
+      responseData.barbero_id = user.barbero_id || null;
     }
 
     console.log('Login exitoso:', { 

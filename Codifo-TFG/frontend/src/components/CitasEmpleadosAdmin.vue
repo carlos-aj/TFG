@@ -12,6 +12,7 @@ const rol = localStorage.getItem('role')
 const user_id = localStorage.getItem('user_id')
 const nombre = localStorage.getItem('nombre')
 const empleadoBarberoId = ref(null)
+const barbero_id = localStorage.getItem('barbero_id')
 
 const hoy = new Date().toISOString().split('T')[0]
 
@@ -23,23 +24,35 @@ onMounted(async () => {
     })
     barberos.value = await resBarberos.json()
     
-    // Si el usuario es empleado, buscar el barbero correspondiente por nombre
-    if (rol === 'empleado' && nombre) {
-      const barberoCorrespondiente = barberos.value.find(
-        b => b.nombre.includes(nombre) || nombre.includes(b.nombre)
-      );
-      
-      if (barberoCorrespondiente) {
-        console.log(`Empleado ${nombre} asociado automáticamente con barbero ${barberoCorrespondiente.nombre} (ID: ${barberoCorrespondiente.id})`);
-        empleadoBarberoId.value = barberoCorrespondiente.id;
-      } else {
-        console.log(`No se encontró un barbero correspondiente para el empleado ${nombre}`);
-        error.value = `No se encontró un barbero correspondiente para ti. Contacta con el administrador.`;
+    // Si el usuario es empleado, buscar el barbero correspondiente por nombre o usar el barbero_id guardado
+    if (rol === 'empleado') {
+      if (barbero_id) {
+        // Usar el barbero_id guardado en localStorage
+        empleadoBarberoId.value = Number(barbero_id);
+        console.log(`Empleado usando barbero_id guardado: ${empleadoBarberoId.value}`);
+      } else if (nombre) {
+        // Buscar por nombre si no hay barbero_id guardado
+        const barberoCorrespondiente = barberos.value.find(
+          b => b.nombre.includes(nombre) || nombre.includes(b.nombre)
+        );
+        
+        if (barberoCorrespondiente) {
+          console.log(`Empleado ${nombre} asociado automáticamente con barbero ${barberoCorrespondiente.nombre} (ID: ${barberoCorrespondiente.id})`);
+          empleadoBarberoId.value = barberoCorrespondiente.id;
+        } else {
+          console.log(`No se encontró un barbero correspondiente para el empleado ${nombre}`);
+          error.value = `No se encontró un barbero correspondiente para ti. Contacta con el administrador.`;
+        }
       }
     }
 
-    // Cargar citas
-    const resCitas = await fetch(`${API_URL}/api/cita`, {
+    // Cargar citas - si es empleado/barbero, filtrar por su barbero_id
+    let citasUrl = `${API_URL}/api/cita`;
+    if (rol === 'empleado' && empleadoBarberoId.value) {
+      citasUrl += `?barbero_id=${empleadoBarberoId.value}`;
+    }
+    
+    const resCitas = await fetch(citasUrl, {
       credentials: 'include'
     })
     if (!resCitas.ok) throw new Error('Error al cargar citas')

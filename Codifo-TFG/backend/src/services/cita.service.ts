@@ -132,3 +132,13 @@ export async function getCitasByBarberoYFecha(barbero_id: number, fecha: string)
   }
 }
 
+export async function getCitasByBarbero(barbero_id: number) {
+  try {
+    return await Cita.query()
+      .where('barbero_id', barbero_id);
+  } catch (error) {
+    console.error(`Error al obtener citas por barbero ${barbero_id}:`, error);
+    throw error;
+  }
+}
+

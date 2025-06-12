@@ -35,8 +35,13 @@ export async function deleteUser(id: number) {
     return await User.query().deleteById(id);
 }
 
-export async function updateUser(data: Partial<IUser>, id: number) {
-    return await User.query().patchAndFetchById(id, data);
+export async function updateUser(data: Partial<IUser>, userId: number) {
+    try {
+        return await User.query().patchAndFetchById(userId, data);
+    } catch (error) {
+        console.error(`Error al actualizar usuario ${userId}:`, error);
+        throw error;
+    }
 }
 
 export async function confirmUser(token: string) {

@@ -32,12 +32,20 @@ const firstDayOfWeek = computed(() => {
 
 onMounted(async () => {
   try {
-    const res = await fetch(`${API_URL}/api/cita`, {
+    // Si es empleado/barbero, filtrar por su barbero_id
+    let citasUrl = `${API_URL}/api/cita`;
+    if ((rol === 'empleado' || rol === 'barbero') && barbero_id) {
+      citasUrl += `?barbero_id=${barbero_id}`;
+      console.log(`Filtrando citas para barbero_id: ${barbero_id}`);
+    }
+    
+    const res = await fetch(citasUrl, {
       credentials: 'include'
     })
     if (!res.ok) throw new Error('Error al cargar citas')
     const data = await res.json()
     citas.value = data
+    console.log(`Cargadas ${data.length} citas`);
   } catch (e) {
     error.value = e.message
   } finally {
@@ -51,11 +59,7 @@ const citasFiltradas = computed(() => {
     if (!c.fecha) return false
     const [cYear, cMonth] = c.fecha.split('-')
     if (parseInt(cYear) !== year.value || parseInt(cMonth) !== month.value + 1) return false
-    // Si es barbero, solo sus citas
-    if (rol === 'barbero' && barbero_id) {
-      return String(c.barbero_id) === String(barbero_id)
-    }
-    // Admin ve todas
+    // Si es barbero o empleado, solo sus citas (ya vienen filtradas del backend)
     return true
   })
   return filtradas
