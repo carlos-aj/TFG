@@ -95,6 +95,16 @@ async function cargarCitas() {
     if (!res.ok) throw new Error('Error al cargar citas')
     const data = await res.json()
     citas.value = data
+    
+    // Añadir logs para depurar el problema de fechas
+    if (data.length > 0) {
+      console.log('Primera cita cargada:', data[0]);
+      console.log('Fecha de la primera cita:', data[0].fecha);
+      const fechaObj = new Date(data[0].fecha);
+      console.log('Fecha convertida a objeto Date:', fechaObj);
+      console.log('Fecha local:', `${fechaObj.getFullYear()}-${String(fechaObj.getMonth() + 1).padStart(2, '0')}-${String(fechaObj.getDate()).padStart(2, '0')}`);
+    }
+    
     console.log(`Cargadas ${data.length} citas`);
   } catch (e) {
     console.error('Error al cargar citas:', e);
@@ -167,7 +177,10 @@ function selectDay(day) {
 
 const citasDelDia = computed(() => {
   if (!selectedDay.value) return []
+  
+  // Crear la fecha correctamente sin usar toISOString para evitar problemas de zona horaria
   const fechaStr = `${year.value}-${monthString.value}-${String(selectedDay.value).padStart(2, '0')}`
+  
   return citasFiltradas.value.filter(c => c.fecha && c.fecha.slice(0, 10) === fechaStr)
 })
 

@@ -75,9 +75,11 @@ async function checkPuedeInvitar() {
     return
   }
 
-  const fechaFormateada = fechaSeleccionada.value
-  ? new Date(fechaSeleccionada.value).toISOString().split('T')[0]
-  : '';
+  // Formatear la fecha correctamente para evitar problemas de zona horaria
+  const fechaObj = new Date(fechaSeleccionada.value);
+  const fechaFormateada = `${fechaObj.getFullYear()}-${String(fechaObj.getMonth() + 1).padStart(2, '0')}-${String(fechaObj.getDate()).padStart(2, '0')}`;
+  console.log('Fecha seleccionada original en checkPuedeInvitar:', fechaSeleccionada.value);
+  console.log('Fecha formateada para consulta en checkPuedeInvitar:', fechaFormateada);
 
   const params = new URLSearchParams({
     barbero_id: barberoSeleccionado.value,
@@ -153,7 +155,13 @@ watch(fechaSeleccionada, async () => {
     horasOcupadasPorBarbero.value = {};
     return;
   }
-  const fechaFormateada = new Date(fechaSeleccionada.value).toISOString().split('T')[0];
+  
+  // Formatear la fecha correctamente para evitar problemas de zona horaria
+  const fechaObj = new Date(fechaSeleccionada.value);
+  const fechaFormateada = `${fechaObj.getFullYear()}-${String(fechaObj.getMonth() + 1).padStart(2, '0')}-${String(fechaObj.getDate()).padStart(2, '0')}`;
+  console.log('Fecha seleccionada original en watch:', fechaSeleccionada.value);
+  console.log('Fecha formateada para consulta en watch:', fechaFormateada);
+  
   const ocupadas = {};
   for (const barbero of barberos.value) {
     const res = await fetch(`${API_URL}/api/cita?barbero_id=${barbero.id}&fecha=${fechaFormateada}`, {
@@ -201,7 +209,10 @@ async function reservarCita() {
   // El backend espera la fecha en formato YYYY-MM-DD.
   // v-date-picker puede devolver un objeto Date o un string ISO, así que lo formateamos.
   const fechaObj = new Date(fechaSeleccionada.value);
-  const fechaFormateada = fechaObj.toISOString().split('T')[0];
+  // Formatear la fecha correctamente para evitar problemas de zona horaria
+  const fechaFormateada = `${fechaObj.getFullYear()}-${String(fechaObj.getMonth() + 1).padStart(2, '0')}-${String(fechaObj.getDate()).padStart(2, '0')}`;
+  console.log('Fecha seleccionada original:', fechaSeleccionada.value);
+  console.log('Fecha formateada para el backend:', fechaFormateada);
 
   // Prepara el objeto cita
   const cita = {

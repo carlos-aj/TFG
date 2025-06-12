@@ -16,7 +16,9 @@ const barbero_id = localStorage.getItem('barbero_id')
 const selectedBarbero = ref(null)
 const showBarberoSelector = ref(false)
 
-const hoy = new Date().toISOString().split('T')[0]
+// Corregir el cálculo de la fecha actual para evitar problemas de zona horaria
+const fechaActual = new Date()
+const hoy = `${fechaActual.getFullYear()}-${String(fechaActual.getMonth() + 1).padStart(2, '0')}-${String(fechaActual.getDate()).padStart(2, '0')}`
 
 onMounted(async () => {
   try {
@@ -174,16 +176,26 @@ const citasFiltradas = computed(() => {
     return [];
   }
   
+  console.log(`Filtrando citas para la fecha: ${hoy}`);
+  
   // Filtrar por fecha (hoy)
-  let filtradas = citas.value.filter(c => c.fecha && c.fecha.slice(0, 10) === hoy)
+  let filtradas = citas.value.filter(c => {
+    if (!c.fecha) return false;
+    const fechaCita = c.fecha.slice(0, 10);
+    const coincide = fechaCita === hoy;
+    console.log(`Cita ID ${c.id}, fecha ${fechaCita}, coincide con hoy (${hoy}): ${coincide}`);
+    return coincide;
+  });
+  
+  console.log(`Encontradas ${filtradas.length} citas para hoy`);
   
   // Si es empleado y tenemos el barbero correspondiente, filtrar por ese barbero
   if (rol === 'empleado' && empleadoBarberoId.value) {
     console.log(`Filtrando citas para barbero_id: ${empleadoBarberoId.value}`);
-    filtradas = filtradas.filter(c => c.barbero_id === empleadoBarberoId.value)
+    filtradas = filtradas.filter(c => c.barbero_id === empleadoBarberoId.value);
   }
   
-  return filtradas
+  return filtradas;
 })
 
 async function toggleEstado(cita) {

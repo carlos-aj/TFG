@@ -123,9 +123,15 @@ export async function getBarberoNombreById(id: number) {
 
 export async function getCitasByBarberoYFecha(barbero_id: number, fecha: string) {
   try {
-    return await Cita.query()
+    console.log(`Buscando citas para barbero ${barbero_id} en fecha ${fecha}`);
+    
+    // Usar una comparación de fecha sin considerar la hora para evitar problemas de zona horaria
+    const citas = await Cita.query()
       .where('barbero_id', barbero_id)
-      .whereRaw('fecha::date = ?', [fecha]);
+      .whereRaw('TO_CHAR(fecha::date, \'YYYY-MM-DD\') = ?', [fecha]);
+    
+    console.log(`Encontradas ${citas.length} citas`);
+    return citas;
   } catch (error) {
     console.error(`Error al obtener citas por barbero ${barbero_id} y fecha ${fecha}:`, error);
     throw error;
