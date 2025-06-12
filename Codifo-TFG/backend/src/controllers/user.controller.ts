@@ -279,3 +279,49 @@ export async function asignarBarbero(req: Request, res: Response): Promise<void>
     res.status(500).json({ message: 'Error al asignar barbero' });
   }
 }
+
+export async function asignarBarberoEmpleado(req: Request, res: Response): Promise<void> {
+  try {
+    const userId = parseInt(req.params.id);
+    const { barbero_id } = req.body;
+    
+    if (!barbero_id) {
+      res.status(400).json({ message: 'El ID del barbero es obligatorio' });
+      return;
+    }
+    
+    // Verificar que el usuario existe y es el mismo que hace la petición o un admin
+    const user = await UserService.getUserById(userId);
+    if (!user) {
+      res.status(404).json({ message: 'Usuario no encontrado' });
+      return;
+    }
+    
+    if (user.rol !== 'empleado') {
+      res.status(400).json({ message: 'Solo los empleados pueden usar esta función' });
+      return;
+    }
+    
+    // Verificar que el barbero existe
+    const barbero = await UserService.getBarberoById(parseInt(barbero_id));
+    if (!barbero) {
+      res.status(404).json({ message: 'Barbero no encontrado' });
+      return;
+    }
+    
+    // Actualizar el usuario con el barbero_id
+    const updated = await UserService.updateUser({ barbero_id: parseInt(barbero_id) }, userId);
+    
+    res.json({ 
+      message: 'Barbero asignado correctamente', 
+      user: updated,
+      barbero: {
+        id: barbero.id,
+        nombre: barbero.nombre
+      }
+    });
+  } catch (err) {
+    console.error('Error al asignar barbero:', err);
+    res.status(500).json({ message: 'Error al asignar barbero' });
+  }
+}

@@ -3,10 +3,15 @@ import { ref, computed, onMounted } from 'vue'
 import { API_URL } from '../config'
 
 const citas = ref([])
+const barberos = ref([])
 const loading = ref(true)
 const error = ref('')
 const rol = localStorage.getItem('role')
 const barbero_id = localStorage.getItem('barbero_id')
+const user_id = localStorage.getItem('user_id')
+const nombre = localStorage.getItem('nombre')
+const selectedBarbero = ref(null)
+const showBarberoSelector = ref(false)
 
 const today = new Date()
 const year = ref(today.getFullYear())
@@ -32,11 +37,56 @@ const firstDayOfWeek = computed(() => {
 
 onMounted(async () => {
   try {
+    // Cargar barberos primero para poder asociar el empleado con su barbero
+    const resBarberos = await fetch(`${API_URL}/api/barbero`, {
+      credentials: 'include'
+    });
+    const barberosData = await resBarberos.json();
+    
+    // Si el usuario es empleado/barbero, verificar si tiene un barbero asignado
+    if ((rol === 'empleado' || rol === 'barbero')) {
+      if (barbero_id && barbero_id !== '0' && barbero_id !== 'null') {
+        // Verificar que el barbero existe
+        const barberoExiste = barberosData.find(b => b.id === Number(barbero_id));
+        if (!barberoExiste) {
+          console.log(`El barbero_id ${barbero_id} no existe en la lista de barberos`);
+          showBarberoSelector.value = true;
+        }
+      } else if (nombre) {
+        // Buscar por nombre si no hay barbero_id guardado
+        const barberoCorrespondiente = barberosData.find(
+          b => b.nombre.toLowerCase().includes(nombre.toLowerCase()) || nombre.toLowerCase().includes(b.nombre.toLowerCase())
+        );
+        
+        if (barberoCorrespondiente) {
+          console.log(`Empleado ${nombre} asociado automáticamente con barbero ${barberoCorrespondiente.nombre} (ID: ${barberoCorrespondiente.id})`);
+          localStorage.setItem('barbero_id', barberoCorrespondiente.id.toString());
+        } else {
+          console.log(`No se encontró un barbero correspondiente para el empleado ${nombre}`);
+          showBarberoSelector.value = true;
+        }
+      } else {
+        showBarberoSelector.value = true;
+      }
+    }
+    
+    // Cargar citas
+    await cargarCitas();
+  } catch (e) {
+    error.value = e.message
+  } finally {
+    loading.value = false
+  }
+})
+
+async function cargarCitas() {
+  try {
     // Si es empleado/barbero, filtrar por su barbero_id
     let citasUrl = `${API_URL}/api/cita`;
-    if ((rol === 'empleado' || rol === 'barbero') && barbero_id) {
-      citasUrl += `?barbero_id=${barbero_id}`;
-      console.log(`Filtrando citas para barbero_id: ${barbero_id}`);
+    const barberoIdActual = localStorage.getItem('barbero_id');
+    if ((rol === 'empleado' || rol === 'barbero') && barberoIdActual && barberoIdActual !== '0' && barberoIdActual !== 'null') {
+      citasUrl += `?barbero_id=${barberoIdActual}`;
+      console.log(`Filtrando citas para barbero_id: ${barberoIdActual}`);
     }
     
     const res = await fetch(citasUrl, {
@@ -47,11 +97,40 @@ onMounted(async () => {
     citas.value = data
     console.log(`Cargadas ${data.length} citas`);
   } catch (e) {
-    error.value = e.message
-  } finally {
-    loading.value = false
+    console.error('Error al cargar citas:', e);
+    error.value = e.message;
   }
-})
+}
+
+async function seleccionarBarbero() {
+  if (!selectedBarbero.value) {
+    alert('Por favor, selecciona un barbero');
+    return;
+  }
+  
+  localStorage.setItem('barbero_id', selectedBarbero.value.toString());
+  
+  // Actualizar en la base de datos si es posible
+  try {
+    const res = await fetch(`${API_URL}/api/user/${user_id}/asignar-barbero-empleado`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ barbero_id: Number(selectedBarbero.value) })
+    });
+    
+    if (res.ok) {
+      console.log('Barbero asignado correctamente en la base de datos');
+    } else {
+      console.log('No se pudo actualizar el barbero en la base de datos, pero se guardó localmente');
+    }
+  } catch (e) {
+    console.error('Error al asignar barbero:', e);
+  }
+  
+  showBarberoSelector.value = false;
+  await cargarCitas();
+}
 
 const citasFiltradas = computed(() => {
   let filtradas = citas.value.filter(c => {
@@ -147,47 +226,65 @@ onMounted(async () => {
 <template>
   <div class="mes-completo">
     <h1>Calendario de Citas</h1>
-    <div class="calendar">
-      <div class="calendar-header">
-        <button @click="prevMonth">&lt;</button>
-        <span>{{ monthName }} {{ year }}</span>
-        <button @click="nextMonth">&gt;</button>
+    
+    <div v-if="loading">Cargando...</div>
+    <div v-else-if="error" class="error-message">{{ error }}</div>
+    <div v-else-if="showBarberoSelector" class="barbero-selector">
+      <h2>Selecciona tu barbero</h2>
+      <p>No se ha podido determinar automáticamente qué barbero eres. Por favor, selecciona tu barbero de la lista:</p>
+      <div class="selector-container">
+        <select v-model="selectedBarbero">
+          <option :value="null">Selecciona un barbero</option>
+          <option v-for="barbero in barberos" :key="barbero.id" :value="barbero.id">
+            {{ barbero.nombre }}
+          </option>
+        </select>
+        <button @click="seleccionarBarbero" class="btn-primary">Confirmar</button>
       </div>
-      <div class="calendar-grid">
-        <div class="calendar-day header" v-for="d in daysShort" :key="d">{{ d }}</div>
-        <div
-          v-for="blank in firstDayOfWeek"
-          :key="'blank-' + blank"
-          class="calendar-day blank"
-        ></div>
-        <div
-          v-for="day in daysInMonth"
-          :key="day"
-          class="calendar-day"
-          :class="{ today: isToday(day) }"
-          @click="selectDay(day)"
-        >
-          <div>{{ day }}</div>
-          <div class="citas-count">
-            <template v-if="getMaxCitas(day) > 0">
-              {{ citasPorDia[day] || 0 }} / {{ getMaxCitas(day) }}
-            </template>
-            <template v-else :class="{ today: isToday(day), cerrado: getMaxCitas(day) === 0 }">
-              Cerrado
-            </template>
+    </div>
+    <div v-else>
+      <div class="calendar">
+        <div class="calendar-header">
+          <button @click="prevMonth">&lt;</button>
+          <span>{{ monthName }} {{ year }}</span>
+          <button @click="nextMonth">&gt;</button>
+        </div>
+        <div class="calendar-grid">
+          <div class="calendar-day header" v-for="d in daysShort" :key="d">{{ d }}</div>
+          <div
+            v-for="blank in firstDayOfWeek"
+            :key="'blank-' + blank"
+            class="calendar-day blank"
+          ></div>
+          <div
+            v-for="day in daysInMonth"
+            :key="day"
+            class="calendar-day"
+            :class="{ today: isToday(day) }"
+            @click="selectDay(day)"
+          >
+            <div>{{ day }}</div>
+            <div class="citas-count">
+              <template v-if="getMaxCitas(day) > 0">
+                {{ citasPorDia[day] || 0 }} / {{ getMaxCitas(day) }}
+              </template>
+              <template v-else :class="{ today: isToday(day), cerrado: getMaxCitas(day) === 0 }">
+                Cerrado
+              </template>
+            </div>
           </div>
         </div>
       </div>
-    </div>
-    <div v-if="selectedDay" class="citas-list">
-      <h2>Citas del {{ year }}-{{ monthString }}-{{ selectedDay.toString().padStart(2, '0') }}</h2>
-      <ul v-if="citasDelDia.length">
-        <li v-for="cita in citasDelDia" :key="cita.id">
-          Cliente: {{ cita.user_id }}, Barbero: {{ cita.barbero_id }}, Servicio: {{ cita.servicio_id }}, Hora: {{ cita.hora }}, Estado: {{ cita.estado ? 'Atendida' : 'Pendiente' }}
-        </li>
-      </ul>
-      <div v-else>No hay citas para este día.</div>
-      <button @click="selectedDay = null">Cerrar</button>
+      <div v-if="selectedDay" class="citas-list">
+        <h2>Citas del {{ year }}-{{ monthString }}-{{ selectedDay.toString().padStart(2, '0') }}</h2>
+        <ul v-if="citasDelDia.length">
+          <li v-for="cita in citasDelDia" :key="cita.id">
+            Cliente: {{ cita.user_id }}, Barbero: {{ cita.barbero_id }}, Servicio: {{ cita.servicio_id }}, Hora: {{ cita.hora }}, Estado: {{ cita.estado ? 'Atendida' : 'Pendiente' }}
+          </li>
+        </ul>
+        <div v-else>No hay citas para este día.</div>
+        <button @click="selectedDay = null">Cerrar</button>
+      </div>
     </div>
   </div>
 </template>
@@ -258,5 +355,45 @@ onMounted(async () => {
   background: #eee;
   color: #aaa;
   cursor: not-allowed;
+}
+
+.error-message {
+  color: #d32f2f;
+  background-color: #ffebee;
+  padding: 10px;
+  border-radius: 4px;
+  margin: 10px 0;
+}
+
+.barbero-selector {
+  background-color: #e8f5e9;
+  padding: 20px;
+  border-radius: 8px;
+  margin: 20px auto;
+  max-width: 500px;
+}
+.selector-container {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 15px;
+}
+select {
+  padding: 8px;
+  font-size: 16px;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+}
+.btn-primary {
+  background-color: #1976d2;
+  color: white;
+  border: none;
+  padding: 10px 15px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 16px;
+}
+.btn-primary:hover {
+  background-color: #1565c0;
 }
 </style>

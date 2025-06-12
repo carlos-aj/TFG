@@ -24,6 +24,9 @@ userRouter.post('/:id/sancionar', isAuthenticated, hasRole(['admin']), UserContr
 // Asignar barbero a empleado (solo admin)
 userRouter.post('/:id/asignar-barbero', isAuthenticated, hasRole(['admin']), UserController.asignarBarbero);
 
+// Ruta para que un empleado se asigne a sí mismo un barbero
+userRouter.post('/:id/asignar-barbero-empleado', isAuthenticated, isOwnerOrAdmin('id'), UserController.asignarBarberoEmpleado);
+
 // Rutas protegidas para el propietario o admin
 userRouter.get('/:id', isAuthenticated, isOwnerOrAdmin('id'), UserController.getUserById);
 userRouter.put('/:id', isAuthenticated, isOwnerOrAdmin('id'), UserController.updateUser);

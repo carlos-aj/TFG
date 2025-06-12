@@ -13,6 +13,8 @@ const user_id = localStorage.getItem('user_id')
 const nombre = localStorage.getItem('nombre')
 const empleadoBarberoId = ref(null)
 const barbero_id = localStorage.getItem('barbero_id')
+const selectedBarbero = ref(null)
+const showBarberoSelector = ref(false)
 
 const hoy = new Date().toISOString().split('T')[0]
 
@@ -26,38 +28,41 @@ onMounted(async () => {
     
     // Si el usuario es empleado, buscar el barbero correspondiente por nombre o usar el barbero_id guardado
     if (rol === 'empleado') {
-      if (barbero_id) {
+      if (barbero_id && barbero_id !== '0' && barbero_id !== 'null') {
         // Usar el barbero_id guardado en localStorage
         empleadoBarberoId.value = Number(barbero_id);
         console.log(`Empleado usando barbero_id guardado: ${empleadoBarberoId.value}`);
+        
+        // Verificar que el barbero existe
+        const barberoExiste = barberos.value.find(b => b.id === Number(barbero_id));
+        if (!barberoExiste) {
+          console.log(`El barbero_id ${barbero_id} no existe en la lista de barberos`);
+          empleadoBarberoId.value = null;
+          showBarberoSelector.value = true;
+        }
       } else if (nombre) {
         // Buscar por nombre si no hay barbero_id guardado
         const barberoCorrespondiente = barberos.value.find(
-          b => b.nombre.includes(nombre) || nombre.includes(b.nombre)
+          b => b.nombre.toLowerCase().includes(nombre.toLowerCase()) || nombre.toLowerCase().includes(b.nombre.toLowerCase())
         );
         
         if (barberoCorrespondiente) {
           console.log(`Empleado ${nombre} asociado automáticamente con barbero ${barberoCorrespondiente.nombre} (ID: ${barberoCorrespondiente.id})`);
           empleadoBarberoId.value = barberoCorrespondiente.id;
+          // Guardar en localStorage para futuras sesiones
+          localStorage.setItem('barbero_id', barberoCorrespondiente.id.toString());
         } else {
           console.log(`No se encontró un barbero correspondiente para el empleado ${nombre}`);
-          error.value = `No se encontró un barbero correspondiente para ti. Contacta con el administrador.`;
+          showBarberoSelector.value = true;
         }
+      } else {
+        showBarberoSelector.value = true;
       }
     }
 
     // Cargar citas - si es empleado/barbero, filtrar por su barbero_id
-    let citasUrl = `${API_URL}/api/cita`;
-    if (rol === 'empleado' && empleadoBarberoId.value) {
-      citasUrl += `?barbero_id=${empleadoBarberoId.value}`;
-    }
+    await cargarCitas();
     
-    const resCitas = await fetch(citasUrl, {
-      credentials: 'include'
-    })
-    if (!resCitas.ok) throw new Error('Error al cargar citas')
-    citas.value = await resCitas.json()
-
     // Cargar usuarios solo si es admin
     if (rol === 'admin') {
       try {
@@ -89,6 +94,55 @@ onMounted(async () => {
     loading.value = false
   }
 })
+
+async function cargarCitas() {
+  try {
+    let citasUrl = `${API_URL}/api/cita`;
+    if (rol === 'empleado' && empleadoBarberoId.value) {
+      citasUrl += `?barbero_id=${empleadoBarberoId.value}`;
+    }
+    
+    const resCitas = await fetch(citasUrl, {
+      credentials: 'include'
+    })
+    if (!resCitas.ok) throw new Error('Error al cargar citas')
+    citas.value = await resCitas.json()
+  } catch (e) {
+    console.error('Error al cargar citas:', e);
+    error.value = e.message;
+  }
+}
+
+async function seleccionarBarbero() {
+  if (!selectedBarbero.value) {
+    alert('Por favor, selecciona un barbero');
+    return;
+  }
+  
+  empleadoBarberoId.value = Number(selectedBarbero.value);
+  localStorage.setItem('barbero_id', selectedBarbero.value.toString());
+  
+  // Actualizar en la base de datos si es posible
+  try {
+    const res = await fetch(`${API_URL}/api/user/${user_id}/asignar-barbero-empleado`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ barbero_id: Number(selectedBarbero.value) })
+    });
+    
+    if (res.ok) {
+      console.log('Barbero asignado correctamente en la base de datos');
+    } else {
+      console.log('No se pudo actualizar el barbero en la base de datos, pero se guardó localmente');
+    }
+  } catch (e) {
+    console.error('Error al asignar barbero:', e);
+  }
+  
+  showBarberoSelector.value = false;
+  await cargarCitas();
+}
 
 // Funciones para obtener nombres por id
 function getNombreUsuario(id) {
@@ -186,7 +240,21 @@ async function sancionarUsuario(userId) {
     <div v-if="loading">Cargando...</div>
     <div v-else-if="error" class="error-message">{{ error }}</div>
     <div v-else>
-      <div v-if="rol === 'empleado' && !empleadoBarberoId" class="warning-message">
+      <div v-if="rol === 'empleado' && showBarberoSelector" class="barbero-selector">
+        <h2>Selecciona tu barbero</h2>
+        <p>No se ha podido determinar automáticamente qué barbero eres. Por favor, selecciona tu barbero de la lista:</p>
+        <div class="selector-container">
+          <select v-model="selectedBarbero">
+            <option :value="null">Selecciona un barbero</option>
+            <option v-for="barbero in barberos" :key="barbero.id" :value="barbero.id">
+              {{ barbero.nombre }}
+            </option>
+          </select>
+          <button @click="seleccionarBarbero" class="btn-primary">Confirmar</button>
+        </div>
+      </div>
+      
+      <div v-else-if="rol === 'empleado' && !empleadoBarberoId" class="warning-message">
         <p>No se encontró un barbero correspondiente para ti. Contacta con el administrador.</p>
       </div>
       <table v-else-if="citasFiltradas.length">
@@ -239,6 +307,7 @@ async function sancionarUsuario(userId) {
     </div>
   </div>
 </template>
+
 <style scoped>
 .landing {
   text-align: center;
@@ -271,5 +340,36 @@ th, td {
   padding: 10px;
   border-radius: 4px;
   margin: 10px 0;
+}
+.barbero-selector {
+  background-color: #e8f5e9;
+  padding: 20px;
+  border-radius: 8px;
+  margin: 20px auto;
+  max-width: 500px;
+}
+.selector-container {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 15px;
+}
+select {
+  padding: 8px;
+  font-size: 16px;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+}
+.btn-primary {
+  background-color: #1976d2;
+  color: white;
+  border: none;
+  padding: 10px 15px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 16px;
+}
+.btn-primary:hover {
+  background-color: #1565c0;
 }
 </style>
