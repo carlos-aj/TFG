@@ -5,27 +5,24 @@ import bcrypt from 'bcrypt';
 
 const JWT_SECRET = process.env.JWT_SECRET;
 
-export async function getUserById(req: Request, res: Response) {
+export async function getUserById(req: Request, res: Response): Promise<void> {
   try{
     const id = parseInt(req.params.id);
-    if (isNaN(id)) {
-      res.status(400).json({ message: 'ID inválido' });
-    }else{
-      const user = await UserService.getUserById(id);
+    const user = await UserService.getUserById(id);
 
-      if (!user) {
-        res.status(404).json({ message: 'User not found' });
-      }
+    if(!user){
+      res.status(404).json({ message: 'User not found' });
+      return;
+    }
 
-      res.json(user);
-  }
-  }catch (err) {
+    res.json(user);
+  }catch (err){
     console.error('Error getting user:', err);
     res.status(500).json({ message: 'Error getting user' });
   }
 }
 
-export async function getAllUsers(req: Request, res: Response) {
+export async function getAllUsers(req: Request, res: Response): Promise<void> {
   try{
     const users = await UserService.getAllUsers();
     
@@ -47,44 +44,39 @@ export async function getAllUsers(req: Request, res: Response) {
   }
 }
 
-export async function createUser(req: Request, res: Response) {
-  try {
-    const { nombre, apellidos, email, telefono, contrasena, rol } = req.body;
-
-    if (!nombre || typeof nombre !== 'string') {
-      res.status(400).json({ message: 'El nombre es obligatorio' });
+export async function createUser(req: Request, res: Response): Promise<void> {
+  try{
+    const userData = req.body;
+    const newUser = await UserService.createUser(userData);
+    
+    res.status(201).json({
+      message: 'Usuario creado exitosamente. Por favor, revisa tu correo para confirmar tu cuenta.',
+      user: {
+        id: newUser.id,
+        nombre: newUser.nombre,
+        apellidos: newUser.apellidos,
+        email: newUser.email,
+        rol: newUser.rol
+      }
+    });
+  }catch (err: any){
+    console.error('Error creating user:', err);
+    if (err.code === '23505' && err.constraint === 'users_email_unique') {
+      res.status(409).json({ message: 'El correo electrónico ya está registrado' });
+      return;
     }
-    if (!apellidos || typeof apellidos !== 'string') {
-      res.status(400).json({ message: 'Los apellidos son obligatorios' });
-    }
-    if (!email || !/\S+@\S+\.\S+/.test(email)) {
-      res.status(400).json({ message: 'Introduce un email válido' });
-    }
-    if (!telefono || !/^\d{9,15}$/.test(telefono)) {
-      res.status(400).json({ message: 'Introduce un número de teléfono válido' });
-    }
-    if (!contrasena || contrasena.length < 6) {
-      res.status(400).json({ message: 'La contraseña debe tener al menos 6 caracteres' });
-    }
-    if (!rol) {
-      res.status(400).json({ message: 'El rol es obligatorio' });
-    }
-
-    const user = await UserService.createUser(req.body);
-    res.status(201).json(user);
-  } catch (err) {
-    console.log('Error creating user:', err);
-    res.status(500).json({ message: 'Error creating user' });
+    res.status(500).json({ message: 'Error al crear el usuario' });
   }
 }
 
-export async function deleteUser(req: Request, res: Response) {
+export async function deleteUser(req: Request, res: Response): Promise<void> {
   try{
     const id = parseInt(req.params.id);
     const deleted = await UserService.deleteUser(id);
 
     if(deleted === 0){
       res.status(404).json({ message: 'User not found' });
+      return;
     }
 
     res.json({ message: 'User deleted successfully' });
@@ -94,7 +86,7 @@ export async function deleteUser(req: Request, res: Response) {
   }
 }
 
-export async function updateUser(req: Request, res: Response) {
+export async function updateUser(req: Request, res: Response): Promise<void> {
   try{
     const id = parseInt(req.params.id);
     const data = req.body
@@ -102,6 +94,7 @@ export async function updateUser(req: Request, res: Response) {
 
     if (!updatedUser) {
       res.status(404).json({ message: 'User not found' });
+      return;
     }
 
     res.json(updatedUser);
@@ -111,14 +104,15 @@ export async function updateUser(req: Request, res: Response) {
   }
 }
 
-export async function confirmUser(req: Request, res: Response) {
-    console.log('Entrando en confirmUser');
+export async function confirmUser(req: Request, res: Response): Promise<void> {
+  console.log('Entrando en confirmUser');
   try{
     const token = req.query.token as string;
     const user = await UserService.confirmUser(token);
 
     if (!user) {
-     res.status(404).json({ message: 'User not found' });
+      res.status(404).json({ message: 'User not found' });
+      return;
     }
 
     res.json({ message: 'User confirmed successfully' });
@@ -128,7 +122,7 @@ export async function confirmUser(req: Request, res: Response) {
   }
 }
 
-export async function login(req: Request, res: Response) {
+export async function login(req: Request, res: Response): Promise<void> {
   const { correo, contrasena } = req.body;
 
   if (!correo || !contrasena) {
@@ -215,7 +209,7 @@ export async function login(req: Request, res: Response) {
   }
 }
 
-export async function logout(req: Request, res: Response) {
+export async function logout(req: Request, res: Response): Promise<void> {
   res.clearCookie('token', {
     httpOnly: true,
     secure: true,
@@ -224,44 +218,49 @@ export async function logout(req: Request, res: Response) {
   res.json({ message: 'Logout successful' });
 }
 
-export async function sancionarUsuario(req: Request, res: Response) {
+export async function sancionarUsuario(req: Request, res: Response): Promise<void> {
   try {
     const id = parseInt(req.params.id);
     const user = await UserService.getUserById(id);
     if (!user) {
       res.status(404).json({ message: 'User not found' });
-    }else{
-      const nuevaPenalizacion = (user.penalizacion || 0) + 1;
-      const updated = await UserService.updateUser({ penalizacion: nuevaPenalizacion }, id);
-      res.json({ message: 'Usuario sancionado', penalizacion: nuevaPenalizacion });
+      return;
     }
+    
+    const nuevaPenalizacion = (user.penalizacion || 0) + 1;
+    const updated = await UserService.updateUser({ penalizacion: nuevaPenalizacion }, id);
+    res.json({ message: 'Usuario sancionado', penalizacion: nuevaPenalizacion });
   } catch (err) {
     res.status(500).json({ message: 'Error sancionando usuario' });
   }
 }
 
-export async function asignarBarbero(req: Request, res: Response) {
+export async function asignarBarbero(req: Request, res: Response): Promise<void> {
   try {
     const userId = parseInt(req.params.id);
     const { barbero_id } = req.body;
     
     if (!barbero_id) {
-      return res.status(400).json({ message: 'El ID del barbero es obligatorio' });
+      res.status(400).json({ message: 'El ID del barbero es obligatorio' });
+      return;
     }
     
     const user = await UserService.getUserById(userId);
     if (!user) {
-      return res.status(404).json({ message: 'Usuario no encontrado' });
+      res.status(404).json({ message: 'Usuario no encontrado' });
+      return;
     }
     
     if (user.rol !== 'empleado') {
-      return res.status(400).json({ message: 'Solo se puede asignar un barbero a usuarios con rol "empleado"' });
+      res.status(400).json({ message: 'Solo se puede asignar un barbero a usuarios con rol "empleado"' });
+      return;
     }
     
     // Verificar que el barbero existe
     const barbero = await UserService.getBarberoById(parseInt(barbero_id));
     if (!barbero) {
-      return res.status(404).json({ message: 'Barbero no encontrado' });
+      res.status(404).json({ message: 'Barbero no encontrado' });
+      return;
     }
     
     // Actualizar el usuario con el barbero_id
