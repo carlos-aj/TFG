@@ -155,12 +155,15 @@
                   class="form-field"
                 ></v-text-field>
               </v-col>
-              
+            </v-row>
+            
+            <v-row>
               <v-col cols="12" class="d-flex justify-end">
                 <v-btn 
                   type="submit" 
                   color="accent"
-                  class="font-weight-bold form-button"
+                  class="font-weight-bold form-button mt-4"
+                  min-width="120"
                 >
                   Crear
                 </v-btn>
