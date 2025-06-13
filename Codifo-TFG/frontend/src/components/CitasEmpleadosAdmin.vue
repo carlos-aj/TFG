@@ -35,30 +35,6 @@ const hoy = `${fechaActual.getFullYear()}-${String(fechaActual.getMonth() + 1).p
 console.log('[DEBUG FECHAS] Fecha HOY corregida:', hoy);
 
 onMounted(async () => {
-  // Animaciones iniciales
-  gsap.from('.primary-title', {
-    opacity: 0,
-    y: -30,
-    duration: 0.8,
-    ease: 'power2.out'
-  });
-  
-  gsap.from('.title-underline', {
-    opacity: 0,
-    width: 0,
-    duration: 0.8,
-    delay: 0.2,
-    ease: 'power2.out'
-  });
-  
-  gsap.from('.fade-in', {
-    opacity: 0,
-    y: 30,
-    duration: 0.8,
-    delay: 0.3,
-    ease: 'back.out(1.7)'
-  });
-  
   try {
     // Cargar barberos primero para poder asociar el empleado con su barbero
     const resBarberos = await fetch(`${API_URL}/api/barbero`, {
@@ -97,16 +73,29 @@ onMounted(async () => {
     // Cargar citas
     await cargarCitas();
     
-    // Animar las filas de la tabla de citas
-    setTimeout(() => {
-      gsap.from('.cita-row', {
-        opacity: 0,
-        y: 15,
-        duration: 0.5,
-        stagger: 0.05,
-        ease: 'power2.out'
-      });
-    }, 500);
+    // Animaciones iniciales
+    gsap.from('.primary-title', {
+      opacity: 0,
+      y: -30,
+      duration: 0.8,
+      ease: 'power2.out'
+    });
+    
+    gsap.from('.title-underline', {
+      opacity: 0,
+      width: 0,
+      duration: 0.8,
+      delay: 0.2,
+      ease: 'power2.out'
+    });
+    
+    gsap.from('.fade-in', {
+      opacity: 0,
+      y: 30,
+      duration: 0.8,
+      delay: 0.3,
+      ease: 'back.out(1.7)'
+    });
     
     // Logs adicionales para depurar
     console.log('[DEBUG FECHAS] Fecha actual completa:', new Date());
@@ -344,7 +333,7 @@ async function sancionarUsuario(userId) {
 
       <v-row v-else-if="error">
         <v-col cols="12">
-          <v-alert type="error" variant="tonal" class="fade-in">{{ error }}</v-alert>
+          <v-alert type="error" variant="tonal">{{ error }}</v-alert>
         </v-col>
       </v-row>
 
@@ -385,7 +374,7 @@ async function sancionarUsuario(userId) {
             <v-alert 
               type="warning"
               variant="tonal"
-              class="mb-6 fade-in"
+              class="fade-in"
             >
               No se encontró un barbero correspondiente para ti. Contacta con el administrador.
             </v-alert>
@@ -472,7 +461,7 @@ async function sancionarUsuario(userId) {
                         </tr>
                       </thead>
                       <tbody>
-                        <tr v-for="(cita, index) in citasFiltradas" :key="cita.id" class="cita-row">
+                        <tr v-for="(cita, index) in citasFiltradas" :key="cita.id" class="cita-row table-row">
                           <td>
                             <template v-if="cita.nombre_invitado">
                               {{ cita.nombre_invitado }} <v-chip size="x-small" color="primary" class="ml-1">Invitado</v-chip>
@@ -676,34 +665,12 @@ async function sancionarUsuario(userId) {
 }
 
 .stat-card {
-  background-color: rgba(60, 60, 60, 0.7) !important;
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  background-color: rgba(60, 60, 60, 0.9) !important;
   border: 1px solid rgba(255, 255, 255, 0.1);
   color: #D9D9D9 !important;
   border-radius: 10px;
   overflow: hidden;
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-
-.stat-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 12px 25px rgba(0, 0, 0, 0.4);
-}
-
-/* Animaciones */
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-.fade-in {
-  animation: fadeIn 0.5s ease-out forwards;
-}
-
-.cita-row {
-  transition: all 0.3s ease;
 }
 
 .cita-row:hover {

@@ -42,43 +42,12 @@ const firstDayOfWeek = computed(() => {
 // Observar cuando se abre el modal de citas
 watch(showCitasModal, (newVal) => {
   if (newVal) {
-    setTimeout(() => {
-      gsap.from('.cita-item', {
-        opacity: 0,
-        y: 15,
-        duration: 0.4,
-        stagger: 0.1,
-        ease: 'power2.out'
-      });
-    }, 100);
+    // Cargar las citas del día seleccionado
+    console.log(`Mostrando citas para el día ${selectedDay.value}`);
   }
 });
 
 onMounted(async () => {
-  // Animaciones iniciales
-  gsap.from('.primary-title', {
-    opacity: 0,
-    y: -30,
-    duration: 0.8,
-    ease: 'power2.out'
-  });
-  
-  gsap.from('.title-underline', {
-    opacity: 0,
-    width: 0,
-    duration: 0.8,
-    delay: 0.2,
-    ease: 'power2.out'
-  });
-  
-  gsap.from('.fade-in', {
-    opacity: 0,
-    y: 30,
-    duration: 0.8,
-    delay: 0.3,
-    ease: 'back.out(1.7)'
-  });
-  
   try {
     // Cargar barberos primero para poder asociar el empleado con su barbero
     const resBarberos = await fetch(`${API_URL}/api/barbero`, {
@@ -117,16 +86,29 @@ onMounted(async () => {
     // Cargar citas
     await loadCitas();
     
-    // Animar los días del calendario
-    setTimeout(() => {
-      gsap.from('.calendar-day-animate', {
-        opacity: 0,
-        scale: 0.9,
-        duration: 0.5,
-        stagger: 0.01,
-        ease: 'back.out(1.7)'
-      });
-    }, 500);
+    // Animaciones iniciales
+    gsap.from('.primary-title', {
+      opacity: 0,
+      y: -30,
+      duration: 0.8,
+      ease: 'power2.out'
+    });
+    
+    gsap.from('.title-underline', {
+      opacity: 0,
+      width: 0,
+      duration: 0.8,
+      delay: 0.2,
+      ease: 'power2.out'
+    });
+    
+    gsap.from('.fade-in', {
+      opacity: 0,
+      y: 30,
+      duration: 0.8,
+      delay: 0.3,
+      ease: 'back.out(1.7)'
+    });
     
   } catch (e) {
     error.value = e.message
@@ -284,6 +266,20 @@ function isToday(day) {
   )
 }
 
+function hasCitas(day) {
+  return citasPorDia.value[day] && citasPorDia.value[day] > 0;
+}
+
+function isClosed(day) {
+  return getMaxCitas(day) === 0;
+}
+
+function openDayModal(day) {
+  if (getMaxCitas(day) > 0) {
+    selectDay(day);
+  }
+}
+
 function selectDay(day) {
   selectedDay.value = day
   showCitasModal.value = true
@@ -412,10 +408,10 @@ const processCitasForCalendar = () => {
 
 <template>
   <div class="mes-completo-page">
-    <v-container class="mes-completo-container px-4 px-sm-6 px-md-8">
+    <v-container class="mes-completo-container">
       <v-row>
         <v-col cols="12" class="text-center mb-4">
-          <h1 class="primary-title fade-in">CALENDARIO DE CITAS</h1>
+          <h1 class="primary-title fade-in">CALENDARIO MENSUAL</h1>
           <div class="title-underline mx-auto fade-in"></div>
         </v-col>
       </v-row>
@@ -429,7 +425,7 @@ const processCitasForCalendar = () => {
 
       <v-row v-else-if="error">
         <v-col cols="12">
-          <v-alert type="error" variant="tonal" class="fade-in">{{ error }}</v-alert>
+          <v-alert type="error" variant="tonal">{{ error }}</v-alert>
         </v-col>
       </v-row>
 
@@ -490,13 +486,13 @@ const processCitasForCalendar = () => {
                   <div
                     v-for="day in daysInMonth"
                     :key="day"
-                    class="calendar-day calendar-day-animate"
+                    class="calendar-day"
                     :class="{ 
                       'today': isToday(day), 
-                      'cerrado': getMaxCitas(day) === 0,
-                      'has-citas': citasPorDia[day] > 0
+                      'has-citas': hasCitas(day),
+                      'cerrado': isClosed(day)
                     }"
-                    @click="getMaxCitas(day) > 0 ? selectDay(day) : null"
+                    @click="openDayModal(day)"
                   >
                     <div class="day-number">{{ day }}</div>
                     <div class="citas-count">
@@ -606,9 +602,7 @@ const processCitasForCalendar = () => {
 }
 
 .glass-card {
-  background-color: rgba(60, 60, 60, 0.7) !important;
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  background-color: rgba(60, 60, 60, 1) !important;
   border: 1px solid rgba(255, 255, 255, 0.1);
   color: #D9D9D9 !important;
   border-radius: 10px;
@@ -634,13 +628,10 @@ const processCitasForCalendar = () => {
   justify-content: space-between;
   padding: 8px 4px;
   cursor: pointer;
-  transition: all 0.3s ease;
 }
 
 .calendar-day:hover:not(.blank):not(.header):not(.cerrado) {
   background: rgba(245, 224, 9, 0.1);
-  transform: translateY(-3px);
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
 }
 
 .calendar-day.today {
@@ -747,21 +738,4 @@ const processCitasForCalendar = () => {
   opacity: 1 !important;
 }
 
-/* Animaciones */
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-.fade-in {
-  animation: fadeIn 0.5s ease-out forwards;
-}
-
-.calendar-day-animate {
-  transition: all 0.3s ease;
-}
-
-.cita-item {
-  transition: all 0.3s ease;
-}
 </style>
