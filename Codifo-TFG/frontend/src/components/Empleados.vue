@@ -280,15 +280,8 @@ const editForm = ref({ nombre: '', especialidad: '' })
 // Observar cuando se abre el modal de estadísticas
 watch(showStats, (newVal) => {
   if (newVal) {
-    setTimeout(() => {
-      gsap.from('.chart-container', {
-        opacity: 0,
-        y: 30,
-        duration: 0.7,
-        stagger: 0.2,
-        ease: 'power2.out'
-      });
-    }, 300);
+    // Cargar datos de estadísticas si es necesario
+    cargarEstadisticas();
   }
 });
 
