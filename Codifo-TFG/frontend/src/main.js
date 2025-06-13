@@ -3,6 +3,7 @@ import App from './App.vue'
 import router from './plugins/router'
 import vuetify from './plugins/vuetify'
 import './style.css'
+import './assets/animations.css'
 import '@mdi/font/css/materialdesignicons.css'
 
 const app = createApp(App)

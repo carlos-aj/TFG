@@ -1,21 +1,62 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
+import { gsap } from 'gsap';
 
 const opiniones = ref([
   { text: '¡Excelente servicio y atención! El ambiente es acogedor y el personal muy profesional.', author: 'Juan Pérez', rating: 5 },
   { text: 'El mejor corte que he tenido. Siempre saben exactamente lo que quiero.', author: 'Ana Gómez', rating: 5 },
   { text: 'Ambiente muy agradable y profesionales. Recomendado para quienes buscan calidad.', author: 'Luis Martínez', rating: 4 }
 ])
+
+onMounted(() => {
+  // Animación para el hero
+  gsap.from('.hero-content > *', {
+    opacity: 0,
+    y: 30,
+    duration: 1,
+    stagger: 0.2,
+    ease: 'power2.out'
+  });
+  
+  // Animación para las secciones
+  gsap.from('.section-title, .section-divider', {
+    opacity: 0,
+    y: 20,
+    duration: 0.8,
+    stagger: 0.2,
+    delay: 0.5,
+    ease: 'power2.out'
+  });
+  
+  // Animación para los miembros del equipo
+  gsap.from('.team-member', {
+    opacity: 0,
+    y: 50,
+    duration: 0.8,
+    stagger: 0.2,
+    delay: 0.5,
+    ease: 'back.out(1.7)'
+  });
+  
+  // Animación para las opiniones
+  gsap.from('.carousel-wrapper', {
+    opacity: 0,
+    scale: 0.9,
+    duration: 0.8,
+    delay: 0.5,
+    ease: 'back.out(1.2)'
+  });
+});
 </script>
 
 <template> 
   <section class="hero">
     <div class="overlay"></div>
     <div class="hero-content">
-      <h1 class="hero-title dm-serif font-italic">ESTILO Y TRADICIÓN</h1>
-      <p class="hero-subtitle normal-text">Barbería de estilo clásico con un toque contemporáneo</p>
+      <h1 class="hero-title dm-serif font-italic fade-in">ESTILO Y TRADICIÓN</h1>
+      <p class="hero-subtitle normal-text fade-in">Barbería de estilo clásico con un toque contemporáneo</p>
       <v-btn 
-        class="reserve-btn mt-6" 
+        class="reserve-btn mt-6 fade-in" 
         size="large" 
         elevation="4"
         color="var(--accent-color)"
@@ -28,12 +69,12 @@ const opiniones = ref([
 
   <section class="equipo">
     <div class="section-container">
-      <h1 class="section-title dm-serif font-italic">Nuestro Equipo</h1>
-      <div class="section-divider"></div>
+      <h1 class="section-title dm-serif font-italic fade-in">Nuestro Equipo</h1>
+      <div class="section-divider fade-in"></div>
       
       <v-row class="mt-8">
         <v-col cols="12" sm="4">
-          <div class="team-member">
+          <div class="team-member fade-in">
             <div class="img-container">
               <img src="../assets/Barbero1.png" alt="Malik Johnson"/>
             </div>
@@ -43,7 +84,7 @@ const opiniones = ref([
         </v-col>
         
         <v-col cols="12" sm="4">
-          <div class="team-member">
+          <div class="team-member fade-in">
             <div class="img-container">
               <img src="../assets/Barbero2.png" alt="Luka Petrov"/>
             </div>
@@ -53,7 +94,7 @@ const opiniones = ref([
         </v-col>
         
         <v-col cols="12" sm="4">
-          <div class="team-member">
+          <div class="team-member fade-in">
             <div class="img-container">
               <img src="../assets/Barbero3.png" alt="Santi Rivas"/>
             </div>
@@ -67,10 +108,10 @@ const opiniones = ref([
 
   <section class="opiniones">
     <div class="section-container">
-      <h1 class="section-title dm-serif font-italic">Opiniones</h1>
-      <div class="section-divider"></div>
+      <h1 class="section-title dm-serif font-italic fade-in">Opiniones</h1>
+      <div class="section-divider fade-in"></div>
       
-      <div class="carousel-wrapper mt-8">
+      <div class="carousel-wrapper mt-8 fade-in">
         <v-carousel
           hide-delimiter-background
           show-arrows="hover"

@@ -2,18 +2,18 @@
   <div class="register-page">
     <div class="overlay"></div>
     <div class="register-container">
-      <v-card class="register-card" elevation="10" rounded="lg">
-        <v-card-title class="text-h4 text-center dm-serif font-italic">Crear Cuenta</v-card-title>
+      <v-card class="register-card fade-in" elevation="10" rounded="lg">
+        <v-card-title class="text-h4 text-center dm-serif font-italic fade-in">Crear Cuenta</v-card-title>
         
         <v-card-text>
           <v-alert
             v-if="successMessage"
             type="success"
-            class="mb-4"
+            class="mb-4 fade-in"
             density="compact"
           >{{ successMessage }}</v-alert>
           
-          <v-form @submit.prevent="register">
+          <v-form @submit.prevent="register" class="form-container">
             <v-row>
               <v-col cols="12" md="6">
                 <v-text-field
@@ -24,6 +24,7 @@
                   prepend-inner-icon="mdi-account"
                   bg-color="rgba(43, 43, 43, 0.7)"
                   color="var(--accent-color)"
+                  class="fade-in"
                 ></v-text-field>
               </v-col>
               
@@ -36,6 +37,7 @@
                   prepend-inner-icon="mdi-account-outline"
                   bg-color="rgba(43, 43, 43, 0.7)"
                   color="var(--accent-color)"
+                  class="fade-in"
                 ></v-text-field>
               </v-col>
             </v-row>
@@ -47,7 +49,7 @@
               :error-messages="errors.email"
               variant="outlined"
               prepend-inner-icon="mdi-email"
-              class="mb-3"
+              class="mb-3 fade-in"
               bg-color="rgba(43, 43, 43, 0.7)"
               color="var(--accent-color)"
             ></v-text-field>
@@ -59,7 +61,7 @@
               :error-messages="errors.phone"
               variant="outlined"
               prepend-inner-icon="mdi-phone"
-              class="mb-3"
+              class="mb-3 fade-in"
               bg-color="rgba(43, 43, 43, 0.7)"
               color="var(--accent-color)"
             ></v-text-field>
@@ -71,7 +73,7 @@
               :error-messages="errors.password"
               variant="outlined"
               prepend-inner-icon="mdi-lock"
-              class="mb-3"
+              class="mb-3 fade-in"
               bg-color="rgba(43, 43, 43, 0.7)"
               color="var(--accent-color)"
             ></v-text-field>
@@ -85,13 +87,13 @@
                 :error-messages="errors.confirmPassword"
                 variant="outlined"
                 prepend-inner-icon="mdi-lock-check"
-                class="mb-4"
+                class="mb-4 fade-in"
                 bg-color="rgba(43, 43, 43, 0.7)"
                 color="var(--accent-color)"
               ></v-text-field>
             </v-expand-transition>
             
-            <div class="my-4 text-center normal-text">
+            <div class="my-4 text-center normal-text fade-in">
               <span>¿Ya tienes cuenta? </span>
               <router-link to="/login" class="accent-link">Inicia sesión aquí</router-link>
             </div>
@@ -100,7 +102,7 @@
               color="var(--accent-color)" 
               type="submit" 
               block
-              class="register-btn mt-4"
+              class="register-btn mt-4 fade-in"
               size="large"
               elevation="3"
             >
@@ -114,7 +116,8 @@
 </template>
 
 <script setup>
-import { ref, reactive } from 'vue'
+import { ref, reactive, onMounted } from 'vue'
+import { gsap } from 'gsap'
 import { API_URL } from '../config'
 
 const username = ref('')
@@ -134,6 +137,26 @@ const errors = reactive({
   password: '',
   confirmPassword: '',
 })
+
+onMounted(() => {
+  // Animación para la tarjeta de registro
+  gsap.from('.register-card', {
+    opacity: 0,
+    y: 30,
+    duration: 0.8,
+    ease: 'power2.out'
+  });
+  
+  // Animación para el título y los elementos del formulario
+  gsap.from('.form-container > *, .form-container .v-row > *, .text-h4', {
+    opacity: 0,
+    y: 20,
+    duration: 0.6,
+    stagger: 0.1,
+    delay: 0.3,
+    ease: 'power2.out'
+  });
+});
 
 const validate = () => {
   let valid = true

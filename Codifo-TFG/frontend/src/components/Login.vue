@@ -2,10 +2,10 @@
   <div class="login-page">
     <div class="overlay"></div>
     <div class="login-container">
-      <v-card class="login-card" elevation="10" rounded="lg">
-        <v-card-title class="text-h4 text-center dm-serif font-italic">Iniciar Sesión</v-card-title>
+      <v-card class="login-card fade-in" elevation="10" rounded="lg">
+        <v-card-title class="text-h4 text-center dm-serif font-italic fade-in">Iniciar Sesión</v-card-title>
         <v-card-text>
-          <v-form @submit.prevent="login">
+          <v-form @submit.prevent="login" class="form-container">
             <v-text-field
               v-model="correo"
               label="Correo"
@@ -13,7 +13,7 @@
               :error-messages="errors.correo"
               variant="outlined"
               prepend-inner-icon="mdi-email"
-              class="mb-3"
+              class="mb-3 fade-in"
               bg-color="rgba(43, 43, 43, 0.7)"
               color="var(--accent-color)"
             ></v-text-field>
@@ -25,12 +25,12 @@
               :error-messages="errors.contrasena"
               variant="outlined"
               prepend-inner-icon="mdi-lock"
-              class="mb-4"
+              class="mb-4 fade-in"
               bg-color="rgba(43, 43, 43, 0.7)"
               color="var(--accent-color)"
             ></v-text-field>
 
-            <div class="my-4 text-center normal-text">
+            <div class="my-4 text-center normal-text fade-in">
               <span>¿No tienes cuenta? </span>
               <router-link to="/register" class="accent-link">Regístrate aquí</router-link>
             </div>
@@ -38,7 +38,7 @@
             <v-alert
               v-if="errors.general"
               type="error"
-              class="mb-4"
+              class="mb-4 fade-in"
               density="compact"
             >{{ errors.general }}</v-alert>
 
@@ -46,7 +46,7 @@
               color="var(--accent-color)" 
               type="submit" 
               block
-              class="login-btn mt-4"
+              class="login-btn mt-4 fade-in"
               size="large"
               elevation="3"
             >
@@ -60,8 +60,9 @@
 </template>
 
 <script setup>
-import { ref, reactive, nextTick } from 'vue'
+import { ref, reactive, nextTick, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { gsap } from 'gsap'
 import { API_URL } from '../config'
 import { saveAuthData } from '../utils/auth'
 
@@ -69,6 +70,26 @@ const correo = ref('')
 const contrasena = ref('')
 const errors = reactive({ correo: '', contrasena: '', general: '' })
 const router = useRouter()
+
+onMounted(() => {
+  // Animación para la tarjeta de login
+  gsap.from('.login-card', {
+    opacity: 0,
+    y: 30,
+    duration: 0.8,
+    ease: 'power2.out'
+  });
+  
+  // Animación para el título y los elementos del formulario
+  gsap.from('.form-container > *, .text-h4', {
+    opacity: 0,
+    y: 20,
+    duration: 0.6,
+    stagger: 0.15,
+    delay: 0.3,
+    ease: 'power2.out'
+  });
+});
 
 const validate = () => {
   let valid = true

@@ -24,6 +24,15 @@ onMounted(() => {
     ease: 'power2.out'
   });
   
+  // Animación específica para el subrayado
+  gsap.from('.title-underline', {
+    opacity: 0,
+    width: 0,
+    duration: 0.8,
+    delay: 0.2,
+    ease: 'power2.out'
+  });
+  
   // Animación para las tarjetas del equipo
   gsap.from('.team-card', {
     opacity: 0,

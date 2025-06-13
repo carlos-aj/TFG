@@ -7,9 +7,9 @@
           <path class="checkmark-check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8"/>
         </svg>
       </div>
-      <h1>¡Pago completado!</h1>
-      <p>Tu cita ha sido confirmada. Revisa tu correo para ver los detalles.</p>
-      <p>Serás redirigido al inicio en unos segundos...</p>
+      <h1 class="fade-in">¡Pago completado!</h1>
+      <p class="fade-in">Tu cita ha sido confirmada. Revisa tu correo para ver los detalles.</p>
+      <p class="fade-in">Serás redirigido al inicio en unos segundos...</p>
     </div>
   </div>
 </template>
@@ -17,6 +17,7 @@
 <script setup>
 import { onMounted, ref } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
+import { gsap } from 'gsap';
 import { API_URL } from '../config'; // Importar la URL base correcta
 import { getAuthHeaders, getToken } from '../utils/auth'; // Importar los headers de autenticación
 
@@ -27,6 +28,23 @@ const procesando = ref(false);
 onMounted(async () => {
   if (procesando.value) return;
   procesando.value = true;
+
+  // Animaciones
+  gsap.from('.success-card', {
+    opacity: 0,
+    y: 30,
+    duration: 0.8,
+    ease: 'back.out(1.7)'
+  });
+
+  gsap.from('.fade-in', {
+    opacity: 0,
+    y: 20,
+    duration: 0.6,
+    stagger: 0.2,
+    delay: 0.8,
+    ease: 'power2.out'
+  });
 
   try {
     // 1. Intentar obtener el ID de la cita de la URL
@@ -62,8 +80,16 @@ onMounted(async () => {
 
   // Redirigir al inicio después de un tiempo
   setTimeout(() => {
-    router.push('/');
-  }, 4000); // Espera 4 segundos antes de redirigir
+    // Animación de salida antes de redirigir
+    gsap.to('.success-card', {
+      opacity: 0,
+      y: -30,
+      duration: 0.6,
+      onComplete: () => {
+        router.push('/');
+      }
+    });
+  }, 3500); // Espera 3.5 segundos antes de iniciar la animación de salida
 });
 </script>
 
@@ -73,15 +99,18 @@ onMounted(async () => {
   justify-content: center;
   align-items: center;
   height: 80vh;
-  background-color: #f4f4f4;
+  background-color: var(--main-bg-color);
+  color: var(--text-color);
   font-family: Arial, sans-serif;
 }
 .success-card {
   text-align: center;
   padding: 40px;
   border-radius: 15px;
-  background: white;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  background: rgba(43, 43, 43, 0.85);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(245, 224, 9, 0.2);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
   max-width: 400px;
 }
 .icon-container {
@@ -98,7 +127,7 @@ onMounted(async () => {
   stroke-dashoffset: 166;
   stroke-width: 2;
   stroke-miterlimit: 10;
-  stroke: #7ac142;
+  stroke: var(--accent-color);
   fill: none;
   animation: stroke 0.6s cubic-bezier(0.65, 0, 0.45, 1) forwards;
 }
@@ -107,7 +136,7 @@ onMounted(async () => {
   stroke-dasharray: 48;
   stroke-dashoffset: 48;
   stroke-width: 3;
-  stroke: #7ac142;
+  stroke: var(--accent-color);
   animation: stroke 0.3s cubic-bezier(0.65, 0, 0.45, 1) 0.8s forwards;
 }
 @keyframes stroke {
@@ -116,12 +145,14 @@ onMounted(async () => {
   }
 }
 h1 {
-  color: #333;
+  color: var(--text-color);
   font-size: 24px;
   margin-bottom: 10px;
+  font-family: 'DM Serif Display', serif;
+  font-style: italic;
 }
 p {
-  color: #666;
+  color: var(--text-color);
   font-size: 16px;
   margin-bottom: 25px;
 }

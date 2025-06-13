@@ -3,13 +3,13 @@
     <v-container class="usuarios-container px-4 px-sm-6 px-md-8">
       <v-row>
         <v-col cols="12" class="text-center mb-4">
-          <h1 class="primary-title">GESTIÓN DE USUARIOS</h1>
-          <div class="title-underline mx-auto"></div>
+          <h1 class="primary-title fade-in">GESTIÓN DE USUARIOS</h1>
+          <div class="title-underline mx-auto fade-in"></div>
         </v-col>
       </v-row>
 
       <!-- Lista de usuarios -->
-      <v-card class="mb-8">
+      <v-card class="mb-8 fade-in">
         <v-card-title class="text-h5 py-4 px-6">
           Lista de Usuarios ({{ usuarios.length }})
         </v-card-title>
@@ -28,7 +28,7 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="usuario in paginatedServicios" :key="usuario.id">
+              <tr v-for="(usuario, index) in paginatedServicios" :key="usuario.id" class="table-row">
                 <td v-if="editId !== usuario.id">{{ usuario.nombre }}</td>
                 <td v-else>
                   <v-text-field 
@@ -157,13 +157,13 @@
       </v-card>
 
       <!-- Formulario para crear usuario -->
-      <v-card>
+      <v-card class="fade-in">
         <v-card-title class="text-h5 py-4 px-6">
           Crear Usuario
         </v-card-title>
         
         <v-card-text>
-          <v-form @submit.prevent="crearUsuario">
+          <v-form @submit.prevent="crearUsuario" class="form-container">
             <v-row>
               <v-col cols="12" md="6">
                 <v-text-field
@@ -171,6 +171,7 @@
                   label="Nombre"
                   variant="outlined"
                   required
+                  class="form-field"
                 ></v-text-field>
               </v-col>
               
@@ -180,6 +181,7 @@
                   label="Apellidos"
                   variant="outlined"
                   required
+                  class="form-field"
                 ></v-text-field>
               </v-col>
               
@@ -190,6 +192,7 @@
                   variant="outlined"
                   type="email"
                   required
+                  class="form-field"
                 ></v-text-field>
               </v-col>
               
@@ -199,6 +202,7 @@
                   label="Teléfono"
                   variant="outlined"
                   required
+                  class="form-field"
                 ></v-text-field>
               </v-col>
               
@@ -210,6 +214,7 @@
                   type="password"
                   required
                   minlength="6"
+                  class="form-field"
                 ></v-text-field>
               </v-col>
               
@@ -224,6 +229,7 @@
                   ]"
                   variant="outlined"
                   required
+                  class="form-field"
                 ></v-select>
               </v-col>
               
@@ -231,7 +237,7 @@
                 <v-btn 
                   type="submit" 
                   color="accent"
-                  class="font-weight-bold"
+                  class="font-weight-bold form-button"
                 >
                   Crear
                 </v-btn>
@@ -243,7 +249,7 @@
             v-if="mensaje"
             type="success"
             variant="tonal"
-            class="mt-4"
+            class="mt-4 alert-message"
           >
             {{ mensaje }}
           </v-alert>
@@ -252,7 +258,7 @@
             v-if="error"
             type="error"
             variant="tonal"
-            class="mt-4"
+            class="mt-4 alert-message"
           >
             {{ error }}
           </v-alert>
@@ -299,7 +305,6 @@ const paginatedServicios = computed(() => {
   return usuarios.value.slice(start, start + pageSize.value)
 })
 
-
 async function cargarUsuarios() {
   try {
     const response = await fetch(`${API_URL}/api/user`, {
@@ -341,14 +346,6 @@ async function crearUsuario() {
       form.value.contrasena = ''
       form.value.rol = 'user'
       await cargarUsuarios()
-      
-      // Animación para el mensaje de éxito
-      gsap.from('.v-alert', {
-        opacity: 0,
-        y: 20,
-        duration: 0.5,
-        ease: 'power2.out'
-      })
     } else {
       const data = await response.json()
       error.value = data.message || 'Error al crear usuario'
@@ -387,6 +384,7 @@ function startEdit(usuario) {
     penalizacion: usuario.penalizacion
   }
 }
+
 function cancelEdit() {
   editId.value = null
   editForm.value = {
@@ -398,6 +396,7 @@ function cancelEdit() {
     penalizacion: 0
   }
 }
+
 async function saveEdit(id) {
   try {
     const response = await fetch(`${API_URL}/api/user/${id}`, {
@@ -418,7 +417,49 @@ async function saveEdit(id) {
 }
 
 onMounted(() => {
-  cargarUsuarios()
+  // Animaciones iniciales simples sin efectos de scroll
+  gsap.from('.primary-title', {
+    opacity: 0,
+    y: -30,
+    duration: 0.8,
+    ease: 'power2.out'
+  });
+  
+  gsap.from('.title-underline', {
+    opacity: 0,
+    width: 0,
+    duration: 0.8,
+    delay: 0.2,
+    ease: 'power2.out'
+  });
+  
+  gsap.from('.fade-in', {
+    opacity: 0,
+    y: 30,
+    duration: 0.8,
+    delay: 0.3,
+    ease: 'back.out(1.7)'
+  });
+  
+  // Cargar datos y animar campos del formulario
+  cargarUsuarios();
+  setTimeout(() => {
+    gsap.from('.form-field', {
+      opacity: 0,
+      y: 20,
+      duration: 0.6,
+      delay: 0.3,
+      ease: 'power2.out'
+    });
+    
+    gsap.from('.form-button', {
+      opacity: 0,
+      y: 20,
+      duration: 0.6,
+      delay: 0.6,
+      ease: 'power2.out'
+    });
+  }, 800);
 })
 </script>
 
@@ -550,6 +591,10 @@ onMounted(() => {
 
 .fade-in {
   animation: fadeIn 0.5s ease-out forwards;
+}
+
+.table-row {
+  transition: all 0.3s ease;
 }
 
 /* Responsive adjustments */

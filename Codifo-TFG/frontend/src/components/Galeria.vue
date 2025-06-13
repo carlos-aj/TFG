@@ -1,6 +1,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { API_URL } from '../config'
+import { gsap } from 'gsap'
 
 const galerias = ref([])
 const barberos = ref([])
@@ -46,7 +47,6 @@ async function fetchGalerias() {
   loading.value = false
 }
 
-// Utilidad para mezclar un array
 function shuffleArray(array) {
   return array
     .map(value => ({ value, sort: Math.random() }))
@@ -68,6 +68,32 @@ function abrirModal(galeria) {
   galeriaActual.value = galeria
   imagenesModal.value = galeria.imagenes
   modalOpen.value = true
+  
+  // Animar la apertura del modal
+  setTimeout(() => {
+    gsap.from('.modal-content', {
+      opacity: 0,
+      scale: 0.8,
+      duration: 0.5,
+      ease: 'back.out(1.7)'
+    });
+    
+    gsap.from('.modal-content .title-underline', {
+      opacity: 0,
+      width: 0,
+      duration: 0.8,
+      delay: 0.3,
+      ease: 'power2.out'
+    });
+    
+    gsap.from('.carousel-container', {
+      opacity: 0,
+      y: 30,
+      duration: 0.8,
+      delay: 0.2,
+      ease: 'power2.out'
+    });
+  }, 10);
 }
 
 function cerrarModal() {
@@ -79,6 +105,16 @@ function cerrarModal() {
 // --- ADMIN FUNCIONES ---
 function abrirAdminMenu() {
   showAdminMenu.value = true
+  
+  // Animar la apertura del menú admin
+  setTimeout(() => {
+    gsap.from('.admin-menu-content', {
+      opacity: 0,
+      y: 30,
+      duration: 0.5,
+      ease: 'back.out(1.7)'
+    });
+  }, 10);
 }
 
 function cerrarAdminMenu() {
@@ -92,7 +128,36 @@ function seleccionarAccion(accion) {
   selectedGrupos.value = []
   newImageFiles.value = []
   newBarberoId.value = ''
-  if (accion === 'añadir') showAddModal.value = true
+  if (accion === 'añadir') {
+    showAddModal.value = true
+    
+    // Animar el modal de añadir
+    setTimeout(() => {
+      gsap.from('.modal-content', {
+        opacity: 0,
+        scale: 0.8,
+        duration: 0.5,
+        ease: 'back.out(1.7)'
+      });
+      
+      gsap.from('.modal-content .title-underline', {
+        opacity: 0,
+        width: 0,
+        duration: 0.8,
+        delay: 0.3,
+        ease: 'power2.out'
+      });
+      
+      gsap.from('.fade-in', {
+        opacity: 0,
+        y: 30,
+        duration: 0.8,
+        stagger: 0.2,
+        delay: 0.2,
+        ease: 'power2.out'
+      });
+    }, 10);
+  }
 }
 
 function desactivarAdmin() {
@@ -156,6 +221,34 @@ async function guardarNuevaImagen() {
 }
 
 onMounted(() => {
+  // Animación para el título y elementos con fade-in
+  gsap.from('.fade-in', {
+    opacity: 0,
+    y: 30,
+    duration: 1,
+    stagger: 0.2,
+    ease: 'power2.out'
+  });
+  
+  // Animación específica para el subrayado
+  gsap.from('.title-underline', {
+    opacity: 0,
+    width: 0,
+    duration: 0.8,
+    delay: 0.2,
+    ease: 'power2.out'
+  });
+  
+  // Animación para las tarjetas de la galería
+  gsap.from('.galeria-item', {
+    opacity: 0,
+    y: 50,
+    duration: 0.8,
+    stagger: 0.2,
+    delay: 0.5,
+    ease: 'back.out(1.7)'
+  });
+  
   fetchGalerias()
   fetchBarberos()
 })
@@ -163,8 +256,9 @@ onMounted(() => {
 
 <template>
   <div class="landing">
-    <h1>Galería</h1>
-    <div v-if="isAdmin" class="admin-bar">
+    <h1 class="fade-in">Galería</h1>
+    <div class="title-underline mx-auto fade-in"></div>
+    <div v-if="isAdmin" class="admin-bar fade-in">
       <button class="admin-btn" @click="abrirAdminMenu" v-if="!adminMode">Administrar galería</button>
       <button class="admin-btn" @click="desactivarAdmin" v-if="adminMode">Salir administración</button>
       <!-- Menú modal pequeño para elegir acción -->
@@ -175,13 +269,22 @@ onMounted(() => {
         </div>
       </div>
     </div>
+    
+    <!-- Estado de carga -->
+    <v-row v-if="loading" justify="center" class="my-8">
+      <v-col cols="12" class="text-center">
+        <v-progress-circular indeterminate color="accent" size="64"></v-progress-circular>
+        <div class="mt-4">Cargando imágenes...</div>
+      </v-col>
+    </v-row>
+    
     <!-- Eliminar grupos -->
     <div v-if="adminMode && adminAction === 'eliminar'" style="margin-bottom:1em;">
       <div class="galeria-grid">
         <div
           v-for="galeria in galerias"
           :key="galeria.id"
-          class="galeria-item"
+          class="galeria-item fade-in"
           :class="{ selected: selectedGrupos.includes(galeria.id) }"
           @click="toggleGrupo(galeria.id)"
           style="cursor:pointer; position:relative;"
@@ -200,22 +303,23 @@ onMounted(() => {
           />
         </div>
       </div>
-      <div class="admin-actions">
+      <div class="admin-actions fade-in">
         <button class="admin-action-btn eliminar-btn" @click="eliminarGruposSeleccionados" :disabled="selectedGrupos.length === 0">
           Eliminar grupos seleccionados
         </button>
-        <button v-if="!totalLoaded" @click="cargarMas" :disabled="loading" class="admin-action-btn cargar-btn">
-          {{ loading ? 'Cargando...' : 'Cargar más' }}
+        <button v-if="!totalLoaded && !loading" @click="cargarMas" class="admin-action-btn cargar-btn">
+          Cargar más
         </button>
-        <p v-else class="fin">No hay más imágenes.</p>
+        <p v-else-if="totalLoaded" class="fin">No hay más imágenes.</p>
       </div>
     </div>
     <!-- Modal para añadir imágenes -->
     <div v-if="showAddModal" class="modal-overlay" @click.self="desactivarAdmin">
       <div class="modal-content">
         <button class="cerrar-modal" @click="desactivarAdmin">×</button>
-        <h2>Añadir imágenes</h2>
-        <form @submit.prevent="guardarNuevaImagen" style="margin-top:1em;">
+        <h2 class="fade-in">Añadir imágenes</h2>
+        <div class="title-underline mx-auto fade-in"></div>
+        <form @submit.prevent="guardarNuevaImagen" style="margin-top:1em;" class="fade-in">
           <label>Barbero:</label>
           <select v-model="newBarberoId" required>
             <option value="" disabled>Selecciona un barbero</option>
@@ -240,7 +344,7 @@ onMounted(() => {
       <div
         v-for="(galeria, i) in galerias"
         :key="galeria.id"
-        class="galeria-item"
+        class="galeria-item fade-in"
         @click="galeria.imagenes.length > 1 ? abrirModal(galeria) : null"
         :class="{ 'clickable': galeria.imagenes.length > 1 }"
       >
@@ -256,16 +360,17 @@ onMounted(() => {
         </div>
       </div>
     </div>
-    <button v-if="!totalLoaded && !adminMode" @click="cargarMas" :disabled="loading" class="cargar-btn">
-      {{ loading ? 'Cargando...' : 'Cargar más' }}
+    <button v-if="!totalLoaded && !adminMode && !loading" @click="cargarMas" class="cargar-btn fade-in">
+      Cargar más
     </button>
-    <p v-else-if="!adminMode" class="fin">No hay más imágenes.</p>
+    <p v-else-if="!adminMode && totalLoaded" class="fin fade-in">No hay más imágenes.</p>
 
     <!-- Modal de imágenes con carrusel -->
     <div v-if="modalOpen" class="modal-overlay" @click.self="cerrarModal">
       <div class="modal-content">
         <button class="cerrar-modal" @click="cerrarModal">×</button>
-        <h2 v-if="galeriaActual">{{ galeriaActual.barbero?.nombre }}</h2>
+        <h2 v-if="galeriaActual" class="fade-in">{{ galeriaActual.barbero?.nombre }}</h2>
+        <div class="title-underline mx-auto fade-in"></div>
         
         <v-carousel
           v-if="imagenesModal.length > 0"
@@ -274,7 +379,7 @@ onMounted(() => {
           height="500"
           delimiter-icon="mdi-circle"
           :cycle="true"
-          class="carousel-container"
+          class="carousel-container fade-in"
         >
           <v-carousel-item
             v-for="(img, idx) in imagenesModal"
@@ -306,24 +411,24 @@ onMounted(() => {
 }
 
 h1 {
-  font-family: 'DM Serif', serif !important;
+  font-family: 'DM Serif Display', serif !important;
   font-style: italic;
   font-size: 3rem;
-  margin-bottom: 2rem;
+  margin-bottom: 0.3rem;
+  letter-spacing: 3px;
   position: relative;
   display: inline-block;
 }
 
-h1::after {
-  content: '';
-  position: absolute;
-  bottom: -10px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 80px;
-  height: 3px;
+.title-underline {
+  width: 100px;
+  height: 4px;
   background-color: var(--accent-color);
-  border-radius: 2px;
+  margin-bottom: 2rem;
+}
+
+h1::after {
+  display: none;
 }
 
 .admin-bar {
@@ -476,10 +581,11 @@ h1::after {
 }
 
 .modal-content h2 {
-  font-family: 'DM Serif', serif;
+  font-family: 'DM Serif Display', serif;
   font-style: italic;
   font-size: 2rem;
-  margin-bottom: 1.5rem;
+  margin-bottom: 0.3rem;
+  letter-spacing: 2px;
   text-align: center;
   color: var(--text-color);
 }

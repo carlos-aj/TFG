@@ -3,13 +3,13 @@
     <v-container class="servicios-container px-4 px-sm-6 px-md-8">
       <v-row>
         <v-col cols="12" class="text-center mb-4">
-          <h1 class="primary-title">GESTIÓN DE SERVICIOS</h1>
-          <div class="title-underline mx-auto"></div>
+          <h1 class="primary-title fade-in">GESTIÓN DE SERVICIOS</h1>
+          <div class="title-underline mx-auto fade-in"></div>
         </v-col>
       </v-row>
 
       <!-- Lista de servicios -->
-      <v-card class="mb-8">
+      <v-card class="mb-8 fade-in">
         <v-card-title class="text-h5 py-4 px-6">
           Lista de Servicios ({{ servicios.length }})
         </v-card-title>
@@ -25,7 +25,7 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="servicio in paginatedServicios" :key="servicio.id">
+              <tr v-for="(servicio, index) in paginatedServicios" :key="servicio.id" class="table-row">
                 <td v-if="editId !== servicio.id">{{ servicio.nombre }}</td>
                 <td v-else>
                   <v-text-field 
@@ -127,13 +127,13 @@
       </v-card>
 
       <!-- Formulario para crear servicio -->
-      <v-card>
+      <v-card class="fade-in">
         <v-card-title class="text-h5 py-4 px-6">
           Crear Servicio
         </v-card-title>
         
         <v-card-text>
-          <v-form @submit.prevent="crearServicio">
+          <v-form @submit.prevent="crearServicio" class="form-container">
             <v-row>
               <v-col cols="12" md="6">
                 <v-text-field
@@ -141,6 +141,7 @@
                   label="Nombre"
                   variant="outlined"
                   required
+                  class="form-field"
                 ></v-text-field>
               </v-col>
               
@@ -152,6 +153,7 @@
                   type="number"
                   min="0"
                   required
+                  class="form-field"
                 ></v-text-field>
               </v-col>
               
@@ -167,6 +169,7 @@
                   ]"
                   variant="outlined"
                   required
+                  class="form-field"
                 ></v-select>
               </v-col>
               
@@ -174,7 +177,7 @@
                 <v-btn 
                   type="submit" 
                   color="accent"
-                  class="font-weight-bold"
+                  class="font-weight-bold form-button"
                 >
                   Crear
                 </v-btn>
@@ -186,7 +189,7 @@
             v-if="mensaje"
             type="success"
             variant="tonal"
-            class="mt-4"
+            class="mt-4 alert-message"
           >
             {{ mensaje }}
           </v-alert>
@@ -195,7 +198,7 @@
             v-if="error"
             type="error"
             variant="tonal"
-            class="mt-4"
+            class="mt-4 alert-message"
           >
             {{ error }}
           </v-alert>
@@ -262,14 +265,6 @@ async function crearServicio() {
       form.value.precio = 0
       form.value.duracion = 1
       await cargarServicios()
-      
-      // Animación para el mensaje de éxito
-      gsap.from('.v-alert', {
-        opacity: 0,
-        y: 20,
-        duration: 0.5,
-        ease: 'power2.out'
-      })
     } else {
       const data = await response.json()
       error.value = data.message || 'Error al crear servicio'
@@ -301,10 +296,12 @@ function startEdit(servicio) {
   editId.value = servicio.id
   editForm.value = { nombre: servicio.nombre, precio: servicio.precio, duracion: servicio.duracion }
 }
+
 function cancelEdit() {
   editId.value = null
   editForm.value = { nombre: '', precio: 0, duracion: 1 }
 }
+
 async function saveEdit(id) {
   try {
     const response = await fetch(`${API_URL}/api/servicio/${id}`, {
@@ -325,7 +322,32 @@ async function saveEdit(id) {
 }
 
 onMounted(() => {
-  cargarServicios()
+  // Animaciones iniciales simples sin efectos de scroll
+  gsap.from('.primary-title', {
+    opacity: 0,
+    y: -30,
+    duration: 0.8,
+    ease: 'power2.out'
+  });
+  
+  gsap.from('.title-underline', {
+    opacity: 0,
+    width: 0,
+    duration: 0.8,
+    delay: 0.2,
+    ease: 'power2.out'
+  });
+  
+  gsap.from('.fade-in', {
+    opacity: 0,
+    y: 30,
+    duration: 0.8,
+    delay: 0.3,
+    ease: 'back.out(1.7)'
+  });
+  
+  // Cargar datos y animar campos del formulario
+  cargarServicios();
 })
 </script>
 
@@ -457,6 +479,10 @@ onMounted(() => {
 
 .fade-in {
   animation: fadeIn 0.5s ease-out forwards;
+}
+
+.table-row {
+  transition: all 0.3s ease;
 }
 
 /* Responsive adjustments */

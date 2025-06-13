@@ -1,6 +1,7 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { API_URL } from '../config'
+import { gsap } from 'gsap'
 
 const citas = ref([])
 const barberos = ref([])
@@ -38,7 +39,46 @@ const firstDayOfWeek = computed(() => {
   return day === 0 ? 6 : day - 1
 })
 
+// Observar cuando se abre el modal de citas
+watch(showCitasModal, (newVal) => {
+  if (newVal) {
+    setTimeout(() => {
+      gsap.from('.cita-item', {
+        opacity: 0,
+        y: 15,
+        duration: 0.4,
+        stagger: 0.1,
+        ease: 'power2.out'
+      });
+    }, 100);
+  }
+});
+
 onMounted(async () => {
+  // Animaciones iniciales
+  gsap.from('.primary-title', {
+    opacity: 0,
+    y: -30,
+    duration: 0.8,
+    ease: 'power2.out'
+  });
+  
+  gsap.from('.title-underline', {
+    opacity: 0,
+    width: 0,
+    duration: 0.8,
+    delay: 0.2,
+    ease: 'power2.out'
+  });
+  
+  gsap.from('.fade-in', {
+    opacity: 0,
+    y: 30,
+    duration: 0.8,
+    delay: 0.3,
+    ease: 'back.out(1.7)'
+  });
+  
   try {
     // Cargar barberos primero para poder asociar el empleado con su barbero
     const resBarberos = await fetch(`${API_URL}/api/barbero`, {
@@ -76,6 +116,18 @@ onMounted(async () => {
     
     // Cargar citas
     await loadCitas();
+    
+    // Animar los días del calendario
+    setTimeout(() => {
+      gsap.from('.calendar-day-animate', {
+        opacity: 0,
+        scale: 0.9,
+        duration: 0.5,
+        stagger: 0.01,
+        ease: 'back.out(1.7)'
+      });
+    }, 500);
+    
   } catch (e) {
     error.value = e.message
   } finally {
@@ -363,8 +415,8 @@ const processCitasForCalendar = () => {
     <v-container class="mes-completo-container px-4 px-sm-6 px-md-8">
       <v-row>
         <v-col cols="12" class="text-center mb-4">
-          <h1 class="primary-title">CALENDARIO DE CITAS</h1>
-          <div class="title-underline mx-auto"></div>
+          <h1 class="primary-title fade-in">CALENDARIO DE CITAS</h1>
+          <div class="title-underline mx-auto fade-in"></div>
         </v-col>
       </v-row>
 
@@ -377,13 +429,13 @@ const processCitasForCalendar = () => {
 
       <v-row v-else-if="error">
         <v-col cols="12">
-          <v-alert type="error" variant="tonal">{{ error }}</v-alert>
+          <v-alert type="error" variant="tonal" class="fade-in">{{ error }}</v-alert>
         </v-col>
       </v-row>
 
       <v-row v-else-if="showBarberoSelector">
         <v-col cols="12" sm="10" md="8" lg="6" class="mx-auto">
-          <v-card class="glass-card">
+          <v-card class="glass-card fade-in">
             <v-card-title class="text-h5 py-4 px-6">
               <v-icon icon="mdi-account-question" color="accent" class="mr-3"></v-icon>
               Selecciona tu barbero
@@ -415,7 +467,7 @@ const processCitasForCalendar = () => {
         <!-- Calendario -->
         <v-row>
           <v-col cols="12">
-            <v-card class="glass-card">
+            <v-card class="glass-card fade-in">
               <v-card-title class="text-h5 py-4 px-6 d-flex align-center justify-space-between">
                 <div class="d-flex align-center">
                   <v-icon icon="mdi-calendar-month" color="accent" class="mr-3"></v-icon>
@@ -438,7 +490,7 @@ const processCitasForCalendar = () => {
                   <div
                     v-for="day in daysInMonth"
                     :key="day"
-                    class="calendar-day"
+                    class="calendar-day calendar-day-animate"
                     :class="{ 
                       'today': isToday(day), 
                       'cerrado': getMaxCitas(day) === 0,
@@ -483,6 +535,7 @@ const processCitasForCalendar = () => {
                   :subtitle="`Barbero: ${cita.barbero_id} - Servicio: ${cita.servicio_id}`"
                   :prepend-icon="cita.estado ? 'mdi-check-circle' : 'mdi-clock-outline'"
                   :color="cita.estado ? 'success' : ''"
+                  class="cita-item"
                 >
                   <template v-slot:append>
                     <v-chip
@@ -692,5 +745,23 @@ const processCitasForCalendar = () => {
 :deep(.v-overlay__scrim) {
   background-color: rgba(0, 0, 0, 0.8) !important;
   opacity: 1 !important;
+}
+
+/* Animaciones */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.fade-in {
+  animation: fadeIn 0.5s ease-out forwards;
+}
+
+.calendar-day-animate {
+  transition: all 0.3s ease;
+}
+
+.cita-item {
+  transition: all 0.3s ease;
 }
 </style>

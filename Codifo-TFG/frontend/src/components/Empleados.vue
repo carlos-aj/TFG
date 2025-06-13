@@ -3,8 +3,8 @@
     <v-container class="empleados-container px-4 px-sm-6 px-md-8">
       <v-row>
         <v-col cols="12" class="text-center mb-4">
-          <h1 class="primary-title">GESTIÓN DE EMPLEADOS</h1>
-          <div class="title-underline mx-auto"></div>
+          <h1 class="primary-title fade-in">GESTIÓN DE EMPLEADOS</h1>
+          <div class="title-underline mx-auto fade-in"></div>
         </v-col>
       </v-row>
 
@@ -13,7 +13,7 @@
           <v-btn 
             color="accent" 
             @click="showStats = true; cargarEstadisticas()"
-            class="font-weight-bold"
+            class="font-weight-bold stats-btn"
             prepend-icon="mdi-chart-bar"
           >
             Ver estadísticas
@@ -24,14 +24,14 @@
       <!-- Debug info -->
       <v-row v-if="barberos.length === 0">
         <v-col cols="12">
-          <v-alert type="info" variant="tonal">
+          <v-alert type="info" variant="tonal" class="fade-in">
             Cargando datos de empleados...
           </v-alert>
         </v-col>
       </v-row>
 
       <!-- Lista de empleados -->
-      <v-card class="mb-8">
+      <v-card class="mb-8 fade-in">
         <v-card-title class="text-h5 py-4 px-6">
           Lista de Empleados ({{ barberos.length }})
         </v-card-title>
@@ -46,7 +46,7 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="barbero in paginatedBarberos" :key="barbero.id">
+              <tr v-for="(barbero, index) in paginatedBarberos" :key="barbero.id" class="table-row">
                 <td v-if="editId !== barbero.id">{{ barbero.nombre }}</td>
                 <td v-else>
                   <v-text-field 
@@ -128,13 +128,13 @@
       </v-card>
 
       <!-- Formulario para crear empleado -->
-      <v-card>
+      <v-card class="fade-in">
         <v-card-title class="text-h5 py-4 px-6">
           Crear Empleado
         </v-card-title>
         
         <v-card-text>
-          <v-form @submit.prevent="crearBarbero">
+          <v-form @submit.prevent="crearBarbero" class="form-container">
             <v-row>
               <v-col cols="12" md="6">
                 <v-text-field
@@ -142,6 +142,7 @@
                   label="Nombre"
                   variant="outlined"
                   required
+                  class="form-field"
                 ></v-text-field>
               </v-col>
               
@@ -151,6 +152,7 @@
                   label="Especialidad"
                   variant="outlined"
                   required
+                  class="form-field"
                 ></v-text-field>
               </v-col>
               
@@ -158,7 +160,7 @@
                 <v-btn 
                   type="submit" 
                   color="accent"
-                  class="font-weight-bold"
+                  class="font-weight-bold form-button"
                 >
                   Crear
                 </v-btn>
@@ -170,7 +172,7 @@
             v-if="mensaje"
             type="success"
             variant="tonal"
-            class="mt-4"
+            class="mt-4 alert-message"
           >
             {{ mensaje }}
           </v-alert>
@@ -179,7 +181,7 @@
             v-if="error"
             type="error"
             variant="tonal"
-            class="mt-4"
+            class="mt-4 alert-message"
           >
             {{ error }}
           </v-alert>
@@ -196,7 +198,7 @@
           
           <v-card-text>
             <v-row>
-              <v-col cols="12">
+              <v-col cols="12" class="chart-container">
                 <h3 class="text-h6 mb-2">Servicios realizados por barbero</h3>
                 <GChart type="ColumnChart" :data="serviciosPorBarbero" :options="{ 
                   title: 'Servicios por Barbero',
@@ -210,7 +212,7 @@
                 }" style="width:100%;height:300px;" />
               </v-col>
               
-              <v-col cols="12">
+              <v-col cols="12" class="chart-container">
                 <h3 class="text-h6 mb-2">Servicios por hora</h3>
                 <GChart type="ColumnChart" :data="serviciosPorHora" :options="{ 
                   title: 'Servicios por Hora',
@@ -224,7 +226,7 @@
                 }" style="width:100%;height:300px;" />
               </v-col>
               
-              <v-col cols="12">
+              <v-col cols="12" class="chart-container">
                 <h3 class="text-h6 mb-2">Servicios por tipo</h3>
                 <GChart type="PieChart" :data="serviciosPorTipo" :options="{ 
                   title: 'Servicios por Tipo',
@@ -243,7 +245,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, watch } from 'vue'
 import { GChart } from 'vue-google-charts'
 import { API_URL } from '../config'
 import { gsap } from 'gsap'
@@ -272,6 +274,21 @@ const paginatedBarberos = computed(() => {
 const editId = ref(null)
 const editForm = ref({ nombre: '', especialidad: '' })
 
+// Observar cuando se abre el modal de estadísticas
+watch(showStats, (newVal) => {
+  if (newVal) {
+    setTimeout(() => {
+      gsap.from('.chart-container', {
+        opacity: 0,
+        y: 30,
+        duration: 0.7,
+        stagger: 0.2,
+        ease: 'power2.out'
+      });
+    }, 300);
+  }
+});
+
 async function cargarBarberos() {
   console.log('Iniciando carga de barberos...');
   error.value = '';
@@ -294,6 +311,11 @@ async function cargarBarberos() {
       }
       
       console.log('Barberos cargados:', barberos.value.length);
+      
+      // Animar las filas de la tabla después de cargar los datos
+      setTimeout(() => {
+        animateTableRows();
+      }, 100);
     } else {
       console.error('Error en la respuesta:', response.status);
       const errorText = await response.text();
@@ -325,7 +347,7 @@ async function crearBarbero() {
       await cargarBarberos()
       
       // Animación para el mensaje de éxito
-      gsap.from('.v-alert', {
+      gsap.from('.alert-message', {
         opacity: 0,
         y: 20,
         duration: 0.5,
@@ -334,9 +356,25 @@ async function crearBarbero() {
     } else {
       const data = await response.json()
       error.value = data.message || 'Error al crear empleado'
+      
+      // Animación para el mensaje de error
+      gsap.from('.alert-message', {
+        opacity: 0,
+        y: 20,
+        duration: 0.5,
+        ease: 'power2.out'
+      })
     }
   } catch (e) {
     error.value = 'Error de red'
+    
+    // Animación para el mensaje de error
+    gsap.from('.alert-message', {
+      opacity: 0,
+      y: 20,
+      duration: 0.5,
+      ease: 'power2.out'
+    })
   }
 }
 
@@ -351,9 +389,25 @@ async function eliminarBarbero(id) {
       await cargarBarberos()
     } else {
       error.value = 'Error al eliminar empleado'
+      
+      // Animación para el mensaje de error
+      gsap.from('.alert-message', {
+        opacity: 0,
+        y: 20,
+        duration: 0.5,
+        ease: 'power2.out'
+      })
     }
   } catch {
     error.value = 'Error de red'
+    
+    // Animación para el mensaje de error
+    gsap.from('.alert-message', {
+      opacity: 0,
+      y: 20,
+      duration: 0.5,
+      ease: 'power2.out'
+    })
   }
 }
 
@@ -361,11 +415,23 @@ async function eliminarBarbero(id) {
 function startEdit(barbero) {
   editId.value = barbero.id
   editForm.value = { nombre: barbero.nombre, especialidad: barbero.especialidad }
+  
+  // Animar los campos de edición
+  setTimeout(() => {
+    gsap.from('.v-text-field, .v-select', {
+      opacity: 0,
+      scale: 0.95,
+      duration: 0.5,
+      ease: 'power2.out'
+    });
+  }, 50);
 }
+
 function cancelEdit() {
   editId.value = null
   editForm.value = { nombre: '', especialidad: '' }
 }
+
 async function saveEdit(id) {
   try {
     const response = await fetch(`${API_URL}/api/barbero/${id}`, {
@@ -379,9 +445,25 @@ async function saveEdit(id) {
       await cargarBarberos()
     } else {
       error.value = 'Error al editar empleado'
+      
+      // Animación para el mensaje de error
+      gsap.from('.alert-message', {
+        opacity: 0,
+        y: 20,
+        duration: 0.5,
+        ease: 'power2.out'
+      })
     }
   } catch {
     error.value = 'Error de red'
+    
+    // Animación para el mensaje de error
+    gsap.from('.alert-message', {
+      opacity: 0,
+      y: 20,
+      duration: 0.5,
+      ease: 'power2.out'
+    })
   }
 }
 
@@ -441,8 +523,57 @@ async function cargarEstadisticas() {
 }
 
 onMounted(() => {
-  // Solo cargar los datos sin animaciones
+  // Animaciones iniciales simples sin efectos de scroll
+  gsap.from('.primary-title', {
+    opacity: 0,
+    y: -30,
+    duration: 0.8,
+    ease: 'power2.out'
+  });
+  
+  gsap.from('.title-underline', {
+    opacity: 0,
+    width: 0,
+    duration: 0.8,
+    delay: 0.2,
+    ease: 'power2.out'
+  });
+  
+  gsap.from('.fade-in', {
+    opacity: 0,
+    y: 30,
+    duration: 0.8,
+    delay: 0.3,
+    ease: 'back.out(1.7)'
+  });
+  
+  gsap.from('.stats-btn', {
+    opacity: 0,
+    y: -20,
+    duration: 0.8,
+    delay: 0.5,
+    ease: 'power2.out'
+  });
+  
+  // Cargar datos y animar campos del formulario
   cargarBarberos();
+  setTimeout(() => {
+    gsap.from('.form-field', {
+      opacity: 0,
+      y: 20,
+      duration: 0.6,
+      delay: 0.3,
+      ease: 'power2.out'
+    });
+    
+    gsap.from('.form-button', {
+      opacity: 0,
+      y: 20,
+      duration: 0.6,
+      delay: 0.6,
+      ease: 'power2.out'
+    });
+  }, 800);
 });
 </script>
 
@@ -572,6 +703,14 @@ onMounted(() => {
 :deep(.v-btn:hover) {
   transform: translateY(-2px);
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.chart-container {
+  transition: all 0.5s ease;
+}
+
+.table-row {
+  transition: all 0.3s ease;
 }
 
 /* Animaciones */
