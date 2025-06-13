@@ -134,42 +134,42 @@
         </v-card-title>
         
         <v-card-text>
-          <v-form @submit.prevent="crearBarbero" class="form-container">
-            <v-row>
-              <v-col cols="12" md="6">
-                <v-text-field
-                  v-model="form.nombre"
-                  label="Nombre"
-                  variant="outlined"
-                  required
-                  class="form-field"
-                ></v-text-field>
-              </v-col>
+          <div class="form-wrapper">
+            <v-form @submit.prevent="crearBarbero" class="form-container">
+              <v-row>
+                <v-col cols="12" md="6">
+                  <v-text-field
+                    v-model="form.nombre"
+                    label="Nombre"
+                    variant="outlined"
+                    required
+                    class="form-field"
+                  ></v-text-field>
+                </v-col>
+                
+                <v-col cols="12" md="6">
+                  <v-text-field
+                    v-model="form.especialidad"
+                    label="Especialidad"
+                    variant="outlined"
+                    required
+                    class="form-field"
+                  ></v-text-field>
+                </v-col>
+              </v-row>
               
-              <v-col cols="12" md="6">
-                <v-text-field
-                  v-model="form.especialidad"
-                  label="Especialidad"
-                  variant="outlined"
-                  required
-                  class="form-field"
-                ></v-text-field>
-              </v-col>
-            </v-row>
-            
-            <v-row>
-              <v-col cols="12" class="d-flex justify-end">
+              <div class="d-flex justify-end mt-4">
                 <v-btn 
-                  type="submit" 
+                  type="submit"
                   color="accent"
                   class="font-weight-bold form-button mt-4"
                   min-width="120"
                 >
                   Crear
                 </v-btn>
-              </v-col>
-            </v-row>
-          </v-form>
+              </div>
+            </v-form>
+          </div>
           
           <v-alert
             v-if="mensaje"
@@ -550,6 +550,14 @@ onMounted(() => {
     ease: 'back.out(1.7)'
   });
   
+  gsap.from('.form-wrapper', {
+    opacity: 0,
+    y: 20,
+    duration: 0.8,
+    delay: 0.4,
+    ease: 'power2.out'
+  });
+  
   gsap.from('.stats-btn', {
     opacity: 0,
     y: -20,
@@ -560,23 +568,6 @@ onMounted(() => {
   
   // Cargar datos y animar campos del formulario
   cargarBarberos();
-  setTimeout(() => {
-    gsap.from('.form-field', {
-      opacity: 0,
-      y: 20,
-      duration: 0.6,
-      delay: 0.3,
-      ease: 'power2.out'
-    });
-    
-    gsap.from('.form-button', {
-      opacity: 0,
-      y: 20,
-      duration: 0.6,
-      delay: 0.6,
-      ease: 'power2.out'
-    });
-  }, 800);
 });
 </script>
 
@@ -641,6 +632,15 @@ onMounted(() => {
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 10px;
   overflow: hidden;
+}
+
+.form-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.form-container {
+  width: 100%;
 }
 
 :deep(.v-dialog .v-overlay__content > .v-card),

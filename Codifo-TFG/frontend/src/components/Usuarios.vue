@@ -163,79 +163,79 @@
         </v-card-title>
         
         <v-card-text>
-          <v-form @submit.prevent="crearUsuario" class="form-container">
-            <v-row>
-              <v-col cols="12" md="6">
-                <v-text-field
-                  v-model="form.nombre"
-                  label="Nombre"
-                  variant="outlined"
-                  required
-                  class="form-field"
-                ></v-text-field>
-              </v-col>
+          <div class="form-wrapper">
+            <v-form @submit.prevent="crearUsuario" class="form-container">
+              <v-row>
+                <v-col cols="12" md="6">
+                  <v-text-field
+                    v-model="form.nombre"
+                    label="Nombre"
+                    variant="outlined"
+                    required
+                    class="form-field"
+                  ></v-text-field>
+                </v-col>
+                
+                <v-col cols="12" md="6">
+                  <v-text-field
+                    v-model="form.apellidos"
+                    label="Apellidos"
+                    variant="outlined"
+                    required
+                    class="form-field"
+                  ></v-text-field>
+                </v-col>
+                
+                <v-col cols="12" md="6">
+                  <v-text-field
+                    v-model="form.email"
+                    label="Email"
+                    variant="outlined"
+                    type="email"
+                    required
+                    class="form-field"
+                  ></v-text-field>
+                </v-col>
+                
+                <v-col cols="12" md="6">
+                  <v-text-field
+                    v-model="form.telefono"
+                    label="Teléfono"
+                    variant="outlined"
+                    required
+                    class="form-field"
+                  ></v-text-field>
+                </v-col>
+                
+                <v-col cols="12" md="6">
+                  <v-text-field
+                    v-model="form.contrasena"
+                    label="Contraseña"
+                    variant="outlined"
+                    type="password"
+                    required
+                    minlength="6"
+                    class="form-field"
+                  ></v-text-field>
+                </v-col>
+                
+                <v-col cols="12" md="6">
+                  <v-select
+                    v-model="form.rol"
+                    label="Rol"
+                    :items="[
+                      { value: 'user', title: 'user' },
+                      { value: 'empleado', title: 'empleado' },
+                      { value: 'admin', title: 'admin' }
+                    ]"
+                    variant="outlined"
+                    required
+                    class="form-field"
+                  ></v-select>
+                </v-col>
+              </v-row>
               
-              <v-col cols="12" md="6">
-                <v-text-field
-                  v-model="form.apellidos"
-                  label="Apellidos"
-                  variant="outlined"
-                  required
-                  class="form-field"
-                ></v-text-field>
-              </v-col>
-              
-              <v-col cols="12" md="6">
-                <v-text-field
-                  v-model="form.email"
-                  label="Email"
-                  variant="outlined"
-                  type="email"
-                  required
-                  class="form-field"
-                ></v-text-field>
-              </v-col>
-              
-              <v-col cols="12" md="6">
-                <v-text-field
-                  v-model="form.telefono"
-                  label="Teléfono"
-                  variant="outlined"
-                  required
-                  class="form-field"
-                ></v-text-field>
-              </v-col>
-              
-              <v-col cols="12" md="6">
-                <v-text-field
-                  v-model="form.contrasena"
-                  label="Contraseña"
-                  variant="outlined"
-                  type="password"
-                  required
-                  minlength="6"
-                  class="form-field"
-                ></v-text-field>
-              </v-col>
-              
-              <v-col cols="12" md="6">
-                <v-select
-                  v-model="form.rol"
-                  label="Rol"
-                  :items="[
-                    { value: 'user', title: 'user' },
-                    { value: 'empleado', title: 'empleado' },
-                    { value: 'admin', title: 'admin' }
-                  ]"
-                  variant="outlined"
-                  required
-                  class="form-field"
-                ></v-select>
-              </v-col>
-            </v-row>
-            
-            <v-row>
-              <v-col cols="12" class="d-flex justify-end">
+              <div class="d-flex justify-end mt-4">
                 <v-btn 
                   type="submit" 
                   color="accent"
@@ -244,9 +244,9 @@
                 >
                   Crear
                 </v-btn>
-              </v-col>
-            </v-row>
-          </v-form>
+              </div>
+            </v-form>
+          </div>
           
           <v-alert
             v-if="mensaje"
@@ -444,26 +444,17 @@ onMounted(() => {
     ease: 'back.out(1.7)'
   });
   
+  gsap.from('.form-wrapper', {
+    opacity: 0,
+    y: 20,
+    duration: 0.8,
+    delay: 0.4,
+    ease: 'power2.out'
+  });
+  
   // Cargar datos y animar campos del formulario
   cargarUsuarios();
-  setTimeout(() => {
-    gsap.from('.form-field', {
-      opacity: 0,
-      y: 20,
-      duration: 0.6,
-      delay: 0.3,
-      ease: 'power2.out'
-    });
-    
-    gsap.from('.form-button', {
-      opacity: 0,
-      y: 20,
-      duration: 0.6,
-      delay: 0.6,
-      ease: 'power2.out'
-    });
-  }, 800);
-})
+});
 </script>
 
 <style scoped>
