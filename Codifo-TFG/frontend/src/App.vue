@@ -3,23 +3,41 @@ import Header from './components/Header.vue'
 import Footer from './components/Footer.vue';
 </script>
 <template>
-  <div class="app-container">
+  <v-app>
     <Header />
-    <main class="main-content">
+    <v-main class="main-content">
       <router-view></router-view>
-    </main>
+    </v-main>
     <Footer />
-  </div>
+  </v-app>
 </template>
 
 <style>
-.app-container {
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
+:root {
+  --main-bg-color: #2B2B2B;
+  --text-color: #D9D9D9;
+  --accent-color: #F5E009;
 }
+
+.v-application {
+  width: 100% !important;
+  max-width: 100% !important;
+  overflow-x: hidden !important;
+}
+
+.v-main {
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
 .main-content {
-  flex: 1;
-  /* Opcional: para separar el contenido del footer si quieres */
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
+/* Permitir que los componentes definan sus propios paddings */
+.v-container {
+  max-width: 100% !important;
+  width: 100% !important;
 }
 </style>

@@ -12,6 +12,7 @@ const user_id = localStorage.getItem('user_id')
 const nombre = localStorage.getItem('nombre')
 const selectedBarbero = ref(null)
 const showBarberoSelector = ref(false)
+const showCitasModal = ref(false)
 
 // IMPORTANTE: Forzar la fecha a 12 de junio de 2025 para depuración
 // const today = new Date()
@@ -44,6 +45,7 @@ onMounted(async () => {
       credentials: 'include'
     });
     const barberosData = await resBarberos.json();
+    barberos.value = barberosData;
     
     // Si el usuario es empleado/barbero, verificar si tiene un barbero asignado
     if ((rol === 'empleado' || rol === 'barbero')) {
@@ -119,7 +121,7 @@ const loadCitas = async () => {
     processCitasForCalendar();
   } catch (error) {
     console.error('Error al cargar citas:', error);
-    toast.error('Error al cargar las citas');
+    error.value = 'Error al cargar las citas';
   } finally {
     loading.value = false;
   }
@@ -232,6 +234,12 @@ function isToday(day) {
 
 function selectDay(day) {
   selectedDay.value = day
+  showCitasModal.value = true
+}
+
+function closeCitasModal() {
+  showCitasModal.value = false
+  selectedDay.value = null
 }
 
 const citasDelDia = computed(() => {
@@ -283,7 +291,9 @@ function prevMonth() {
     month.value--
   }
   selectedDay.value = null
+  loadCitas()
 }
+
 function nextMonth() {
   if (month.value === 11) {
     month.value = 0
@@ -292,6 +302,7 @@ function nextMonth() {
     month.value++
   }
   selectedDay.value = null
+  loadCitas()
 }
 
 function getMaxCitas(day) {
@@ -348,176 +359,338 @@ const processCitasForCalendar = () => {
 </script>
 
 <template>
-  <div class="mes-completo">
-    <h1>Calendario de Citas</h1>
-    
-    <div v-if="loading">Cargando...</div>
-    <div v-else-if="error" class="error-message">{{ error }}</div>
-    <div v-else-if="showBarberoSelector" class="barbero-selector">
-      <h2>Selecciona tu barbero</h2>
-      <p>No se ha podido determinar automáticamente qué barbero eres. Por favor, selecciona tu barbero de la lista:</p>
-      <div class="selector-container">
-        <select v-model="selectedBarbero">
-          <option :value="null">Selecciona un barbero</option>
-          <option v-for="barbero in barberos" :key="barbero.id" :value="barbero.id">
-            {{ barbero.nombre }}
-          </option>
-        </select>
-        <button @click="seleccionarBarbero" class="btn-primary">Confirmar</button>
-      </div>
-    </div>
-    <div v-else>
-      <div class="calendar">
-        <div class="calendar-header">
-          <button @click="prevMonth">&lt;</button>
-          <span>{{ monthName }} {{ year }}</span>
-          <button @click="nextMonth">&gt;</button>
-        </div>
-        <div class="calendar-grid">
-          <div class="calendar-day header" v-for="d in daysShort" :key="d">{{ d }}</div>
-          <div
-            v-for="blank in firstDayOfWeek"
-            :key="'blank-' + blank"
-            class="calendar-day blank"
-          ></div>
-          <div
-            v-for="day in daysInMonth"
-            :key="day"
-            class="calendar-day"
-            :class="{ today: isToday(day) }"
-            @click="selectDay(day)"
-          >
-            <div>{{ day }}</div>
-            <div class="citas-count">
-              <template v-if="getMaxCitas(day) > 0">
-                {{ citasPorDia[day] || 0 }} / {{ getMaxCitas(day) }}
-              </template>
-              <template v-else :class="{ today: isToday(day), cerrado: getMaxCitas(day) === 0 }">
-                Cerrado
-              </template>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div v-if="selectedDay" class="citas-list">
-        <h2>Citas del {{ year }}-{{ monthString }}-{{ selectedDay.toString().padStart(2, '0') }}</h2>
-        <ul v-if="citasDelDia.length">
-          <li v-for="cita in citasDelDia" :key="cita.id">
-            Cliente: {{ cita.user_id }}, Barbero: {{ cita.barbero_id }}, Servicio: {{ cita.servicio_id }}, Hora: {{ cita.hora }}, Estado: {{ cita.estado ? 'Atendida' : 'Pendiente' }}
-          </li>
-        </ul>
-        <div v-else>No hay citas para este día.</div>
-        <button @click="selectedDay = null">Cerrar</button>
-      </div>
-    </div>
+  <div class="mes-completo-page">
+    <v-container class="mes-completo-container px-4 px-sm-6 px-md-8">
+      <v-row>
+        <v-col cols="12" class="text-center mb-4">
+          <h1 class="primary-title">CALENDARIO DE CITAS</h1>
+          <div class="title-underline mx-auto"></div>
+        </v-col>
+      </v-row>
+
+      <v-row v-if="loading" justify="center">
+        <v-col cols="12" class="text-center">
+          <v-progress-circular indeterminate color="accent" size="64"></v-progress-circular>
+          <div class="mt-4">Cargando calendario...</div>
+        </v-col>
+      </v-row>
+
+      <v-row v-else-if="error">
+        <v-col cols="12">
+          <v-alert type="error" variant="tonal">{{ error }}</v-alert>
+        </v-col>
+      </v-row>
+
+      <v-row v-else-if="showBarberoSelector">
+        <v-col cols="12" sm="10" md="8" lg="6" class="mx-auto">
+          <v-card class="glass-card">
+            <v-card-title class="text-h5 py-4 px-6">
+              <v-icon icon="mdi-account-question" color="accent" class="mr-3"></v-icon>
+              Selecciona tu barbero
+            </v-card-title>
+            <v-card-text>
+              <p class="mb-4">No se ha podido determinar automáticamente qué barbero eres. Por favor, selecciona tu barbero de la lista:</p>
+              <v-select
+                v-model="selectedBarbero"
+                :items="barberos.map(b => ({ title: b.nombre, value: b.id }))"
+                label="Selecciona un barbero"
+                variant="outlined"
+                class="mb-4"
+              ></v-select>
+              <div class="text-center">
+                <v-btn 
+                  @click="seleccionarBarbero" 
+                  color="accent"
+                  class="font-weight-bold"
+                >
+                  Confirmar
+                </v-btn>
+              </div>
+            </v-card-text>
+          </v-card>
+        </v-col>
+      </v-row>
+
+      <template v-else>
+        <!-- Calendario -->
+        <v-row>
+          <v-col cols="12">
+            <v-card class="glass-card">
+              <v-card-title class="text-h5 py-4 px-6 d-flex align-center justify-space-between">
+                <div class="d-flex align-center">
+                  <v-icon icon="mdi-calendar-month" color="accent" class="mr-3"></v-icon>
+                  <span class="text-capitalize">{{ monthName }} {{ year }}</span>
+                </div>
+                <div>
+                  <v-btn icon="mdi-chevron-left" variant="text" @click="prevMonth"></v-btn>
+                  <v-btn icon="mdi-chevron-right" variant="text" @click="nextMonth"></v-btn>
+                </div>
+              </v-card-title>
+              
+              <v-card-text>
+                <div class="calendar-grid">
+                  <div class="calendar-day header" v-for="d in daysShort" :key="d">{{ d }}</div>
+                  <div
+                    v-for="blank in firstDayOfWeek"
+                    :key="'blank-' + blank"
+                    class="calendar-day blank"
+                  ></div>
+                  <div
+                    v-for="day in daysInMonth"
+                    :key="day"
+                    class="calendar-day"
+                    :class="{ 
+                      'today': isToday(day), 
+                      'cerrado': getMaxCitas(day) === 0,
+                      'has-citas': citasPorDia[day] > 0
+                    }"
+                    @click="getMaxCitas(day) > 0 ? selectDay(day) : null"
+                  >
+                    <div class="day-number">{{ day }}</div>
+                    <div class="citas-count">
+                      <template v-if="getMaxCitas(day) > 0">
+                        <v-chip size="x-small" :color="citasPorDia[day] ? 'success' : 'info'" variant="tonal">
+                          {{ citasPorDia[day] || 0 }} / {{ getMaxCitas(day) }}
+                        </v-chip>
+                      </template>
+                      <template v-else>
+                        <v-chip size="x-small" color="error" variant="tonal">Cerrado</v-chip>
+                      </template>
+                    </div>
+                  </div>
+                </div>
+              </v-card-text>
+            </v-card>
+          </v-col>
+        </v-row>
+
+        <!-- Modal de citas del día seleccionado -->
+        <v-dialog v-model="showCitasModal" max-width="600px">
+          <v-card class="glass-card">
+            <v-card-title class="text-h5 py-4 px-6 d-flex align-center justify-space-between">
+              <div class="d-flex align-center">
+                <v-icon icon="mdi-clipboard-text-clock" color="accent" class="mr-3"></v-icon>
+                <span>Citas del {{ selectedDay ? selectedDay.toString().padStart(2, '0') : '' }} de {{ monthName }}</span>
+              </div>
+              <v-btn icon="mdi-close" variant="text" @click="closeCitasModal"></v-btn>
+            </v-card-title>
+            <v-card-text v-if="citasDelDia.length">
+              <v-list class="citas-list">
+                <v-list-item
+                  v-for="cita in citasDelDia"
+                  :key="cita.id"
+                  :title="`${cita.hora} - Cliente: ${cita.nombre_invitado || 'Usuario #' + cita.user_id}`"
+                  :subtitle="`Barbero: ${cita.barbero_id} - Servicio: ${cita.servicio_id}`"
+                  :prepend-icon="cita.estado ? 'mdi-check-circle' : 'mdi-clock-outline'"
+                  :color="cita.estado ? 'success' : ''"
+                >
+                  <template v-slot:append>
+                    <v-chip
+                      :color="cita.estado ? 'success' : 'warning'"
+                      size="small"
+                      variant="outlined"
+                    >
+                      {{ cita.estado ? 'Atendida' : 'Pendiente' }}
+                    </v-chip>
+                  </template>
+                </v-list-item>
+              </v-list>
+            </v-card-text>
+            <v-card-text v-else>
+              <v-alert type="info" variant="tonal">
+                No hay citas programadas para este día.
+              </v-alert>
+            </v-card-text>
+          </v-card>
+        </v-dialog>
+      </template>
+    </v-container>
   </div>
 </template>
 
 <style scoped>
-.mes-completo {
-  max-width: 700px;
-  margin: 0 auto;
-  text-align: center;
+.mes-completo-page {
+  background: linear-gradient(135deg, #1a1a1a 0%, #2B2B2B 50%, #333333 100%);
+  color: #D9D9D9;
+  padding: 2.5rem 0 2rem 0;
+  min-height: 100vh;
+  width: 100%;
+  position: relative;
+  z-index: 1;
 }
-.calendar {
-  margin: 20px 0;
+
+.mes-completo-page::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-image: url('data:image/svg+xml,%3Csvg width="20" height="20" xmlns="http://www.w3.org/2000/svg"%3E%3Cpath d="M0 0h20v20H0z" fill="%23333" fill-opacity=".05"/%3E%3C/svg%3E');
+  opacity: 0.4;
+  z-index: -1;
 }
-.calendar-header {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 20px;
-  font-size: 1.5em;
-  margin-bottom: 10px;
+
+.mes-completo-container {
+  max-width: 1200px !important;
+  margin: 0 auto !important;
 }
+
+.primary-title {
+  color: #D9D9D9;
+  letter-spacing: 3px;
+  margin-bottom: 0.3rem;
+  font-size: 3rem !important;
+  font-family: 'DM Serif Display', serif;
+  font-style: italic;
+}
+
+.title-underline {
+  width: 100px;
+  height: 4px;
+  background-color: #F5E009;
+  margin-bottom: 1rem;
+}
+
+.glass-card {
+  background-color: rgba(60, 60, 60, 0.7) !important;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #D9D9D9 !important;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
 .calendar-grid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: 4px;
+  gap: 8px;
+  margin: 0.5rem 0;
 }
+
 .calendar-day {
-  background: #f5f5f5;
-  border: 1px solid #ccc;
-  min-height: 60px;
+  background: rgba(80, 80, 80, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  min-height: 80px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  justify-content: space-between;
+  padding: 8px 4px;
   cursor: pointer;
-  font-size: 1.1em;
-  position: relative;
+  transition: all 0.3s ease;
 }
+
+.calendar-day:hover:not(.blank):not(.header):not(.cerrado) {
+  background: rgba(245, 224, 9, 0.1);
+  transform: translateY(-3px);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+}
+
 .calendar-day.today {
-  background: #ffe066;
-  border: 2px solid #f5e009;
+  background: rgba(245, 224, 9, 0.15);
+  border: 2px solid #F5E009;
 }
+
+.calendar-day.has-citas {
+  background: rgba(76, 175, 80, 0.1);
+}
+
 .calendar-day.header {
-  background: #2b2b2b;
-  color: #fff;
+  background: rgba(245, 224, 9, 0.2);
+  color: #F5E009;
   font-weight: bold;
+  border-radius: 8px;
+  min-height: 40px;
   cursor: default;
+  font-size: 1.1rem;
 }
+
 .calendar-day.blank {
   background: transparent;
   border: none;
   cursor: default;
 }
-.citas-count {
-  font-size: 0.9em;
-  color: #444;
-  margin-top: 4px;
-}
-.citas-list {
-  margin-top: 30px;
-  background: #fafafa;
-  border: 1px solid #ccc;
-  padding: 20px;
-  border-radius: 8px;
-}
 
 .calendar-day.cerrado {
-  background: #eee;
-  color: #aaa;
+  background: rgba(80, 80, 80, 0.1);
+  color: #888;
   cursor: not-allowed;
+  opacity: 0.7;
 }
 
-.error-message {
-  color: #d32f2f;
-  background-color: #ffebee;
-  padding: 10px;
-  border-radius: 4px;
-  margin: 10px 0;
+.day-number {
+  font-size: 1.3rem;
+  font-weight: 500;
+  margin-bottom: 8px;
 }
 
-.barbero-selector {
-  background-color: #e8f5e9;
-  padding: 20px;
-  border-radius: 8px;
-  margin: 20px auto;
-  max-width: 500px;
+.citas-count {
+  font-size: 0.9rem;
+  margin-top: auto;
 }
-.selector-container {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  margin-top: 15px;
+
+:deep(.citas-list) {
+  background-color: transparent !important;
+  color: #D9D9D9 !important;
 }
-select {
-  padding: 8px;
-  font-size: 16px;
-  border-radius: 4px;
-  border: 1px solid #ccc;
+
+:deep(.citas-list .v-list-item) {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
-.btn-primary {
-  background-color: #1976d2;
-  color: white;
-  border: none;
-  padding: 10px 15px;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 16px;
+
+:deep(.citas-list .v-list-item:last-child) {
+  border-bottom: none;
 }
-.btn-primary:hover {
-  background-color: #1565c0;
+
+:deep(.v-list-item__prepend > .v-icon) {
+  opacity: 0.8;
+}
+
+/* Responsive adjustments */
+@media (max-width: 960px) {
+  .primary-title {
+    font-size: 2.5rem !important;
+  }
+  
+  .calendar-day {
+    min-height: 70px;
+  }
+  
+  .day-number {
+    font-size: 1.1rem;
+  }
+}
+
+@media (max-width: 600px) {
+  .mes-completo-page {
+    padding: 2.5rem 1rem 2rem 1rem;
+  }
+  
+  .primary-title {
+    font-size: 2rem !important;
+  }
+  
+  .calendar-day {
+    min-height: 60px;
+    padding: 4px 2px;
+  }
+  
+  .day-number {
+    font-size: 1rem;
+    margin-bottom: 4px;
+  }
+  
+  .citas-count {
+    font-size: 0.7rem;
+  }
+}
+
+:deep(.v-overlay__scrim) {
+  background-color: rgba(0, 0, 0, 0.8) !important;
+  opacity: 1 !important;
 }
 </style>

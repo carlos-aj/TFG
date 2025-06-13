@@ -1,6 +1,7 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue'
 import { API_URL } from '../config'
+import { gsap } from 'gsap'
 
 const citas = ref([])
 const usuarios = ref([])
@@ -290,141 +291,371 @@ async function sancionarUsuario(userId) {
 </script>
 
 <template>
-  <div class="landing">
-    <h1>Citas del día</h1>
-    <div v-if="loading">Cargando...</div>
-    <div v-else-if="error" class="error-message">{{ error }}</div>
-    <div v-else>
-      <div v-if="rol === 'empleado' && showBarberoSelector" class="barbero-selector">
-        <h2>Selecciona tu barbero</h2>
-        <p>No se ha podido determinar automáticamente qué barbero eres. Por favor, selecciona tu barbero de la lista:</p>
-        <div class="selector-container">
-          <select v-model="selectedBarbero">
-            <option :value="null">Selecciona un barbero</option>
-            <option v-for="barbero in barberos" :key="barbero.id" :value="barbero.id">
-              {{ barbero.nombre }}
-            </option>
-          </select>
-          <button @click="seleccionarBarbero" class="btn-primary">Confirmar</button>
-        </div>
-      </div>
-      
-      <div v-else-if="rol === 'empleado' && !empleadoBarberoId" class="warning-message">
-        <p>No se encontró un barbero correspondiente para ti. Contacta con el administrador.</p>
-      </div>
-      <table v-else-if="citasFiltradas.length">
-        <thead>
-          <tr>
-            <th>Cliente</th>
-            <th>Barbero</th>
-            <th>Servicio</th>
-            <th>Hora</th>
-            <th>Estado</th>
-            <th>Pagado</th>
-            <th v-if="rol === 'admin'">Sancionar</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="cita in citasFiltradas" :key="cita.id">
-            <td>
-              <template v-if="cita.nombre_invitado">
-                {{ cita.nombre_invitado }} <span style="color: #1976d2; font-weight: bold;">(Invitado)</span>
-              </template>
-              <template v-else>
-                {{ getNombreUsuario(cita.user_id) }}
-              </template>
-            </td>
-            <td>{{ getNombreBarbero(cita.barbero_id) }}</td>
-            <td>{{ getNombreServicio(cita.servicio_id) }}</td>
-            <td>{{ cita.hora }}</td>
-            <td>
-              <input
-                type="checkbox"
-                :checked="cita.estado"
-                @change="toggleEstado(cita)"
-              />
-            </td>
-            <td>
-              {{ cita.pagado ? 'Sí' : 'No' }}
-            </td>
-            <td v-if="rol === 'admin'">
-              <button
-                v-if="cita.user_id"
-                @click="sancionarUsuario(cita.user_id)"
-              >
-                Sancionar
-              </button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-      <div v-else class="info-message">No hay citas para hoy.</div>
-    </div>
+  <div class="citas-admin-page">
+    <v-container class="citas-admin-container px-4 px-sm-6 px-md-8">
+      <v-row>
+        <v-col cols="12" class="text-center mb-4">
+          <h1 class="primary-title">CITAS DEL DÍA</h1>
+          <div class="title-underline mx-auto"></div>
+        </v-col>
+      </v-row>
+
+      <v-row v-if="loading" justify="center">
+        <v-col cols="12" class="text-center">
+          <v-progress-circular indeterminate color="accent" size="64"></v-progress-circular>
+          <div class="mt-4">Cargando citas...</div>
+        </v-col>
+      </v-row>
+
+      <v-row v-else-if="error">
+        <v-col cols="12">
+          <v-alert type="error" variant="tonal">{{ error }}</v-alert>
+        </v-col>
+      </v-row>
+
+      <template v-else>
+        <!-- Selector de barbero para empleados -->
+        <v-row v-if="rol === 'empleado' && showBarberoSelector">
+          <v-col cols="12" sm="10" md="8" lg="6" class="mx-auto">
+            <v-card class="mb-6">
+              <v-card-title class="text-h5 py-4 px-6">
+                Selecciona tu barbero
+              </v-card-title>
+              <v-card-text>
+                <p class="mb-4">No se ha podido determinar automáticamente qué barbero eres. Por favor, selecciona tu barbero de la lista:</p>
+                <v-select
+                  v-model="selectedBarbero"
+                  :items="barberos.map(b => ({ title: b.nombre, value: b.id }))"
+                  label="Selecciona un barbero"
+                  variant="outlined"
+                  class="mb-4"
+                ></v-select>
+                <div class="text-center">
+                  <v-btn 
+                    @click="seleccionarBarbero" 
+                    color="accent"
+                    class="font-weight-bold"
+                  >
+                    Confirmar
+                  </v-btn>
+                </div>
+              </v-card-text>
+            </v-card>
+          </v-col>
+        </v-row>
+
+        <!-- Mensaje de advertencia -->
+        <v-row v-else-if="rol === 'empleado' && !empleadoBarberoId">
+          <v-col cols="12" sm="10" md="8" class="mx-auto">
+            <v-alert 
+              type="warning"
+              variant="tonal"
+              class="mb-6"
+            >
+              No se encontró un barbero correspondiente para ti. Contacta con el administrador.
+            </v-alert>
+          </v-col>
+        </v-row>
+
+        <!-- Contenido principal de citas -->
+        <template v-else>
+          <!-- Resumen de estadísticas -->
+          <v-row class="mb-6">
+            <v-col cols="12" sm="6" md="3">
+              <v-card class="stat-card">
+                <v-card-text class="d-flex align-center">
+                  <v-icon icon="mdi-calendar-check" size="large" color="accent" class="mr-4"></v-icon>
+                  <div>
+                    <div class="text-h5 font-weight-bold">{{ citasFiltradas.length }}</div>
+                    <div class="text-caption text-medium-emphasis">Citas totales</div>
+                  </div>
+                </v-card-text>
+              </v-card>
+            </v-col>
+            
+            <v-col cols="12" sm="6" md="3">
+              <v-card class="stat-card">
+                <v-card-text class="d-flex align-center">
+                  <v-icon icon="mdi-check-circle" size="large" color="success" class="mr-4"></v-icon>
+                  <div>
+                    <div class="text-h5 font-weight-bold">{{ citasFiltradas.filter(c => c.estado).length }}</div>
+                    <div class="text-caption text-medium-emphasis">Citas completadas</div>
+                  </div>
+                </v-card-text>
+              </v-card>
+            </v-col>
+            
+            <v-col cols="12" sm="6" md="3">
+              <v-card class="stat-card">
+                <v-card-text class="d-flex align-center">
+                  <v-icon icon="mdi-clock-outline" size="large" color="info" class="mr-4"></v-icon>
+                  <div>
+                    <div class="text-h5 font-weight-bold">{{ citasFiltradas.filter(c => !c.estado).length }}</div>
+                    <div class="text-caption text-medium-emphasis">Citas pendientes</div>
+                  </div>
+                </v-card-text>
+              </v-card>
+            </v-col>
+            
+            <v-col cols="12" sm="6" md="3">
+              <v-card class="stat-card">
+                <v-card-text class="d-flex align-center">
+                  <v-icon icon="mdi-cash-multiple" size="large" color="warning" class="mr-4"></v-icon>
+                  <div>
+                    <div class="text-h5 font-weight-bold">{{ citasFiltradas.filter(c => c.pagado).length }}</div>
+                    <div class="text-caption text-medium-emphasis">Citas pagadas</div>
+                  </div>
+                </v-card-text>
+              </v-card>
+            </v-col>
+          </v-row>
+
+          <!-- Tabla de citas -->
+          <v-row>
+            <v-col cols="12">
+              <v-card class="mb-6">
+                <v-card-title class="text-h5 py-4 px-6 d-flex align-center">
+                  <div class="d-flex align-center">
+                    <v-icon icon="mdi-calendar-text" size="large" color="accent" class="mr-3"></v-icon>
+                    <span>Lista de Citas</span>
+                    <v-chip class="ml-4" color="accent" size="small">{{ citasFiltradas.length }}</v-chip>
+                  </div>
+                </v-card-title>
+                
+                <v-card-text v-if="citasFiltradas.length">
+                  <div class="table-responsive">
+                    <v-table density="compact" hover>
+                      <thead>
+                        <tr>
+                          <th class="text-left">Cliente</th>
+                          <th class="text-left">Barbero</th>
+                          <th class="text-left">Servicio</th>
+                          <th class="text-center">Hora</th>
+                          <th class="text-center">Estado</th>
+                          <th class="text-center">Pagado</th>
+                          <th v-if="rol === 'admin'" class="text-center">Acciones</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr v-for="cita in citasFiltradas" :key="cita.id">
+                          <td>
+                            <template v-if="cita.nombre_invitado">
+                              {{ cita.nombre_invitado }} <v-chip size="x-small" color="primary" class="ml-1">Invitado</v-chip>
+                            </template>
+                            <template v-else>
+                              {{ getNombreUsuario(cita.user_id) }}
+                            </template>
+                          </td>
+                          <td>{{ getNombreBarbero(cita.barbero_id) }}</td>
+                          <td>{{ getNombreServicio(cita.servicio_id) }}</td>
+                          <td class="text-center font-weight-medium">{{ cita.hora }}</td>
+                          <td class="text-center">
+                            <v-switch
+                              v-model="cita.estado"
+                              color="success"
+                              hide-details
+                              density="compact"
+                              @change="toggleEstado(cita)"
+                              class="d-inline-block"
+                            ></v-switch>
+                          </td>
+                          <td class="text-center">
+                            <v-chip
+                              :color="cita.pagado ? 'success' : 'error'"
+                              size="small"
+                              variant="outlined"
+                              :text="cita.pagado ? 'Sí' : 'No'"
+                              class="font-weight-medium"
+                            ></v-chip>
+                          </td>
+                          <td v-if="rol === 'admin'" class="text-center">
+                            <v-tooltip text="Sancionar usuario">
+                              <template v-slot:activator="{ props }">
+                                <v-btn
+                                  v-if="cita.user_id"
+                                  v-bind="props"
+                                  @click="sancionarUsuario(cita.user_id)"
+                                  color="error"
+                                  variant="text"
+                                  size="small"
+                                  icon="mdi-alert-circle"
+                                ></v-btn>
+                              </template>
+                            </v-tooltip>
+                          </td>
+                        </tr>
+                      </tbody>
+                    </v-table>
+                  </div>
+                </v-card-text>
+                <v-card-text v-else>
+                  <v-alert type="info" variant="tonal">
+                    No hay citas para hoy.
+                  </v-alert>
+                </v-card-text>
+              </v-card>
+            </v-col>
+          </v-row>
+        </template>
+      </template>
+    </v-container>
   </div>
 </template>
 
 <style scoped>
-.landing {
-  text-align: center;
+.citas-admin-page {
+  background: linear-gradient(135deg, #1a1a1a 0%, #2B2B2B 50%, #333333 100%);
+  color: #D9D9D9;
+  padding: 2.5rem 0 2rem 0;
+  min-height: 100vh;
+  width: 100%;
+  position: relative;
+  z-index: 1;
 }
-table {
-  margin: 0 auto;
-  border-collapse: collapse;
+
+.citas-admin-page::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-image: url('data:image/svg+xml,%3Csvg width="20" height="20" xmlns="http://www.w3.org/2000/svg"%3E%3Cpath d="M0 0h20v20H0z" fill="%23333" fill-opacity=".05"/%3E%3C/svg%3E');
+  opacity: 0.4;
+  z-index: -1;
 }
-th, td {
-  border: 1px solid #ccc;
-  padding: 8px 12px;
+
+.citas-admin-container {
+  max-width: 1400px !important;
+  margin: 0 auto !important;
 }
-.error-message {
-  color: #d32f2f;
-  background-color: #ffebee;
-  padding: 10px;
-  border-radius: 4px;
-  margin: 10px 0;
+
+.primary-title {
+  color: #D9D9D9;
+  letter-spacing: 3px;
+  margin-bottom: 0.3rem;
+  font-size: 3rem !important;
+  font-family: 'DM Serif Display', serif;
+  font-style: italic;
 }
-.warning-message {
-  color: #ff6f00;
-  background-color: #fff8e1;
-  padding: 10px;
-  border-radius: 4px;
-  margin: 10px 0;
+
+.title-underline {
+  width: 100px;
+  height: 4px;
+  background-color: #F5E009;
+  margin-bottom: 1rem;
 }
-.info-message {
-  color: #0288d1;
-  background-color: #e1f5fe;
-  padding: 10px;
-  border-radius: 4px;
-  margin: 10px 0;
+
+:deep(.v-dialog .v-overlay__content > .v-card),
+:deep(.v-dialog .v-overlay__content) {
+  background-color: rgba(43, 43, 43, 0.95) !important;
 }
-.barbero-selector {
-  background-color: #e8f5e9;
-  padding: 20px;
+
+:deep(.v-overlay__scrim) {
+  background-color: rgba(0, 0, 0, 0.8) !important;
+  opacity: 1 !important;
+}
+
+:deep(.v-overlay__content) {
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5) !important;
+}
+
+:deep(.v-table) {
+  background-color: transparent !important;
+  color: #D9D9D9;
   border-radius: 8px;
-  margin: 20px auto;
-  max-width: 500px;
 }
-.selector-container {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  margin-top: 15px;
+
+:deep(.v-table .v-table__wrapper > table > thead > tr > th) {
+  color: #F5E009 !important;
+  font-size: 1rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  padding: 0.5rem 1rem;
+  border-bottom: 2px solid rgba(245, 224, 9, 0.2);
 }
-select {
-  padding: 8px;
-  font-size: 16px;
-  border-radius: 4px;
-  border: 1px solid #ccc;
+
+:deep(.v-table .v-table__wrapper > table > tbody > tr:hover) {
+  background-color: rgba(245, 224, 9, 0.1) !important;
 }
-.btn-primary {
-  background-color: #1976d2;
-  color: white;
-  border: none;
-  padding: 10px 15px;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 16px;
+
+:deep(.v-table .v-table__wrapper > table > tbody > tr > td) {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 0.5rem 1rem;
 }
-.btn-primary:hover {
-  background-color: #1565c0;
+
+:deep(.v-text-field .v-field__outline__start),
+:deep(.v-text-field .v-field__outline__end),
+:deep(.v-text-field .v-field__outline__notch) {
+  border-color: rgba(255, 255, 255, 0.2) !important;
 }
+
+:deep(.v-text-field .v-field__input) {
+  color: #D9D9D9 !important;
+}
+
+:deep(.v-text-field .v-label) {
+  color: #D9D9D9 !important;
+  opacity: 0.7;
+}
+
+:deep(.v-text-field--focused .v-field__outline__start),
+:deep(.v-text-field--focused .v-field__outline__end),
+:deep(.v-text-field--focused .v-field__outline__notch) {
+  border-color: #F5E009 !important;
+}
+
+:deep(.v-btn) {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+:deep(.v-btn:hover) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* Responsive adjustments */
+@media (max-width: 960px) {
+  .primary-title {
+    font-size: 2.5rem !important;
+  }
+}
+
+@media (max-width: 600px) {
+  .citas-admin-page {
+    padding: 2.5rem 1rem 2rem 1rem;
+  }
+  
+  .primary-title {
+    font-size: 2rem !important;
+  }
+}
+
+.table-responsive {
+  overflow-x: auto;
+}
+
+:deep(.v-chip.v-chip--size-small) {
+  font-size: 0.75rem;
+}
+
+.stat-card {
+  background-color: rgba(60, 60, 60, 0.7) !important;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #D9D9D9 !important;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.stat-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 12px 25px rgba(0, 0, 0, 0.4);
+}
+
+
 </style>

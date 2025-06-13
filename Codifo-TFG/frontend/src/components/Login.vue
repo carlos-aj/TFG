@@ -1,25 +1,61 @@
-<template> 
-  <div class="landing">
-    <h1>login</h1>
-    <form @submit.prevent="login">
-      <div>
-        <label for="correo">Correo:</label>
-        <input type="email" id="correo" v-model="correo" />
-        <p v-if="errors.correo" class="error">{{ errors.correo }}</p>
-      </div>
+<template>
+  <div class="login-page">
+    <div class="overlay"></div>
+    <div class="login-container">
+      <v-card class="login-card" elevation="10" rounded="lg">
+        <v-card-title class="text-h4 text-center dm-serif font-italic">Iniciar Sesión</v-card-title>
+        <v-card-text>
+          <v-form @submit.prevent="login">
+            <v-text-field
+              v-model="correo"
+              label="Correo"
+              type="email"
+              :error-messages="errors.correo"
+              variant="outlined"
+              prepend-inner-icon="mdi-email"
+              class="mb-3"
+              bg-color="rgba(43, 43, 43, 0.7)"
+              color="var(--accent-color)"
+            ></v-text-field>
 
-      <div>
-        <label for="contrasena">Contraseña:</label>
-        <input type="password" id="contrasena" v-model="contrasena" />
-        <p v-if="errors.contrasena" class="error">{{ errors.contrasena }}</p>
-      </div>
-      <div>
-         Registrate si aun no lo estas.
-        <router-link to="/register">Registrarse</router-link>
-      </div>
-      <button type="submit">Login</button>
-    </form>
-    <p v-if="errors.general" class="error">{{ errors.general }}</p>
+            <v-text-field
+              v-model="contrasena"
+              label="Contraseña"
+              type="password"
+              :error-messages="errors.contrasena"
+              variant="outlined"
+              prepend-inner-icon="mdi-lock"
+              class="mb-4"
+              bg-color="rgba(43, 43, 43, 0.7)"
+              color="var(--accent-color)"
+            ></v-text-field>
+
+            <div class="my-4 text-center normal-text">
+              <span>¿No tienes cuenta? </span>
+              <router-link to="/register" class="accent-link">Regístrate aquí</router-link>
+            </div>
+
+            <v-alert
+              v-if="errors.general"
+              type="error"
+              class="mb-4"
+              density="compact"
+            >{{ errors.general }}</v-alert>
+
+            <v-btn 
+              color="var(--accent-color)" 
+              type="submit" 
+              block
+              class="login-btn mt-4"
+              size="large"
+              elevation="3"
+            >
+              Iniciar Sesión
+            </v-btn>
+          </v-form>
+        </v-card-text>
+      </v-card>
+    </div>
   </div>
 </template>
 
@@ -95,31 +131,89 @@ async function login() {
 </script>
 
 <style scoped>
-.error {
-  color: red;
-  font-size: 0.8rem;
-  margin-top: 5px;
-}
-
-input {
+.login-page {
+  position: relative;
+  background-image: url('../assets/imagenHero.png');
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-position: center;
   width: 100%;
-  padding: 8px;
-  margin: 5px 0;
-  border: 1px solid #ccc;
-  border-radius: 4px;
+  height: 100vh; 
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  max-width: 100%;
 }
 
-button {
-  background-color: #4CAF50;
-  color: white;
-  padding: 10px 15px;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  margin-top: 10px;
+.overlay {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  width: 100%; height: 100%;
+  background: rgba(0,0,0,0.6);
+  pointer-events: none;
 }
 
-button:hover {
-  background-color: #45a049;
+.login-container {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  max-width: 550px;
+  padding: 0 1rem;
+  margin-top: -3rem;
+  display: flex;
+  justify-content: center;
+}
+
+.login-card {
+  background-color: rgba(43, 43, 43, 0.85) !important;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(245, 224, 9, 0.2);
+  padding: 3rem;
+  width: 100%;
+  max-width: 500px;
+}
+
+.login-btn {
+  font-weight: bold !important;
+  color: var(--main-bg-color) !important;
+  font-style: normal !important;
+  letter-spacing: 1px;
+  transition: transform 0.3s ease;
+  padding: 1rem !important;
+  font-size: 1.1rem !important;
+}
+
+.login-btn:hover {
+  transform: translateY(-3px);
+}
+
+.accent-link {
+  color: var(--accent-color);
+  text-decoration: none;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.accent-link:hover {
+  text-decoration: underline;
+  opacity: 0.9;
+}
+
+:deep(.v-field__input) {
+  color: var(--text-color) !important;
+  font-size: 1.1rem !important;
+}
+
+:deep(.v-label) {
+  color: var(--text-color) !important;
+  opacity: 0.8;
+  font-size: 1.1rem !important;
+}
+
+:deep(.v-field__outline) {
+  color: var(--accent-color) !important;
 }
 </style>

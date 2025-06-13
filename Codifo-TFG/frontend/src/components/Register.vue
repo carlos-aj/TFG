@@ -1,48 +1,118 @@
 <template>
-  <section>
-    <h1>Register</h1>
-    <p v-if="successMessage" class="success">{{ successMessage }}</p>
-    <form @submit.prevent="register">
-      <div>
-        <label for="username">Nombre:</label>
-        <input type="text" id="username" v-model="username" />
-        <p v-if="errors.username" class="error">{{ errors.username }}</p>
-      </div>
-
-      <div>
-        <label for="surname">Apellidos:</label>
-        <input type="text" id="surname" v-model="surname" />
-        <p v-if="errors.surname" class="error">{{ errors.surname }}</p>
-      </div>
-
-      <div>
-        <label for="email">Email:</label>
-        <input type="email" id="email" v-model="email" />
-        <p v-if="errors.email" class="error">{{ errors.email }}</p>
-      </div>
-
-      <div>
-        <label for="phone">Teléfono:</label>
-        <input type="tel" id="phone" v-model="phone" />
-        <p v-if="errors.phone" class="error">{{ errors.phone }}</p>
-      </div>
-
-      <div>
-        <label for="password">Password:</label>
-        <input type="password" id="password" v-model="password" />
-        <p v-if="errors.password" class="error">{{ errors.password }}</p>
-      </div>
-
-      <div v-if="password">
-        <label for="confirmPassword">Confirm Password:</label>
-        <input type="password" id="confirmPassword" v-model="confirmPassword" />
-        <p v-if="errors.confirmPassword" class="error">{{ errors.confirmPassword }}</p>
-      </div>
-
-      <button type="submit">Register</button>
-    </form>
-  </section>
+  <div class="register-page">
+    <div class="overlay"></div>
+    <div class="register-container">
+      <v-card class="register-card" elevation="10" rounded="lg">
+        <v-card-title class="text-h4 text-center dm-serif font-italic">Crear Cuenta</v-card-title>
+        
+        <v-card-text>
+          <v-alert
+            v-if="successMessage"
+            type="success"
+            class="mb-4"
+            density="compact"
+          >{{ successMessage }}</v-alert>
+          
+          <v-form @submit.prevent="register">
+            <v-row>
+              <v-col cols="12" md="6">
+                <v-text-field
+                  v-model="username"
+                  label="Nombre"
+                  :error-messages="errors.username"
+                  variant="outlined"
+                  prepend-inner-icon="mdi-account"
+                  bg-color="rgba(43, 43, 43, 0.7)"
+                  color="var(--accent-color)"
+                ></v-text-field>
+              </v-col>
+              
+              <v-col cols="12" md="6">
+                <v-text-field
+                  v-model="surname"
+                  label="Apellidos"
+                  :error-messages="errors.surname"
+                  variant="outlined"
+                  prepend-inner-icon="mdi-account-outline"
+                  bg-color="rgba(43, 43, 43, 0.7)"
+                  color="var(--accent-color)"
+                ></v-text-field>
+              </v-col>
+            </v-row>
+            
+            <v-text-field
+              v-model="email"
+              label="Email"
+              type="email"
+              :error-messages="errors.email"
+              variant="outlined"
+              prepend-inner-icon="mdi-email"
+              class="mb-3"
+              bg-color="rgba(43, 43, 43, 0.7)"
+              color="var(--accent-color)"
+            ></v-text-field>
+            
+            <v-text-field
+              v-model="phone"
+              label="Teléfono"
+              type="tel"
+              :error-messages="errors.phone"
+              variant="outlined"
+              prepend-inner-icon="mdi-phone"
+              class="mb-3"
+              bg-color="rgba(43, 43, 43, 0.7)"
+              color="var(--accent-color)"
+            ></v-text-field>
+            
+            <v-text-field
+              v-model="password"
+              label="Contraseña"
+              type="password"
+              :error-messages="errors.password"
+              variant="outlined"
+              prepend-inner-icon="mdi-lock"
+              class="mb-3"
+              bg-color="rgba(43, 43, 43, 0.7)"
+              color="var(--accent-color)"
+            ></v-text-field>
+            
+            <v-expand-transition>
+              <v-text-field
+                v-if="password.length > 0"
+                v-model="confirmPassword"
+                label="Confirmar Contraseña"
+                type="password"
+                :error-messages="errors.confirmPassword"
+                variant="outlined"
+                prepend-inner-icon="mdi-lock-check"
+                class="mb-4"
+                bg-color="rgba(43, 43, 43, 0.7)"
+                color="var(--accent-color)"
+              ></v-text-field>
+            </v-expand-transition>
+            
+            <div class="my-4 text-center normal-text">
+              <span>¿Ya tienes cuenta? </span>
+              <router-link to="/login" class="accent-link">Inicia sesión aquí</router-link>
+            </div>
+            
+            <v-btn 
+              color="var(--accent-color)" 
+              type="submit" 
+              block
+              class="register-btn mt-4"
+              size="large"
+              elevation="3"
+            >
+              Registrarse
+            </v-btn>
+          </v-form>
+        </v-card-text>
+      </v-card>
+    </div>
+  </div>
 </template>
+
 <script setup>
 import { ref, reactive } from 'vue'
 import { API_URL } from '../config'
@@ -55,7 +125,6 @@ const password = ref('')
 const confirmPassword = ref('')
 
 const successMessage = ref('')
-
 
 const errors = reactive({
   username: '',
@@ -153,7 +222,83 @@ const register = () => {
 }
 </script>
 
-
 <style scoped>
+.register-page {
+  position: relative;
+  background-image: url('../assets/imagenHero.png');
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-position: center;
+  width: 100%;
+  min-height: 100vh; 
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  padding: 7rem 0 2rem 0;
+  box-sizing: border-box;
+  max-width: 100%;
+}
 
+.overlay {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  width: 100%; height: 100%;
+  background: rgba(0,0,0,0.6);
+  pointer-events: none;
+}
+
+.register-container {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  max-width: 600px;
+  padding: 0 1rem;
+  margin-top: 2rem;
+}
+
+.register-card {
+  background-color: rgba(43, 43, 43, 0.85) !important;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(245, 224, 9, 0.2);
+  padding: 2rem;
+}
+
+.register-btn {
+  font-weight: bold !important;
+  color: var(--main-bg-color) !important;
+  font-style: normal !important;
+  letter-spacing: 1px;
+  transition: transform 0.3s ease;
+  padding: 0.75rem !important;
+}
+
+.register-btn:hover {
+  transform: translateY(-3px);
+}
+
+.accent-link {
+  color: var(--accent-color);
+  text-decoration: none;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.accent-link:hover {
+  text-decoration: underline;
+  opacity: 0.9;
+}
+
+:deep(.v-field__input) {
+  color: var(--text-color) !important;
+}
+
+:deep(.v-label) {
+  color: var(--text-color) !important;
+  opacity: 0.8;
+}
+
+:deep(.v-field__outline) {
+  color: var(--accent-color) !important;
+}
 </style>

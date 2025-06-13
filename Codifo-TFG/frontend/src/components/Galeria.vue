@@ -200,9 +200,15 @@ onMounted(() => {
           />
         </div>
       </div>
-      <button class="eliminar-btn" @click="eliminarGruposSeleccionados" :disabled="selectedGrupos.length === 0">
-        Eliminar grupos seleccionados
-      </button>
+      <div class="admin-actions">
+        <button class="admin-action-btn eliminar-btn" @click="eliminarGruposSeleccionados" :disabled="selectedGrupos.length === 0">
+          Eliminar grupos seleccionados
+        </button>
+        <button v-if="!totalLoaded" @click="cargarMas" :disabled="loading" class="admin-action-btn cargar-btn">
+          {{ loading ? 'Cargando...' : 'Cargar más' }}
+        </button>
+        <p v-else class="fin">No hay más imágenes.</p>
+      </div>
     </div>
     <!-- Modal para añadir imágenes -->
     <div v-if="showAddModal" class="modal-overlay" @click.self="desactivarAdmin">
@@ -235,8 +241,8 @@ onMounted(() => {
         v-for="(galeria, i) in galerias"
         :key="galeria.id"
         class="galeria-item"
-        @click="abrirModal(galeria)"
-        style="cursor:pointer"
+        @click="galeria.imagenes.length > 1 ? abrirModal(galeria) : null"
+        :class="{ 'clickable': galeria.imagenes.length > 1 }"
       >
         <img
           :src="getImgUrl(galeria.imagenes[0])"
@@ -244,6 +250,10 @@ onMounted(() => {
           :alt="`Imagen de ${galeria.barbero?.nombre || ''}`"
         />
         <div class="barbero-nombre">{{ galeria.barbero?.nombre || 'Barbero desconocido' }}</div>
+        <div v-if="galeria.imagenes.length > 1" class="multi-image-badge">
+          <v-icon icon="mdi-image-multiple" color="white" size="small"></v-icon>
+          <span>{{ galeria.imagenes.length }}</span>
+        </div>
       </div>
     </div>
     <button v-if="!totalLoaded && !adminMode" @click="cargarMas" :disabled="loading" class="cargar-btn">
@@ -251,20 +261,34 @@ onMounted(() => {
     </button>
     <p v-else-if="!adminMode" class="fin">No hay más imágenes.</p>
 
-    <!-- Modal de imágenes -->
+    <!-- Modal de imágenes con carrusel -->
     <div v-if="modalOpen" class="modal-overlay" @click.self="cerrarModal">
       <div class="modal-content">
         <button class="cerrar-modal" @click="cerrarModal">×</button>
         <h2 v-if="galeriaActual">{{ galeriaActual.barbero?.nombre }}</h2>
-        <div class="modal-imgs">
-          <img
+        
+        <v-carousel
+          v-if="imagenesModal.length > 0"
+          hide-delimiter-background
+          show-arrows="hover"
+          height="500"
+          delimiter-icon="mdi-circle"
+          :cycle="true"
+          class="carousel-container"
+        >
+          <v-carousel-item
             v-for="(img, idx) in imagenesModal"
             :key="idx"
-            :src="getImgUrl(img)"
-            class="modal-img"
-            :alt="`Imagen ${idx+1}`"
-          />
-        </div>
+          >
+            <div class="carousel-item-container">
+              <img
+                :src="getImgUrl(img)"
+                class="carousel-img"
+                :alt="`Imagen ${idx+1}`"
+              />
+            </div>
+          </v-carousel-item>
+        </v-carousel>
       </div>
     </div>
   </div>
@@ -273,172 +297,410 @@ onMounted(() => {
 <style scoped>
 .landing {
   text-align: center;
-  padding: 2rem;
+  padding: 1rem;
+  padding-top: 3.5rem;
+  padding-bottom: 0.5rem;
+  background-color: var(--main-bg-color);
+  color: var(--text-color);
+  min-height: 100vh;
 }
+
+h1 {
+  font-family: 'DM Serif', serif !important;
+  font-style: italic;
+  font-size: 3rem;
+  margin-bottom: 2rem;
+  position: relative;
+  display: inline-block;
+}
+
+h1::after {
+  content: '';
+  position: absolute;
+  bottom: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 80px;
+  height: 3px;
+  background-color: var(--accent-color);
+  border-radius: 2px;
+}
+
 .admin-bar {
-  margin-bottom: 1em;
+  margin-bottom: 1.5rem;
   text-align: right;
 }
+
 .galeria-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 16px;
-  margin: 2rem 0;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 24px;
+  margin: 2.5rem 0;
+  max-width: 1200px;
+  margin-left: auto;
+  margin-right: auto;
 }
+
 .galeria-item {
   position: relative;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  border-radius: 12px;
+  overflow: hidden;
 }
+
+.galeria-item.clickable {
+  cursor: pointer;
+}
+
+.galeria-item.clickable:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+}
+
 .galeria-img {
   width: 100%;
-  height: 180px;
+  height: 300px;
   object-fit: cover;
   border-radius: 8px;
-  box-shadow: 0 2px 8px #0002;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transition: all 0.3s ease;
 }
+
 .barbero-nombre {
-  margin-top: 0.5em;
-  font-weight: bold;
-  color: #333;
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: rgba(0, 0, 0, 0.7);
+  color: var(--text-color);
+  padding: 12px;
+  font-family: 'DM Serif', serif;
+  font-style: italic;
+  font-weight: 500;
+  text-align: center;
 }
+
+.multi-image-badge {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background-color: rgba(0, 0, 0, 0.6);
+  color: white;
+  border-radius: 20px;
+  padding: 3px 8px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.8rem;
+}
+
 .cargar-btn {
-  padding: 0.7em 2em;
+  padding: 0.8em 2.5em;
   font-size: 1.1em;
-  background: #2B2B2B;
-  color: #fff;
+  background: var(--accent-color);
+  color: var(--main-bg-color);
   border: none;
   border-radius: 6px;
   cursor: pointer;
-  margin-top: 1em;
-  transition: background 0.2s;
+  margin-top: 2em;
+  transition: all 0.3s ease;
+  font-weight: bold;
+  letter-spacing: 1px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
+
 .cargar-btn:hover:enabled {
-  background: #F5E009;
-  color: #2B2B2B;
+  transform: translateY(-3px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
 }
+
+.cargar-btn:disabled {
+  background: #555;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
 .fin {
-  margin-top: 1em;
-  color: #888;
+  margin-top: 1.5em;
+  color: var(--text-color);
+  font-style: italic;
+  opacity: 0.8;
 }
+
 .modal-overlay {
   position: fixed;
   top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(0,0,0,0.7);
+  background: rgba(0, 0, 0, 0.85);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 2000;
+  backdrop-filter: blur(5px);
 }
+
 .modal-content {
-  background: #fff;
-  padding: 2em;
+  background: var(--main-bg-color);
+  padding: 2.5em;
   border-radius: 12px;
   max-width: 90vw;
   max-height: 90vh;
   overflow: auto;
   position: relative;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  border-left: 4px solid var(--accent-color);
+  color: var(--text-color);
 }
+
 .cerrar-modal {
   position: absolute;
   top: 1em;
   right: 1em;
-  background: transparent;
+  background: rgba(0, 0, 0, 0.2);
   border: none;
-  font-size: 2em;
+  font-size: 1.8em;
   cursor: pointer;
-}
-.modal-imgs {
+  color: var(--text-color);
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
   display: flex;
-  flex-wrap: wrap;
-  gap: 1em;
+  align-items: center;
   justify-content: center;
-  margin-top: 1em;
+  transition: all 0.3s ease;
+  z-index: 10;
 }
-.modal-img {
-  max-width: 180px;
-  max-height: 180px;
+
+.cerrar-modal:hover {
+  background: var(--accent-color);
+  color: var(--main-bg-color);
+}
+
+.modal-content h2 {
+  font-family: 'DM Serif', serif;
+  font-style: italic;
+  font-size: 2rem;
+  margin-bottom: 1.5rem;
+  text-align: center;
+  color: var(--text-color);
+}
+
+.carousel-container {
   border-radius: 8px;
-  object-fit: cover;
-  box-shadow: 0 2px 8px #0002;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
 }
+
+.carousel-item-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+}
+
+.carousel-img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
 .admin-btn {
   margin-top: 0.5em;
-  background: #F5E009;
-  color: #2B2B2B;
+  background: var(--accent-color);
+  color: var(--main-bg-color);
   border: none;
   border-radius: 4px;
-  padding: 0.3em 1em;
+  padding: 0.5em 1.2em;
   cursor: pointer;
   font-weight: bold;
+  transition: all 0.3s ease;
 }
-.admin-img-container {
-  position: relative;
-  border: 2px solid transparent;
-  border-radius: 8px;
-  padding: 4px;
-  cursor: pointer;
+
+.admin-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
-.admin-img-container.selected {
-  border: 2px solid #F5E009;
-  background: #fffbe6;
+
+.galeria-item.selected {
+  outline: 3px solid var(--accent-color);
+  box-shadow: 0 0 20px rgba(245, 224, 9, 0.4);
 }
-.admin-img-container input[type="checkbox"] {
+
+.grupo-checkbox {
   position: absolute;
-  top: 8px;
-  left: 8px;
-  transform: scale(1.3);
+  top: 10px;
+  right: 10px;
+  transform: scale(1.5);
+  pointer-events: none;
+  accent-color: var(--accent-color);
 }
-.eliminar-btn, .añadir-btn {
-  margin-top: 1em;
-  padding: 0.5em 1.5em;
-  background: #2B2B2B;
-  color: #fff;
-  border: none;
+
+.admin-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 1em;
+  max-width: 400px;
+  margin: 2em auto 0 auto;
+}
+
+.admin-action-btn {
+  padding: 0.8em 2.5em;
+  font-size: 1.1em;
   border-radius: 6px;
+  border: none;
   cursor: pointer;
-  font-size: 1em;
+  width: 100%;
+  transition: all 0.3s ease;
+  font-family: inherit;
+  font-weight: 500;
 }
+
+.eliminar-btn {
+  background: #e53935;
+  color: #fff;
+}
+
 .eliminar-btn:disabled {
-  background: #ccc;
+  background: #bdbdbd;
+  color: #fff;
   cursor: not-allowed;
 }
-.galeria-item.selected {
-  outline: 3px solid #F5E009;
-  background: #fffbe6;
+
+.cargar-btn {
+  background: var(--accent-color);
+  color: var(--main-bg-color);
 }
-.grupo-checkbox {
-  pointer-events: none;
+
+.cargar-btn:disabled {
+  background: #bdbdbd;
+  color: #fff;
+  cursor: not-allowed;
 }
+
 .admin-menu-modal {
   position: fixed;
   top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(0,0,0,0.2);
+  background: rgba(0, 0, 0, 0.5);
   display: flex;
   align-items: flex-start;
   justify-content: flex-end;
   z-index: 3000;
+  backdrop-filter: blur(3px);
 }
+
 .admin-menu-content {
-  background: #fff;
+  background: var(--main-bg-color);
   margin: 2em 2em 0 0;
   border-radius: 10px;
-  box-shadow: 0 2px 16px #0003;
-  padding: 1.5em 2em;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+  padding: 1.5em;
   display: flex;
   flex-direction: column;
   gap: 1em;
+  border-left: 3px solid var(--accent-color);
 }
+
 .admin-menu-content button {
-  background: #2B2B2B;
-  color: #fff;
+  background: rgba(0, 0, 0, 0.2);
+  color: var(--text-color);
   border: none;
   border-radius: 6px;
-  padding: 0.7em 1.5em;
-  font-size: 1.1em;
+  padding: 0.8em 1.5em;
+  font-size: 1rem;
   cursor: pointer;
-  transition: background 0.2s;
+  transition: all 0.3s ease;
+  text-align: left;
 }
+
 .admin-menu-content button:hover {
-  background: #F5E009;
-  color: #2B2B2B;
-} 
+  background: var(--accent-color);
+  color: var(--main-bg-color);
+  padding-left: 2em;
+}
+
+/* Estilos para el formulario de añadir imágenes */
+form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  color: var(--text-color);
+}
+
+form label {
+  font-weight: bold;
+  margin-bottom: 0.3rem;
+  display: block;
+  text-align: left;
+}
+
+form select, form input[type="file"] {
+  padding: 0.7rem;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background-color: rgba(0, 0, 0, 0.2);
+  color: var(--text-color);
+}
+
+form select {
+  width: 100%;
+}
+
+form ul {
+  list-style: none;
+  padding: 0;
+  text-align: left;
+  margin-top: 0.5rem;
+}
+
+form li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem;
+  background-color: rgba(0, 0, 0, 0.1);
+  margin-bottom: 0.5rem;
+  border-radius: 4px;
+}
+
+form li button {
+  background-color: #d32f2f;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 0.3rem 0.7rem;
+  cursor: pointer;
+}
+
+.añadir-btn {
+  background-color: var(--accent-color);
+  color: var(--main-bg-color);
+}
+
+.añadir-btn:hover {
+  background-color: #e6d208;
+  transform: translateY(-2px);
+}
+
+@media (max-width: 768px) {
+  .galeria-grid {
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 16px;
+  }
+  
+  .galeria-img {
+    height: 200px;
+  }
+  
+  h1 {
+    font-size: 2.5rem;
+  }
+  
+  .modal-content {
+    padding: 1.5em;
+    max-width: 95vw;
+  }
+  
+  .carousel-container {
+    height: 300px !important;
+  }
+}
 </style>
