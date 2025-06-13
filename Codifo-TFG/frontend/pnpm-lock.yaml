@@ -14,6 +14,9 @@ importers:
       '@stripe/stripe-js':
         specifier: ^3.5.0
         version: 3.5.0
+      gsap:
+        specifier: ^3.13.0
+        version: 3.13.0
       knex:
         specifier: ^3.1.0
         version: 3.1.0
@@ -539,6 +542,9 @@ packages:
 
   getopts@2.3.0:
     resolution: {integrity: sha512-5eDf9fuSXwxBL6q5HX+dhDj+dslFGWzU5thZ9kNKUkcPtaPdatmUFKwHFrLb/uf/WpA4BHET+AX3Scl56cAjpA==}
+
+  gsap@3.13.0:
+    resolution: {integrity: sha512-QL7MJ2WMjm1PHWsoFrAQH/J8wUeqZvMtHO58qdekHpCfhvhSL4gSiz6vJf5EeMP0LOn3ZCprL2ki/gjED8ghVw==}
 
   hasown@2.0.2:
     resolution: {integrity: sha512-0hJU9SCPvmMzIBdZFqNPXWa6dqh7WdH0cII9y+CyS8rG3nL48Bclra9HmKhVVUHyPWNH5Y7xDwAB7bfgSjkUMQ==}
@@ -1142,6 +1148,8 @@ snapshots:
   get-package-type@0.1.0: {}
 
   getopts@2.3.0: {}
+
+  gsap@3.13.0: {}
 
   hasown@2.0.2:
     dependencies:
