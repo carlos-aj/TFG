@@ -468,22 +468,60 @@ function getBarberosDisponibles() {
   return barberos.value;
 }
 
+// Función para limpiar todos los campos del formulario
+function limpiarFormulario() {
+  // Limpiar selecciones principales
+  servicioSeleccionado.value = null;
+  barberoSeleccionado.value = null;
+  fechaSeleccionada.value = null;
+  horaSeleccionada.value = '';
+  pagarAhora.value = false;
+  
+  // Limpiar datos de invitado
+  mostrarFormularioInvitado.value = false;
+  nombreInvitado.value = '';
+  servicioInvitado.value = null;
+  barberoInvitado.value = null;
+  horaInvitado.value = '';
+  
+  // Limpiar errores
+  errores.value = {
+    servicio: '',
+    barbero: '',
+    fecha: '',
+    hora: '',
+    nombreInvitado: '',
+    servicioInvitado: '',
+    barberoInvitado: '',
+    horaInvitado: '',
+    general: ''
+  };
+  
+  // Resetear estados de validación
+  formTouched.value = false;
+  invitadoTouched.value = false;
+  
+  console.log('Formulario limpiado correctamente');
+}
+
 // Función para refrescar los datos cuando el componente se activa (al volver a la página)
 async function refreshData() {
   console.log('Refrescando datos de citas...');
+  
+  // Limpiar el formulario al volver a la página
+  limpiarFormulario();
+  
   if (fechaSeleccionada.value && barberoSeleccionado.value) {
     await cargarHorasOcupadas();
     checkPuedeInvitar();
   }
 }
 
-// Refrescar datos cuando se activa el componente (al volver a la página)
-onActivated(() => {
-  refreshData();
-});
-
 onMounted(async () => {
   try {
+    // Limpiar el formulario al montar el componente
+    limpiarFormulario();
+    
     const resServicios = await fetch(`${API_URL}/api/servicio`, {
       credentials: 'include'
     })
@@ -698,6 +736,9 @@ async function reservarCita() {
       // Actualizar las horas ocupadas para reflejar la nueva reserva
       await cargarHorasOcupadas();
 
+      // Limpiar el formulario después de la reserva exitosa
+      limpiarFormulario();
+
       // Busca el precio del servicio seleccionado
       const servicio = servicios.value.find(s => s.id === servicioSeleccionado.value)
       if (!servicio) {
@@ -775,6 +816,9 @@ async function reservarCita() {
 
     // Actualizar las horas ocupadas para reflejar la nueva reserva
     await cargarHorasOcupadas();
+
+    // Limpiar el formulario después de la reserva exitosa
+    limpiarFormulario();
 
     // Muestra mensaje de éxito y redirige
     mostrarMensaje('¡Cita reservada! Revisa tu correo para la confirmación.', 'success');
@@ -880,6 +924,11 @@ async function cargarHorasOcupadas() {
     errores.value.general = `Error: ${error.message}`;
   }
 }
+
+// Refrescar datos cuando se activa el componente (al volver a la página)
+onActivated(() => {
+  refreshData();
+});
 </script>
 
 <style scoped>
