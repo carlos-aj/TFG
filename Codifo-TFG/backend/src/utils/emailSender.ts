@@ -17,7 +17,7 @@ export async function sendConfirmationEmail(to: string, token: string) {
   const confirmUrl = `${process.env.FRONTEND_URL}/confirm?token=${token}`;
 
   const info = await transporter.sendMail({
-    from: '"Tu App" <no-reply@tuapp.com>',
+    from: '""Rasoio Barber Shop" <no-reply@tuapp.com>',
     to,
     subject: 'Confirma tu cuenta',
     html: `<p>Haz clic en el siguiente enlace para confirmar tu cuenta:</p>
@@ -65,7 +65,7 @@ export async function sendCitaEmail(to: string, citaInfo: CitaEmailInfo) {
       : `<p><b>Estado del pago:</b> Pendiente de pago en el local</p>`;
 
     const info = await transporter.sendMail({
-      from: '"Barbería" <no-reply@barberia.com>',
+      from: '""Rasoio Barber Shop" <no-reply@barberia.com>',
       to,
       subject: 'Confirmación de tu cita',
       html: `
