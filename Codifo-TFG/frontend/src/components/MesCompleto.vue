@@ -2,6 +2,7 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { API_URL } from '../config'
 import { gsap } from 'gsap'
+import { getAuthHeaders } from '../utils/auth'
 
 const citas = ref([])
 const barberos = ref([])
@@ -50,7 +51,10 @@ onMounted(async () => {
   try {
     // Cargar barberos primero para poder asociar el empleado con su barbero
     const resBarberos = await fetch(`${API_URL}/api/barbero`, {
-      credentials: 'include'
+      credentials: 'include',
+      headers: {
+        ...getAuthHeaders()
+      }
     });
     const barberosData = await resBarberos.json();
     barberos.value = barberosData;
@@ -133,14 +137,20 @@ const loadCitas = async () => {
     let data;
     if (rol === 'empleado' && barbero_id) {
       const response = await fetch(`${API_URL}/api/cita?barbero_id=${barbero_id}&fecha_inicio=${primerDia}&fecha_fin=${ultimoDiaStr}&includeRelations=true`, {
-        credentials: 'include'
+        credentials: 'include',
+        headers: {
+          ...getAuthHeaders()
+        }
       });
       console.log(`[DEBUG FECHAS] Obteniendo citas para barbero ${barbero_id} del ${primerDia} al ${ultimoDiaStr}`);
       if (!response.ok) throw new Error('Error al cargar citas');
       data = await response.json();
     } else {
       const response = await fetch(`${API_URL}/api/cita?fecha_inicio=${primerDia}&fecha_fin=${ultimoDiaStr}&includeRelations=true`, {
-        credentials: 'include'
+        credentials: 'include',
+        headers: {
+          ...getAuthHeaders()
+        }
       });
       console.log(`[DEBUG FECHAS] Obteniendo todas las citas del ${primerDia} al ${ultimoDiaStr}`);
       if (!response.ok) throw new Error('Error al cargar citas');
@@ -173,7 +183,10 @@ async function seleccionarBarbero() {
     const res = await fetch(`${API_URL}/api/user/${user_id}/asignar-barbero-empleado`, {
       method: 'POST',
       credentials: 'include',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 
+        'Content-Type': 'application/json',
+        ...getAuthHeaders()
+      },
       body: JSON.stringify({ barbero_id: Number(selectedBarbero.value) })
     });
     
