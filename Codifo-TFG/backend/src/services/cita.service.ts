@@ -5,7 +5,7 @@ import { Servicio } from '../models/Servicio';
 
 export async function getAllCitas() {
   try {
-    const citas = await Cita.query();
+    const citas = await Cita.query().withGraphFetched('[user, barbero, servicio]');
     
     // Transformar las fechas a string ISO para evitar problemas
     const citasFormateadas = citas.map(c => {
@@ -151,6 +151,9 @@ export async function getCitasByBarberoYFecha(barbero_id: number, fecha_inicio: 
       query = query.whereRaw('fecha::date = ?::date', [fecha_inicio]);
     }
     
+    // Añadir relaciones
+    query = query.withGraphFetched('[user, barbero, servicio]');
+    
     const citas = await query;
     console.log(`[DEBUG FECHAS] Encontradas ${citas.length} citas para barbero ${barbero_id}`);
     
@@ -181,6 +184,7 @@ export async function getCitasByBarbero(barbero_id: number) {
     // Usar la misma estructura que getCitasByBarberoYFecha pero sin filtro de fecha
     const citas = await Cita.query()
       .where('barbero_id', barbero_id)
+      .withGraphFetched('[user, barbero, servicio]')
       .orderBy('fecha', 'asc');
     
     console.log(`[DEBUG FECHAS] Encontradas ${citas.length} citas para barbero ${barbero_id}`);
@@ -201,6 +205,47 @@ export async function getCitasByBarbero(barbero_id: number) {
     return citasFormateadas;
   } catch (error) {
     console.error(`Error al obtener citas por barbero ${barbero_id}:`, error);
+    throw error;
+  }
+}
+
+export async function getCitasByFecha(fecha_inicio: string, fecha_fin?: string) {
+  try {
+    console.log(`[DEBUG FECHAS] Buscando citas por rango de fechas desde ${fecha_inicio}${fecha_fin ? ' hasta ' + fecha_fin : ''}`);
+    
+    let query = Cita.query();
+    
+    if (fecha_fin) {
+      // Si tenemos fecha de inicio y fin, buscar en el rango
+      query = query.whereRaw('fecha::date >= ?::date', [fecha_inicio])
+                   .whereRaw('fecha::date <= ?::date', [fecha_fin]);
+    } else {
+      // Si solo tenemos fecha de inicio, buscar para ese día específico
+      query = query.whereRaw('fecha::date = ?::date', [fecha_inicio]);
+    }
+    
+    // Añadir relaciones
+    query = query.withGraphFetched('[user, barbero, servicio]');
+    
+    const citas = await query;
+    console.log(`[DEBUG FECHAS] Encontradas ${citas.length} citas en el rango de fechas`);
+    
+    // Transformar las fechas a string ISO para evitar problemas
+    const citasFormateadas = citas.map(c => {
+      if (c.fecha && typeof c.fecha !== 'string') {
+        // Si es un objeto Date, convertirlo a string ISO
+        const fecha = new Date(c.fecha);
+        return {
+          ...c,
+          fecha: `${fecha.getFullYear()}-${String(fecha.getMonth() + 1).padStart(2, '0')}-${String(fecha.getDate()).padStart(2, '0')}`
+        };
+      }
+      return c;
+    });
+    
+    return citasFormateadas;
+  } catch (error) {
+    console.error(`Error al obtener citas por rango de fechas ${fecha_inicio} - ${fecha_fin || fecha_inicio}:`, error);
     throw error;
   }
 }
