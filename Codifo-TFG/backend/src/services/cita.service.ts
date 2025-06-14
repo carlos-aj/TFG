@@ -5,7 +5,10 @@ import { Servicio } from '../models/Servicio';
 
 export async function getAllCitas() {
   try {
-    const citas = await Cita.query().withGraphFetched('[user, barbero, servicio]');
+    const citas = await Cita.query()
+      .withGraphFetched('[user, barbero, servicio]')
+      .orderBy('barbero_id', 'asc')
+      .orderBy('hora', 'asc');
     
     // Transformar las fechas a string ISO para evitar problemas
     const citasFormateadas = citas.map(c => {
@@ -152,7 +155,8 @@ export async function getCitasByBarberoYFecha(barbero_id: number, fecha_inicio: 
     }
     
     // Añadir relaciones
-    query = query.withGraphFetched('[user, barbero, servicio]');
+    query = query.withGraphFetched('[user, barbero, servicio]')
+                .orderBy('hora', 'asc'); // Ordenar por hora ascendente
     
     const citas = await query;
     console.log(`[DEBUG FECHAS] Encontradas ${citas.length} citas para barbero ${barbero_id}`);
@@ -185,7 +189,8 @@ export async function getCitasByBarbero(barbero_id: number) {
     const citas = await Cita.query()
       .where('barbero_id', barbero_id)
       .withGraphFetched('[user, barbero, servicio]')
-      .orderBy('fecha', 'asc');
+      .orderBy('fecha', 'asc')
+      .orderBy('hora', 'asc');
     
     console.log(`[DEBUG FECHAS] Encontradas ${citas.length} citas para barbero ${barbero_id}`);
     
@@ -224,8 +229,10 @@ export async function getCitasByFecha(fecha_inicio: string, fecha_fin?: string) 
       query = query.whereRaw('fecha::date = ?::date', [fecha_inicio]);
     }
     
-    // Añadir relaciones
-    query = query.withGraphFetched('[user, barbero, servicio]');
+    // Añadir relaciones y ordenamiento
+    query = query.withGraphFetched('[user, barbero, servicio]')
+                .orderBy('barbero_id', 'asc')  // Primero ordenar por barbero
+                .orderBy('hora', 'asc');       // Luego por hora
     
     const citas = await query;
     console.log(`[DEBUG FECHAS] Encontradas ${citas.length} citas en el rango de fechas`);

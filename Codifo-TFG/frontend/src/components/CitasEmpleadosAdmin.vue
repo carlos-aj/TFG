@@ -28,10 +28,10 @@ console.log('[DEBUG FECHAS] Fecha actual con toLocaleDateString:', fechaActual.t
 const fechaISO = fechaActual.toISOString().split('T')[0];
 console.log('[DEBUG FECHAS] Fecha actual como ISO string partido:', fechaISO);
 
-// CORRECCIÓN: Usar la fecha actual sin ajustes
-// Si hoy es 12 de junio de 2025, usamos esa fecha directamente
-const hoy = `${fechaActual.getFullYear()}-${String(fechaActual.getMonth() + 1).padStart(2, '0')}-${String(fechaActual.getDate()).padStart(2, '0')}`;
-console.log('[DEBUG FECHAS] Fecha HOY corregida:', hoy);
+// MODIFICACIÓN: Usar una fecha fija (11 de junio de 2024) para pruebas
+// const hoy = `${fechaActual.getFullYear()}-${String(fechaActual.getMonth() + 1).padStart(2, '0')}-${String(fechaActual.getDate()).padStart(2, '0')}`;
+const hoy = '2024-06-11'; // Fecha fija para pruebas: 11 de junio de 2024
+console.log('[DEBUG FECHAS] Fecha HOY corregida (FALSEADA para pruebas):', hoy);
 
 onMounted(async () => {
   try {
@@ -265,6 +265,16 @@ const citasFiltradas = computed(() => {
     console.log(`[DEBUG FECHAS] Citas finales después de filtrar por barbero: ${filtradas.length}`);
   }
   
+  // Asegurarnos de que las citas estén ordenadas correctamente
+  // Para empleados: ordenar solo por hora
+  // Para admin: mantener el orden por barbero y luego por hora que viene del backend
+  if (rol === 'empleado') {
+    filtradas = [...filtradas].sort((a, b) => {
+      // Ordenar por hora ascendente
+      return a.hora.localeCompare(b.hora);
+    });
+  }
+  
   return filtradas;
 })
 
@@ -323,6 +333,14 @@ async function sancionarUsuario(userId) {
         <v-col cols="12" class="text-center mb-4">
           <h1 class="primary-title fade-in">CITAS DEL DÍA</h1>
           <div class="title-underline mx-auto fade-in"></div>
+          <v-chip 
+            color="warning" 
+            class="mt-2 fecha-falseada-chip"
+            size="large"
+          >
+            <v-icon start icon="mdi-calendar-alert"></v-icon>
+            Mostrando datos del 11 de junio de 2024 (Fecha de prueba)
+          </v-chip>
         </v-col>
       </v-row>
 
