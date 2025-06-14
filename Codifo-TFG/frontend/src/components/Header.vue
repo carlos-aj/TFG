@@ -149,10 +149,10 @@ onUnmounted(() => {
         <template v-else-if="userRole === 'admin'">
           <v-tab to="/empleados" :ripple="false" class="font-weight-bold">Empleados</v-tab>
           <v-tab to="/servicios" :ripple="false" class="font-weight-bold">Servicios</v-tab>
-          <v-tab to="/citas-empleados-admin" :ripple="false" class="font-weight-bold">Citas</v-tab>
-          <v-tab to="/mes-completo" :ripple="false" class="font-weight-bold">Mes Completo</v-tab>
           <v-tab to="/usuarios" :ripple="false" class="font-weight-bold">Usuarios</v-tab>
           <v-tab to="/galeria" :ripple="false" class="font-weight-bold">Galeria</v-tab>
+          <v-tab to="/citas-empleados-admin" :ripple="false" class="font-weight-bold">Citas</v-tab>
+          <v-tab to="/mes-completo" :ripple="false" class="font-weight-bold">Mes Completo</v-tab>
           <v-tab @click.prevent="logout" :ripple="false" class="font-weight-bold">
             Logout
           </v-tab>

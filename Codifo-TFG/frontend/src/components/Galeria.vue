@@ -23,6 +23,10 @@ const selectedGrupos = ref([]) // IDs de grupos seleccionados para eliminar
 const newImageFiles = ref([])
 const newBarberoId = ref('')
 const mezclado = ref(false);
+const errorMensaje = ref('');
+const mostrarError = ref(false);
+const barberoError = ref('');
+const imagenesError = ref('');
 
 
 function getImgUrl(img) {
@@ -113,29 +117,74 @@ function toggleGrupo(id) {
 }
 
 async function eliminarGruposSeleccionados() {
-  await Promise.all(
-    selectedGrupos.value.map(id =>
-      fetch(`${API_URL}/api/galeria/${id}`, { method: 'DELETE' })
-    )
-  );
-  mezclado.value = false; // <-- Añade esta línea
-  await fetchGalerias();
-  desactivarAdmin();
+  try {
+    await Promise.all(
+      selectedGrupos.value.map(id =>
+        fetch(`${API_URL}/api/galeria/item/${id}`, { 
+          method: 'DELETE',
+          credentials: 'include'
+        })
+      )
+    );
+    mezclado.value = false;
+    await fetchGalerias();
+    desactivarAdmin();
+  } catch (error) {
+    console.error("Error al eliminar grupos:", error);
+    errorMensaje.value = "Error al eliminar las imágenes seleccionadas";
+    mostrarError.value = true;
+    setTimeout(() => {
+      mostrarError.value = false;
+    }, 4000);
+  }
 }
 
 function subirImagen(e) {
   const files = Array.from(e.target.files)
-  // Evita duplicados por nombre (opcional)
-  const nombresActuales = new Set(newImageFiles.value.map(f => f.name))
-  const nuevos = files.filter(f => !nombresActuales.has(f.name))
-  newImageFiles.value = newImageFiles.value.concat(nuevos)
-  // Si quieres permitir duplicados, simplemente:
-  // newImageFiles.value = newImageFiles.value.concat(files)
+  // Validar que solo sean imágenes
+  const imageFiles = files.filter(file => file.type.startsWith('image/'))
+  
+  // Si hay archivos que no son imágenes, mostrar un mensaje
+  if (imageFiles.length < files.length) {
+    errorMensaje.value = 'Solo se permiten archivos de imagen';
+    mostrarError.value = true;
+    // Limpiar el input file para que el usuario pueda intentar de nuevo
+    e.target.value = ''
+    
+    // Ocultar el mensaje de error después de 4 segundos
+    setTimeout(() => {
+      mostrarError.value = false;
+    }, 4000);
+  }
+  
+  // Solo procesamos los archivos de imagen
+  if (imageFiles.length > 0) {
+    // Evita duplicados por nombre (opcional)
+    const nombresActuales = new Set(newImageFiles.value.map(f => f.name))
+    const nuevos = imageFiles.filter(f => !nombresActuales.has(f.name))
+    newImageFiles.value = newImageFiles.value.concat(nuevos)
+  }
 }
 
 async function guardarNuevaImagen() {
+  // Resetear errores
+  barberoError.value = '';
+  errorMensaje.value = '';
+  mostrarError.value = false;
+  imagenesError.value = '';
+  
   const barbero_id = Number(newBarberoId.value)
-  if (!barbero_id || newImageFiles.value.length === 0) return
+  
+  // Validación personalizada
+  if (!barbero_id) {
+    barberoError.value = 'Por favor, selecciona un barbero';
+    return;
+  }
+  
+  if (newImageFiles.value.length === 0) {
+    imagenesError.value = 'Por favor, selecciona al menos una imagen';
+    return;
+  }
 
   const formData = new FormData()
   for (const file of newImageFiles.value) {
@@ -155,6 +204,13 @@ async function guardarNuevaImagen() {
   })
   await fetchGalerias()
   desactivarAdmin()
+}
+
+function quitarImagen(idx) {
+  // Crear una copia del array y eliminar el elemento
+  const nuevosArchivos = [...newImageFiles.value];
+  nuevosArchivos.splice(idx, 1);
+  newImageFiles.value = nuevosArchivos;
 }
 
 onMounted(() => {
@@ -257,23 +313,93 @@ onMounted(() => {
         <button class="cerrar-modal" @click="desactivarAdmin">×</button>
         <h2 class="primary-title fade-in">Añadir imágenes</h2>
         <div class="title-underline mx-auto fade-in"></div>
-        <form @submit.prevent="guardarNuevaImagen" style="margin-top:1em;" class="fade-in">
+        <form @submit.prevent="guardarNuevaImagen" style="margin-top:1em; width: 100%;" class="fade-in">
           <label>Barbero:</label>
-          <select v-model="newBarberoId" required>
-            <option value="" disabled>Selecciona un barbero</option>
-            <option v-for="barbero in barberos" :key="barbero.id" :value="barbero.id">
-              {{ barbero.nombre }}
-            </option>
-          </select>
+          <v-select
+            v-model="newBarberoId"
+            :items="barberos.map(b => ({ value: b.id, title: b.nombre }))"
+            variant="outlined"
+            bg-color="rgba(43, 43, 43, 0.7)"
+            color="var(--accent-color)"
+            label="Selecciona un barbero"
+            placeholder="Selecciona un barbero"
+            :error-messages="barberoError"
+            @update:model-value="barberoError = ''"
+            hide-details="auto"
+          ></v-select>
           <label>Añadir imagen(es):</label>
-          <input type="file" accept="image/*" @change="subirImagen" multiple required>
+          <div class="custom-file-input">
+            <v-btn
+              color="accent"
+              variant="outlined"
+              prepend-icon="mdi-file-image"
+              @click="$refs.fileInput.click()"
+              class="file-select-btn"
+              :class="{ 'error-border': imagenesError }"
+            >
+              Elegir archivos
+            </v-btn>
+            <input 
+              ref="fileInput" 
+              type="file" 
+              accept="image/*" 
+              @change="subirImagen" 
+              multiple
+              class="hidden-input"
+            >
+          </div>
+          
+          <v-alert
+            v-if="imagenesError"
+            type="error"
+            variant="tonal"
+            density="compact"
+            icon="mdi-alert-circle"
+            border="start"
+            class="mt-2 mb-2"
+          >
+            {{ imagenesError }}
+          </v-alert>
+          
+          <v-alert
+            v-if="mostrarError"
+            type="error"
+            variant="tonal"
+            density="compact"
+            icon="mdi-alert-circle"
+            border="start"
+            closable
+            class="mt-2 mb-2"
+            @click:close="mostrarError = false"
+          >
+            {{ errorMensaje }}
+          </v-alert>
+          
           <ul>
             <li v-for="(file, idx) in newImageFiles" :key="file.name">
-              {{ file.name }}
-              <button type="button" @click="newImageFiles.value.splice(idx, 1)">Quitar</button>
+              <div class="d-flex align-center justify-space-between">
+                <span class="file-name">{{ file.name }}</span>
+                <v-btn
+                  size="small"
+                  color="error"
+                  variant="text"
+                  icon="mdi-delete"
+                  @click="quitarImagen(idx)"
+                ></v-btn>
+              </div>
             </li>
           </ul>
-          <button type="submit" class="añadir-btn">Añadir imágenes</button>
+          <div class="d-flex justify-end mt-4">
+            <v-btn 
+              type="submit" 
+              color="accent"
+              class="font-weight-bold"
+              min-width="120"
+              prepend-icon="mdi-image-plus"
+            >
+              Añadir imágenes
+            </v-btn>
+          </div>
         </form>
       </div>
     </div>
@@ -493,10 +619,17 @@ h1::after {
   box-shadow: 0 15px 40px rgba(0, 0, 0, 0.6);
   border-left: 4px solid var(--accent-color);
   color: var(--text-color);
+  width: 100%;
+  box-sizing: border-box;
+  overflow-x: hidden;
 }
 
 .modal-form {
-  overflow: auto;
+  overflow-y: auto;
+  overflow-x: hidden;
+  width: 100%;
+  max-width: 500px;
+  margin: 0 auto;
 }
 
 .modal-carousel {
@@ -761,10 +894,47 @@ form select, form input[type="file"] {
   border: 1px solid rgba(255, 255, 255, 0.2);
   background-color: rgba(0, 0, 0, 0.2);
   color: var(--text-color);
+  width: 100%;
 }
 
 form select {
-  width: 100%;
+  appearance: menulist;
+  height: 45px;
+  font-size: 1rem;
+  cursor: pointer;
+  background-image: linear-gradient(45deg, transparent 50%, var(--text-color) 50%), 
+                    linear-gradient(135deg, var(--text-color) 50%, transparent 50%);
+  background-position: calc(100% - 20px) center, calc(100% - 15px) center;
+  background-size: 5px 5px, 5px 5px;
+  background-repeat: no-repeat;
+  padding-right: 30px;
+  color-scheme: dark;
+}
+
+form select option {
+  background-color: var(--main-bg-color);
+  color: var(--text-color);
+  padding: 10px;
+}
+
+form select:focus {
+  outline: 2px solid var(--accent-color);
+}
+
+form input[type="file"] {
+  padding: 10px;
+  cursor: pointer;
+}
+
+form input[type="file"]::file-selector-button {
+  background-color: var(--accent-color);
+  color: var(--main-bg-color);
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-right: 10px;
+  font-weight: bold;
 }
 
 form ul {
@@ -772,29 +942,55 @@ form ul {
   padding: 0;
   text-align: left;
   margin-top: 0.5rem;
+  max-height: 200px;
+  overflow-y: auto;
+  border-radius: 4px;
+  background-color: rgba(0, 0, 0, 0.1);
 }
 
 form li {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0.5rem;
-  background-color: rgba(0, 0, 0, 0.1);
-  margin-bottom: 0.5rem;
-  border-radius: 4px;
+  padding: 0.5rem 0.7rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  margin-bottom: 0;
 }
 
-form li button {
-  background-color: #d32f2f;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  padding: 0.3rem 0.7rem;
-  cursor: pointer;
+form li:last-child {
+  border-bottom: none;
+}
+
+form li .file-name {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 80%;
 }
 
 .añadir-btn {
   background-color: var(--accent-color);
   color: var(--main-bg-color);
+}
+
+.custom-file-input {
+  position: relative;
+  margin-bottom: 1rem;
+}
+
+.hidden-input {
+  position: absolute;
+  width: 0;
+  height: 0;
+  opacity: 0;
+  overflow: hidden;
+}
+
+.file-select-btn {
+  width: 100%;
+}
+
+.error-border {
+  border: 1px solid #ff5252 !important;
 }
 </style>
