@@ -8,8 +8,8 @@ import { Cita } from '../models/Cita';
 
 export async function getAllCitas(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
-    const { barbero_id, fecha, fecha_inicio, fecha_fin } = req.query;
-    console.log(`[DEBUG FECHAS] getAllCitas - Parámetros recibidos: barbero_id=${barbero_id}, fecha=${fecha}, fecha_inicio=${fecha_inicio}, fecha_fin=${fecha_fin}`);
+    const { barbero_id, fecha, fecha_inicio, fecha_fin, includeRelations } = req.query;
+    console.log(`[DEBUG FECHAS] getAllCitas - Parámetros recibidos: barbero_id=${barbero_id}, fecha=${fecha}, fecha_inicio=${fecha_inicio}, fecha_fin=${fecha_fin}, includeRelations=${includeRelations}`);
     
     let citas;
     if (barbero_id && fecha_inicio && fecha_fin) {
@@ -29,8 +29,11 @@ export async function getAllCitas(req: Request, res: Response, next: NextFunctio
     } else if (fecha_inicio && fecha_fin) {
       // Buscar por rango de fechas sin filtrar por barbero
       console.log(`[DEBUG FECHAS] getAllCitas - Buscando citas por rango de fechas sin filtrar por barbero`);
-      // Implementar esta función si es necesario
-      citas = await CitaService.getAllCitas(); // Por ahora devolvemos todas
+      citas = await CitaService.getCitasByFecha(String(fecha_inicio), String(fecha_fin));
+    } else if (fecha_inicio) {
+      // Buscar por fecha específica sin filtrar por barbero
+      console.log(`[DEBUG FECHAS] getAllCitas - Buscando citas por fecha específica sin filtrar por barbero`);
+      citas = await CitaService.getCitasByFecha(String(fecha_inicio));
     } else {
       console.log(`[DEBUG FECHAS] getAllCitas - Buscando todas las citas`);
       citas = await CitaService.getAllCitas();
@@ -53,6 +56,31 @@ export async function getAllCitas(req: Request, res: Response, next: NextFunctio
         } catch (e) {
           console.log(`[DEBUG FECHAS] getAllCitas - Error al formatear fecha: ${e}`);
         }
+      }
+    }
+    
+    // Si se solicitan las relaciones, cargarlas para cada cita
+    if (includeRelations === 'true' && citas && citas.length > 0) {
+      console.log(`[DEBUG FECHAS] getAllCitas - Cargando relaciones para ${citas.length} citas`);
+      try {
+        const citasIds = citas.map(c => c.id);
+        const citasConRelaciones = await Cita.query()
+          .findByIds(citasIds)
+          .withGraphFetched('[user, barbero, servicio]');
+        
+        // Crear un mapa para facilitar la búsqueda
+        const citasMap: Record<number, any> = {};
+        citasConRelaciones.forEach(c => {
+          citasMap[c.id] = c;
+        });
+        
+        // Reemplazar las citas con sus versiones con relaciones
+        citas = citas.map(c => citasMap[c.id] || c);
+        
+        console.log(`[DEBUG FECHAS] getAllCitas - Relaciones cargadas correctamente`);
+      } catch (e) {
+        console.error(`[DEBUG FECHAS] getAllCitas - Error al cargar relaciones: ${e}`);
+        // Continuamos con las citas sin relaciones
       }
     }
     

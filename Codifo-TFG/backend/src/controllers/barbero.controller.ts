@@ -8,6 +8,7 @@ export async function getBarberoById(req: Request, res: Response) {
 
     if(!barbero){
         res.status(404).json({ message: 'Barber not found' });
+        return;
     }
 
     res.json(barbero);
@@ -45,6 +46,7 @@ export async function deleteBarbero(req: Request, res: Response) {
 
     if(barberDeleted === 0){
       res.status(404).json({ message: 'Barber not found' });
+      return;
     }
 
     res.json({ message: 'Barber deleted successfully' });
@@ -62,6 +64,7 @@ export async function updateBarbero(req: Request, res: Response) {
 
     if(!barberUpdated){
       res.status(404).json({ message: 'Barber not found' });
+      return;
     }
 
     res.json(barberUpdated);  
