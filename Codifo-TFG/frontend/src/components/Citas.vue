@@ -736,9 +736,6 @@ async function reservarCita() {
       // Actualizar las horas ocupadas para reflejar la nueva reserva
       await cargarHorasOcupadas();
 
-      // Limpiar el formulario después de la reserva exitosa
-      limpiarFormulario();
-
       // Busca el precio del servicio seleccionado
       const servicio = servicios.value.find(s => s.id === servicioSeleccionado.value)
       if (!servicio) {
@@ -746,7 +743,13 @@ async function reservarCita() {
       }
 
       const amount = Math.round(servicio.precio * 100); // en céntimos
-      console.log('Iniciando pago:', { amount, citaId: citaCreada.id });
+      
+      // Guardar información importante antes de limpiar el formulario
+      const citaId = citaCreada.id;
+      
+      // Limpiar el formulario después de obtener la información necesaria
+      limpiarFormulario();
+      console.log('Iniciando pago:', { amount, citaId });
 
       // Crear la sesión de Stripe Checkout
       const res = await fetch(`${API_URL}/api/cita/pago`, {
@@ -755,7 +758,7 @@ async function reservarCita() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
           amount,
-          citaId: citaCreada.id
+          citaId
         })
       });
 
