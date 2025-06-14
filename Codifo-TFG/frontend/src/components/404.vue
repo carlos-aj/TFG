@@ -11,7 +11,6 @@ import { onMounted } from 'vue';
 import { gsap } from 'gsap';
 
 onMounted(() => {
-    // Animación para el código de error
     gsap.from('.error-code', {
         opacity: 0,
         y: -100,
@@ -20,7 +19,6 @@ onMounted(() => {
         ease: 'elastic.out(1, 0.3)'
     });
     
-    // Animación para el mensaje
     gsap.from('.error-message', {
         opacity: 0,
         y: 20,
@@ -29,7 +27,6 @@ onMounted(() => {
         ease: 'power2.out'
     });
     
-    // Animación para el enlace
     gsap.from('.home-link', {
         opacity: 0,
         y: 20,

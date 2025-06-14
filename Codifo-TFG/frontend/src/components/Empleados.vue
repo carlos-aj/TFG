@@ -21,7 +21,6 @@
         </v-col>
       </v-row>
 
-      <!-- Debug info -->
       <v-row v-if="barberos.length === 0">
         <v-col cols="12">
           <v-alert type="info" variant="tonal" class="fade-in">
@@ -30,7 +29,6 @@
         </v-col>
       </v-row>
 
-      <!-- Lista de empleados -->
       <v-card class="mb-8 fade-in">
         <v-card-title class="text-h5 py-4 px-6">
           Lista de Empleados ({{ barberos.length }})
@@ -127,7 +125,6 @@
         </v-card-text>
       </v-card>
 
-      <!-- Formulario para crear empleado -->
       <v-card class="fade-in">
         <v-card-title class="text-h5 py-4 px-6">
           Crear Empleado
@@ -191,7 +188,6 @@
         </v-card-text>
       </v-card>
       
-      <!-- Modal de estadísticas -->
       <v-dialog v-model="showStats" max-width="800px">
         <v-card class="stats-card pa-4">
           <v-card-title class="text-h5 mb-2 d-flex justify-space-between align-center">
@@ -274,14 +270,11 @@ const paginatedBarberos = computed(() => {
   return barberos.value.slice(start, start + pageSize.value)
 })
 
-// Para edición
 const editId = ref(null)
 const editForm = ref({ nombre: '', especialidad: '' })
 
-// Observar cuando se abre el modal de estadísticas
 watch(showStats, (newVal) => {
   if (newVal) {
-    // Cargar datos de estadísticas si es necesario
     cargarEstadisticas();
   }
 });
@@ -312,7 +305,6 @@ async function cargarBarberos() {
       
       console.log('Barberos cargados:', barberos.value.length);
       
-      // Animar las filas de la tabla después de cargar los datos
       setTimeout(() => {
         animateTableRows();
       }, 100);
@@ -349,7 +341,6 @@ async function crearBarbero() {
       form.value.especialidad = ''
       await cargarBarberos()
       
-      // Animación para el mensaje de éxito
       gsap.from('.alert-message', {
         opacity: 0,
         y: 20,
@@ -360,7 +351,6 @@ async function crearBarbero() {
       const data = await response.json()
       error.value = data.message || 'Error al crear empleado'
       
-      // Animación para el mensaje de error
       gsap.from('.alert-message', {
         opacity: 0,
         y: 20,
@@ -371,7 +361,6 @@ async function crearBarbero() {
   } catch (e) {
     error.value = 'Error de red'
     
-    // Animación para el mensaje de error
     gsap.from('.alert-message', {
       opacity: 0,
       y: 20,
@@ -396,7 +385,6 @@ async function eliminarBarbero(id) {
     } else {
       error.value = 'Error al eliminar empleado'
       
-      // Animación para el mensaje de error
       gsap.from('.alert-message', {
         opacity: 0,
         y: 20,
@@ -407,7 +395,6 @@ async function eliminarBarbero(id) {
   } catch {
     error.value = 'Error de red'
     
-    // Animación para el mensaje de error
     gsap.from('.alert-message', {
       opacity: 0,
       y: 20,
@@ -417,12 +404,10 @@ async function eliminarBarbero(id) {
   }
 }
 
-// Edición
 function startEdit(barbero) {
   editId.value = barbero.id
   editForm.value = { nombre: barbero.nombre, especialidad: barbero.especialidad }
   
-  // Animar los campos de edición
   setTimeout(() => {
     gsap.from('.v-text-field, .v-select', {
       opacity: 0,
@@ -455,7 +440,6 @@ async function saveEdit(id) {
     } else {
       error.value = 'Error al editar empleado'
       
-      // Animación para el mensaje de error
       gsap.from('.alert-message', {
         opacity: 0,
         y: 20,
@@ -466,7 +450,6 @@ async function saveEdit(id) {
   } catch {
     error.value = 'Error de red'
     
-    // Animación para el mensaje de error
     gsap.from('.alert-message', {
       opacity: 0,
       y: 20,
@@ -477,7 +460,6 @@ async function saveEdit(id) {
 }
 
 const serviciosPorBarbero = computed(() => {
-  // { barbero_id: cantidad }
   const counts = {}
   citasStats.value.forEach(c => {
     counts[c.barbero_id] = (counts[c.barbero_id] || 0) + 1
@@ -489,12 +471,10 @@ const serviciosPorBarbero = computed(() => {
 })
 
 const serviciosPorHora = computed(() => {
-  // { hora: cantidad }
   const counts = {}
   citasStats.value.forEach(c => {
     counts[c.hora] = (counts[c.hora] || 0) + 1
   })
-  // Ordena por hora
   const horas = Object.keys(counts).sort()
   return [
     ['Hora', 'Servicios'],
@@ -526,7 +506,6 @@ const serviciosPorTipo = computed(() => {
 })
 
 async function cargarEstadisticas() {
-  // Obtén barberos y citas
   const [barberosRes, citasRes] = await Promise.all([
     fetch(`${API_URL}/api/barbero`, { 
       credentials: 'include',
@@ -543,11 +522,9 @@ async function cargarEstadisticas() {
   ])
   barberosStats.value = barberosRes.ok ? await barberosRes.json() : []
   citasStats.value = citasRes.ok ? await citasRes.json() : []
-  // No necesitas más aquí, los computed se actualizan solos
 }
 
 onMounted(() => {
-  // Animaciones iniciales simples sin efectos de scroll
   gsap.from('.primary-title', {
     opacity: 0,
     y: -30,
@@ -587,7 +564,6 @@ onMounted(() => {
     ease: 'power2.out'
   });
   
-  // Cargar datos y animar campos del formulario
   cargarBarberos();
 });
 </script>
@@ -737,7 +713,6 @@ onMounted(() => {
   transition: all 0.3s ease;
 }
 
-/* Animaciones */
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(20px); }
   to { opacity: 1; transform: translateY(0); }
@@ -747,7 +722,6 @@ onMounted(() => {
   animation: fadeIn 0.5s ease-out forwards;
 }
 
-/* Responsive adjustments */
 @media (max-width: 960px) {
   .primary-title {
     font-size: 2.5rem !important;

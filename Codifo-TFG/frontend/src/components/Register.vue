@@ -139,7 +139,6 @@ const errors = reactive({
 })
 
 onMounted(() => {
-  // Animación para la tarjeta de registro
   gsap.from('.register-card', {
     opacity: 0,
     y: 30,
@@ -147,7 +146,6 @@ onMounted(() => {
     ease: 'power2.out'
   });
   
-  // Animación para el título y los elementos del formulario
   gsap.from('.form-container > *, .form-container .v-row > *, .text-h4', {
     opacity: 0,
     y: 20,

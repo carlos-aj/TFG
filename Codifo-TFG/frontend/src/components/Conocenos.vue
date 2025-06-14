@@ -2,20 +2,17 @@
 import { onMounted, ref } from 'vue';
 import { gsap } from 'gsap';
 
-// Importar las imágenes directamente
 import sloganImage from '../assets/sloganff.png';
 import barbero1Image from '../assets/Barbero1.png';
 import barbero2Image from '../assets/Barbero2.png';
 import barbero3Image from '../assets/Barbero3.png';
 
-// Referencias a las imágenes
 const slogan = ref(sloganImage);
 const barbero1 = ref(barbero1Image);
 const barbero2 = ref(barbero2Image);
 const barbero3 = ref(barbero3Image);
 
 onMounted(() => {
-  // Animación para el título y la descripción
   gsap.from('.fade-in', {
     opacity: 0,
     y: 30,
@@ -24,7 +21,6 @@ onMounted(() => {
     ease: 'power2.out'
   });
   
-  // Animación específica para el subrayado
   gsap.from('.title-underline', {
     opacity: 0,
     width: 0,
@@ -33,7 +29,6 @@ onMounted(() => {
     ease: 'power2.out'
   });
   
-  // Animación para las tarjetas del equipo
   gsap.from('.team-card', {
     opacity: 0,
     y: 50,
@@ -48,7 +43,6 @@ onMounted(() => {
 <template> 
   <div class="conocenos-page">
     <v-container class="conocenos-container px-4 px-sm-6 px-md-8">
-      <!-- Sección Quienes Somos -->
       <v-row justify="center" class="mb-4">
         <v-col cols="12" class="text-center mb-2">
           <h1 class="primary-title fade-in">QUIENES SOMOS</h1>
@@ -57,7 +51,6 @@ onMounted(() => {
       </v-row>
       
       <v-row no-gutters class="mb-10">
-        <!-- Texto a la izquierda -->
         <v-col cols="12" md="6" class="d-flex align-center">
           <div class="pa-4 pa-md-6">
             <p class="fade-in mb-4 about-text dm-serif">
@@ -70,13 +63,11 @@ onMounted(() => {
           </div>
         </v-col>
         
-        <!-- Imagen a la derecha (slogan) -->
         <v-col cols="12" md="6" class="d-flex align-center justify-center" style="background-color: #2B2B2B;">
           <v-img :src="slogan" alt="Rasoio Corte Afilado" contain height="100%" class="fade-in"></v-img>
         </v-col>
       </v-row>
       
-      <!-- Sección Equipo con nuevo diseño -->
       <v-row>
         <v-col cols="12" class="text-center mb-4">
           <h1 class="primary-title fade-in">NUESTRO EQUIPO</h1>
@@ -85,7 +76,6 @@ onMounted(() => {
       </v-row>
       
       <div class="team-grid px-2">
-        <!-- Barbero 1 -->
         <div class="team-member fade-in">
           <div class="member-photo-container">
             <v-img :src="barbero1" alt="Malik Johnson" class="member-photo" width="100%" height="370" cover></v-img>
@@ -101,7 +91,6 @@ onMounted(() => {
           </div>
         </div>
         
-        <!-- Barbero 2 -->
         <div class="team-member fade-in">
           <div class="member-photo-container">
             <v-img :src="barbero2" alt="Luka Petrov" class="member-photo" width="100%" height="370" cover></v-img>
@@ -117,7 +106,6 @@ onMounted(() => {
           </div>
         </div>
         
-        <!-- Barbero 3 -->
         <div class="team-member fade-in">
           <div class="member-photo-container">
             <v-img :src="barbero3" alt="Santi Rivas" class="member-photo" width="100%" height="370" cover></v-img>
@@ -177,7 +165,6 @@ onMounted(() => {
   font-family: 'DM Serif Display', serif;
 }
 
-/* Diseño para el equipo */
 .team-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -270,7 +257,6 @@ onMounted(() => {
   text-align: center;
 }
 
-/* Animaciones */
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(20px); }
   to { opacity: 1; transform: translateY(0); }
@@ -280,7 +266,6 @@ onMounted(() => {
   animation: fadeIn 0.5s ease-out forwards;
 }
 
-/* Responsive adjustments */
 @media (max-width: 960px) {
   .about-text {
     font-size: 1.3rem;

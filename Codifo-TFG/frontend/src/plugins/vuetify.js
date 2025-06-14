@@ -19,8 +19,8 @@ export default createVuetify({
         colors: {
           background: '#2B2B2B',
           surface: '#2B2B2B',
-          primary: '#F5E009',   // Amarillo (color de acento)
-          secondary: '#D9D9D9', // Color de texto principal
+          primary: '#F5E009',   
+          secondary: '#D9D9D9', 
           error: '#FF5252',
           info: '#2196F3',
           success: '#4CAF50',

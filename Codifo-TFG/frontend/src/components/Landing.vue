@@ -9,7 +9,6 @@ const opiniones = ref([
 ])
 
 onMounted(() => {
-  // Animación para el hero
   gsap.from('.hero-content > *', {
     opacity: 0,
     y: 30,
@@ -18,7 +17,6 @@ onMounted(() => {
     ease: 'power2.out'
   });
   
-  // Animación para las secciones
   gsap.from('.section-title, .section-divider', {
     opacity: 0,
     y: 20,
@@ -28,7 +26,6 @@ onMounted(() => {
     ease: 'power2.out'
   });
   
-  // Animación para los miembros del equipo
   gsap.from('.team-member', {
     opacity: 0,
     y: 50,
@@ -38,7 +35,6 @@ onMounted(() => {
     ease: 'back.out(1.7)'
   });
   
-  // Animación para las opiniones
   gsap.from('.carousel-wrapper', {
     opacity: 0,
     scale: 0.9,

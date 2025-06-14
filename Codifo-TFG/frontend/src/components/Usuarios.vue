@@ -8,7 +8,6 @@
         </v-col>
       </v-row>
 
-      <!-- Lista de usuarios -->
       <v-card class="mb-8 fade-in">
         <v-card-title class="text-h5 py-4 px-6">
           Lista de Usuarios ({{ usuarios.length }})
@@ -156,7 +155,6 @@
         </v-card-text>
       </v-card>
 
-      <!-- Formulario para crear usuario -->
       <v-card class="fade-in">
         <v-card-title class="text-h5 py-4 px-6">
           Crear Usuario
@@ -289,7 +287,6 @@ const form = ref({
 const mensaje = ref('')
 const error = ref('')
 
-// Para edición
 const editId = ref(null)
 const editForm = ref({
   nombre: '',
@@ -385,7 +382,6 @@ async function eliminarUsuario(id) {
   }
 }
 
-// Edición
 function startEdit(usuario) {
   editId.value = usuario.id
   editForm.value = {
@@ -433,7 +429,6 @@ async function saveEdit(id) {
 }
 
 onMounted(() => {
-  // Animaciones iniciales simples sin efectos de scroll
   gsap.from('.primary-title', {
     opacity: 0,
     y: -30,
@@ -465,7 +460,6 @@ onMounted(() => {
     ease: 'power2.out'
   });
   
-  // Cargar datos y animar campos del formulario
   cargarUsuarios();
 });
 </script>
@@ -590,7 +584,6 @@ onMounted(() => {
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
 
-/* Animaciones */
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(20px); }
   to { opacity: 1; transform: translateY(0); }
@@ -604,7 +597,6 @@ onMounted(() => {
   transition: all 0.3s ease;
 }
 
-/* Responsive adjustments */
 @media (max-width: 960px) {
   .primary-title {
     font-size: 2.5rem !important;

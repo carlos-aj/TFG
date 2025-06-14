@@ -8,7 +8,6 @@
         </v-col>
       </v-row>
 
-      <!-- Lista de servicios -->
       <v-card class="mb-8 fade-in">
         <v-card-title class="text-h5 py-4 px-6">
           Lista de Servicios ({{ servicios.length }})
@@ -126,7 +125,6 @@
         </v-card-text>
       </v-card>
 
-      <!-- Formulario para crear servicio -->
       <v-card class="fade-in">
         <v-card-title class="text-h5 py-4 px-6">
           Crear Servicio
@@ -221,7 +219,6 @@ const form = ref({ nombre: '', precio: 0, duracion: 1 })
 const mensaje = ref('')
 const error = ref('')
 
-// Para edición
 const editId = ref(null)
 const editForm = ref({ nombre: '', precio: 0, duracion: 1 })
 
@@ -294,7 +291,6 @@ async function eliminarServicio(id) {
   }
 }
 
-// Edición
 function startEdit(servicio) {
   editId.value = servicio.id
   editForm.value = { nombre: servicio.nombre, precio: servicio.precio, duracion: servicio.duracion }
@@ -325,7 +321,6 @@ async function saveEdit(id) {
 }
 
 onMounted(() => {
-  // Animaciones iniciales simples sin efectos de scroll
   gsap.from('.primary-title', {
     opacity: 0,
     y: -30,
@@ -349,7 +344,6 @@ onMounted(() => {
     ease: 'back.out(1.7)'
   });
   
-  // Cargar datos y animar campos del formulario
   cargarServicios();
 })
 </script>
@@ -474,7 +468,6 @@ onMounted(() => {
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
 
-/* Animaciones */
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(20px); }
   to { opacity: 1; transform: translateY(0); }
@@ -488,7 +481,6 @@ onMounted(() => {
   transition: all 0.3s ease;
 }
 
-/* Responsive adjustments */
 @media (max-width: 960px) {
   .primary-title {
     font-size: 2.5rem !important;

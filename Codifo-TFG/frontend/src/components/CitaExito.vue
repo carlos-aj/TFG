@@ -18,8 +18,8 @@
 import { onMounted, ref } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { gsap } from 'gsap';
-import { API_URL } from '../config'; // Importar la URL base correcta
-import { getAuthHeaders, getToken } from '../utils/auth'; // Importar los headers de autenticación
+import { API_URL } from '../config'; 
+import { getAuthHeaders, getToken } from '../utils/auth'; 
 
 const router = useRouter();
 const route = useRoute();
@@ -29,7 +29,6 @@ onMounted(async () => {
   if (procesando.value) return;
   procesando.value = true;
 
-  // Animaciones
   gsap.from('.success-card', {
     opacity: 0,
     y: 30,
@@ -47,16 +46,13 @@ onMounted(async () => {
   });
 
   try {
-    // 1. Intentar obtener el ID de la cita de la URL
     let citaId = route.query.cita_id;
 
-    // Si no hay ID en la URL, usamos un valor predeterminado para asegurar que se envíe algo
     if (!citaId) {
       console.log('No se encontró ID de cita en la URL. Usando ID predeterminado.');
-      citaId = localStorage.getItem('ultima_cita_id') || '1'; // Intentamos usar el último ID guardado
+      citaId = localStorage.getItem('ultima_cita_id') || '1';
     }
 
-    // Siempre enviamos un ID de cita
     console.log('Confirmando pago para la cita ID:', citaId);
     const response = await fetch(`${API_URL}/api/cita/confirmar-pago`, {
       method: 'POST',
@@ -74,13 +70,10 @@ onMounted(async () => {
     }
   } catch (error) {
     console.error('Error al procesar la confirmación de la cita:', error);
-    // Incluso si hay un error, mostramos el mensaje de éxito al usuario
-    // para "falsear" que todo ha ido bien
+
   }
 
-  // Redirigir al inicio después de un tiempo
   setTimeout(() => {
-    // Animación de salida antes de redirigir
     gsap.to('.success-card', {
       opacity: 0,
       y: -30,
@@ -89,7 +82,7 @@ onMounted(async () => {
         router.push('/');
       }
     });
-  }, 3500); // Espera 3.5 segundos antes de iniciar la animación de salida
+  }, 3500); 
 });
 </script>
 

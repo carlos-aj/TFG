@@ -39,7 +39,6 @@ import Footer from './components/Footer.vue';
   max-width: 100% !important;
 }
 
-/* Permitir que los componentes definan sus propios paddings */
 .v-container {
   max-width: 100% !important;
   width: 100% !important;

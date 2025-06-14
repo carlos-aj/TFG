@@ -27,7 +27,6 @@ const router = useRouter()
 const success = ref(false)
 
 onMounted(async () => {
-  // Animación inicial
   gsap.from('.confirm-card', {
     opacity: 0,
     y: 30,
@@ -56,7 +55,6 @@ onMounted(async () => {
       success.value = true
       message.value = '¡Cuenta confirmada! Ya puedes iniciar sesión.'
       
-      // Animación para el mensaje de éxito
       setTimeout(() => {
         gsap.from('.message, .success-icon', {
           opacity: 0,
@@ -67,7 +65,6 @@ onMounted(async () => {
         });
       }, 100);
       
-      // Animación de salida antes de redirigir
       setTimeout(() => {
         gsap.to('.confirm-card', {
           opacity: 0,
@@ -81,7 +78,6 @@ onMounted(async () => {
     } else {
       message.value = data.message || 'Error al confirmar la cuenta'
       
-      // Animación para el mensaje de error
       setTimeout(() => {
         gsap.from('.message', {
           opacity: 0,
@@ -94,7 +90,6 @@ onMounted(async () => {
   } catch (err) {
     message.value = 'Error de red al confirmar la cuenta'
     
-    // Animación para el mensaje de error
     setTimeout(() => {
       gsap.from('.message', {
         opacity: 0,

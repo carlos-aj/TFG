@@ -17,41 +17,33 @@ const barbero_id = localStorage.getItem('barbero_id')
 const selectedBarbero = ref(null)
 const showBarberoSelector = ref(false)
 
-// Usar la fecha actual
 const fechaActual = new Date();
 console.log('[DEBUG FECHAS] Fecha actual como objeto Date:', fechaActual);
 console.log('[DEBUG FECHAS] Fecha actual como ISO string:', fechaActual.toISOString());
 console.log('[DEBUG FECHAS] Fecha actual local:', `${fechaActual.getFullYear()}-${String(fechaActual.getMonth() + 1).padStart(2, '0')}-${String(fechaActual.getDate()).padStart(2, '0')}`);
 console.log('[DEBUG FECHAS] Fecha actual con toLocaleDateString:', fechaActual.toLocaleDateString());
 
-// Probar diferentes formas de obtener la fecha actual
 const fechaISO = fechaActual.toISOString().split('T')[0];
 console.log('[DEBUG FECHAS] Fecha actual como ISO string partido:', fechaISO);
 
-// CORRECCIÓN: Usar la fecha actual sin ajustes
-// Si hoy es 12 de junio de 2025, usamos esa fecha directamente
 const hoy = `${fechaActual.getFullYear()}-${String(fechaActual.getMonth() + 1).padStart(2, '0')}-${String(fechaActual.getDate()).padStart(2, '0')}`;
 console.log('[DEBUG FECHAS] Fecha HOY corregida:', hoy);
 
 onMounted(async () => {
   try {
-    // Cargar barberos primero para poder asociar el empleado con su barbero
     const resBarberos = await fetch(`${API_URL}/api/barbero`, {
       credentials: 'include'
     });
     barberos.value = await resBarberos.json();
     
-    // Si el usuario es empleado/barbero, verificar si tiene un barbero asignado
     if (rol === 'empleado' || rol === 'barbero') {
       if (empleadoBarberoId.value) {
-        // Verificar que el barbero existe
         const barberoExiste = barberos.value.find(b => b.id === Number(empleadoBarberoId.value));
         if (!barberoExiste) {
           console.log(`El barbero_id ${empleadoBarberoId.value} no existe en la lista de barberos`);
           showBarberoSelector.value = true;
         }
       } else if (nombre) {
-        // Buscar por nombre si no hay barbero_id guardado
         const barberoCorrespondiente = barberos.value.find(
           b => b.nombre.toLowerCase().includes(nombre.toLowerCase()) || nombre.toLowerCase().includes(b.nombre.toLowerCase())
         );
@@ -69,10 +61,8 @@ onMounted(async () => {
       }
     }
     
-    // Cargar citas
     await cargarCitas();
     
-    // Animaciones iniciales
     gsap.from('.primary-title', {
       opacity: 0,
       y: -30,
@@ -96,15 +86,6 @@ onMounted(async () => {
       ease: 'back.out(1.7)'
     });
     
-    // Logs adicionales para depurar
-    console.log('[DEBUG FECHAS] Fecha actual completa:', new Date());
-    console.log('[DEBUG FECHAS] Fecha actual ISO:', new Date().toISOString());
-    console.log('[DEBUG FECHAS] Fecha actual local:', new Date().toLocaleDateString());
-    console.log('[DEBUG FECHAS] Fecha HOY que se usa para filtrar:', hoy);
-    console.log('[DEBUG FECHAS] Citas cargadas:', citas.value.length);
-    console.log('[DEBUG FECHAS] Citas filtradas para hoy:', citasFiltradas.value.length);
-    
-    // Cargar usuarios solo si es admin
     if (rol === 'admin') {
       try {
         const resUsuarios = await fetch(`${API_URL}/api/user`, {
@@ -124,7 +105,6 @@ onMounted(async () => {
       usuarios.value = []
     }
 
-    // Cargar servicios
     const resServicios = await fetch(`${API_URL}/api/servicio`, {
       credentials: 'include'
     })
@@ -140,25 +120,20 @@ async function cargarCitas() {
   try {
     loading.value = true;
     
-    // Construir la URL base
     let citasUrl = `${API_URL}/api/cita`;
     const params = new URLSearchParams();
     
-    // Añadir el barbero_id si es empleado
     if (rol === 'empleado' && empleadoBarberoId.value) {
       params.append('barbero_id', empleadoBarberoId.value.toString());
       console.log(`[DEBUG FECHAS] Filtrando citas para barbero_id: ${empleadoBarberoId.value}`);
     }
     
-    // Añadir la fecha actual como fecha_inicio y fecha_fin
     params.append('fecha_inicio', hoy);
     params.append('fecha_fin', hoy);
     console.log(`[DEBUG FECHAS] Filtrando citas para fecha: ${hoy}`);
     
-    // Añadir el parámetro para incluir relaciones
     params.append('includeRelations', 'true');
     
-    // Añadir los parámetros a la URL
     if (params.toString()) {
       citasUrl += `?${params.toString()}`;
     }
@@ -177,7 +152,6 @@ async function cargarCitas() {
     citas.value = await res.json();
     console.log(`[DEBUG FECHAS] Citas cargadas: ${citas.value.length}`);
     
-    // Mostrar las fechas de las citas para depuración
     citas.value.forEach(c => {
       if (c.fecha) {
         console.log(`[DEBUG FECHAS] Cita ID ${c.id}, fecha: ${c.fecha.slice(0, 10)}, barbero_id: ${c.barbero_id}`);
@@ -200,7 +174,6 @@ async function seleccionarBarbero() {
   empleadoBarberoId.value = Number(selectedBarbero.value);
   localStorage.setItem('barbero_id', selectedBarbero.value.toString());
   
-  // Actualizar en la base de datos si es posible
   try {
     const res = await fetch(`${API_URL}/api/user/${user_id}/asignar-barbero-empleado`, {
       method: 'POST',
@@ -222,9 +195,7 @@ async function seleccionarBarbero() {
   await cargarCitas();
 }
 
-// Funciones para obtener nombres por id
 function getNombreUsuario(id) {
-  // Si no tenemos acceso a la lista de usuarios o está vacía
   if (!usuarios.value || !Array.isArray(usuarios.value) || usuarios.value.length === 0) {
     return `Cliente #${id}`
   }
@@ -247,30 +218,22 @@ function getNombreServicio(id) {
 }
 
 const citasFiltradas = computed(() => {
-  // Asegurarse de que citas.value es un array
   if (!citas.value || !Array.isArray(citas.value)) {
     return [];
   }
   
   console.log(`[DEBUG FECHAS] Total citas cargadas: ${citas.value.length}`);
-  
-  // CORRECCIÓN: Ya no filtramos por fecha en el cliente, confiamos en el servidor
-  // Solo filtramos por barbero si es necesario
+
   let filtradas = citas.value;
   
-  // Si es empleado y tenemos el barbero correspondiente, filtrar por ese barbero
   if (rol === 'empleado' && empleadoBarberoId.value) {
     console.log(`[DEBUG FECHAS] Filtrando citas para barbero_id: ${empleadoBarberoId.value}`);
     filtradas = filtradas.filter(c => c.barbero_id === empleadoBarberoId.value);
     console.log(`[DEBUG FECHAS] Citas finales después de filtrar por barbero: ${filtradas.length}`);
   }
   
-  // Asegurarnos de que las citas estén ordenadas correctamente
-  // Para empleados: ordenar solo por hora
-  // Para admin: mantener el orden por barbero y luego por hora que viene del backend
   if (rol === 'empleado') {
     filtradas = [...filtradas].sort((a, b) => {
-      // Ordenar por hora ascendente
       return a.hora.localeCompare(b.hora);
     });
   }
@@ -298,7 +261,6 @@ async function toggleEstado(cita) {
 }
 
 async function sancionarUsuario(userId) {
-  // Solo permitir a administradores sancionar
   if (rol !== 'admin') {
     alert('Solo los administradores pueden sancionar usuarios');
     return;
@@ -312,7 +274,6 @@ async function sancionarUsuario(userId) {
     });
     if (res.ok) {
       alert('Usuario sancionado');
-      // Opcional: recargar usuarios para ver la penalización actualizada
       const resUsuarios = await fetch(`${API_URL}/api/user`, {
         credentials: 'include'
       });
@@ -350,7 +311,6 @@ async function sancionarUsuario(userId) {
       </v-row>
 
       <template v-else>
-        <!-- Selector de barbero para empleados -->
         <v-row v-if="rol === 'empleado' && showBarberoSelector">
           <v-col cols="12" sm="10" md="8" lg="6" class="mx-auto">
             <v-card class="mb-6 fade-in">
@@ -380,7 +340,6 @@ async function sancionarUsuario(userId) {
           </v-col>
         </v-row>
 
-        <!-- Mensaje de advertencia -->
         <v-row v-else-if="rol === 'empleado' && !empleadoBarberoId">
           <v-col cols="12" sm="10" md="8" class="mx-auto">
             <v-alert 
@@ -393,9 +352,7 @@ async function sancionarUsuario(userId) {
           </v-col>
         </v-row>
 
-        <!-- Contenido principal de citas -->
         <template v-else>
-          <!-- Resumen de estadísticas -->
           <v-row class="mb-6">
             <v-col cols="12" sm="6" md="3">
               <v-card class="stat-card fade-in">
@@ -446,7 +403,6 @@ async function sancionarUsuario(userId) {
             </v-col>
           </v-row>
 
-          <!-- Tabla de citas -->
           <v-row>
             <v-col cols="12">
               <v-card class="mb-6 fade-in">
@@ -654,7 +610,6 @@ async function sancionarUsuario(userId) {
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
 
-/* Responsive adjustments */
 @media (max-width: 960px) {
   .primary-title {
     font-size: 2.5rem !important;

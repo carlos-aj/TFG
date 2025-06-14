@@ -13,13 +13,12 @@ const modalOpen = ref(false)
 const imagenesModal = ref([])
 const galeriaActual = ref(null)
 
-// Admin
 const isAdmin = ref(localStorage.getItem('role') === 'admin')
 const adminMode = ref(false)
-const adminAction = ref('eliminar') // 'eliminar' o 'añadir'
+const adminAction = ref('eliminar') 
 const showAdminMenu = ref(false)
 const showAddModal = ref(false)
-const selectedGrupos = ref([]) // IDs de grupos seleccionados para eliminar
+const selectedGrupos = ref([]) 
 const newImageFiles = ref([])
 const newBarberoId = ref('')
 const mezclado = ref(false);
@@ -42,7 +41,6 @@ async function fetchGalerias() {
     galerias.value = shuffleArray(data)
     mezclado.value = true
   } else {
-    // Añade solo los que no están ya (por id)
     const existentes = new Set(galerias.value.map(g => g.id))
     const nuevos = data.filter(g => !existentes.has(g.id))
     galerias.value = galerias.value.concat(nuevos)
@@ -80,7 +78,6 @@ function cerrarModal() {
   galeriaActual.value = null
 }
 
-// --- ADMIN FUNCIONES ---
 function abrirAdminMenu() {
   showAdminMenu.value = true
 }
@@ -141,25 +138,19 @@ async function eliminarGruposSeleccionados() {
 
 function subirImagen(e) {
   const files = Array.from(e.target.files)
-  // Validar que solo sean imágenes
   const imageFiles = files.filter(file => file.type.startsWith('image/'))
   
-  // Si hay archivos que no son imágenes, mostrar un mensaje
   if (imageFiles.length < files.length) {
     errorMensaje.value = 'Solo se permiten archivos de imagen';
     mostrarError.value = true;
-    // Limpiar el input file para que el usuario pueda intentar de nuevo
     e.target.value = ''
     
-    // Ocultar el mensaje de error después de 4 segundos
     setTimeout(() => {
       mostrarError.value = false;
     }, 4000);
   }
   
-  // Solo procesamos los archivos de imagen
   if (imageFiles.length > 0) {
-    // Evita duplicados por nombre (opcional)
     const nombresActuales = new Set(newImageFiles.value.map(f => f.name))
     const nuevos = imageFiles.filter(f => !nombresActuales.has(f.name))
     newImageFiles.value = newImageFiles.value.concat(nuevos)
@@ -167,7 +158,6 @@ function subirImagen(e) {
 }
 
 async function guardarNuevaImagen() {
-  // Resetear errores
   barberoError.value = '';
   errorMensaje.value = '';
   mostrarError.value = false;
@@ -175,7 +165,6 @@ async function guardarNuevaImagen() {
   
   const barbero_id = Number(newBarberoId.value)
   
-  // Validación personalizada
   if (!barbero_id) {
     barberoError.value = 'Por favor, selecciona un barbero';
     return;
@@ -207,14 +196,12 @@ async function guardarNuevaImagen() {
 }
 
 function quitarImagen(idx) {
-  // Crear una copia del array y eliminar el elemento
   const nuevosArchivos = [...newImageFiles.value];
   nuevosArchivos.splice(idx, 1);
   newImageFiles.value = nuevosArchivos;
 }
 
 onMounted(() => {
-  // Animación específica para el subrayado
   gsap.from('.title-underline', {
     opacity: 0,
     width: 0,
@@ -237,7 +224,6 @@ onMounted(() => {
       <button class="admin-btn" @click="desactivarAdmin" v-if="adminMode">Salir administración</button>
     </div>
     
-    <!-- Estado de carga -->
     <v-row v-if="loading" justify="center" class="my-8">
       <v-col cols="12" class="text-center">
         <v-progress-circular indeterminate color="accent" size="64"></v-progress-circular>
@@ -245,7 +231,6 @@ onMounted(() => {
       </v-col>
     </v-row>
     
-    <!-- Eliminar grupos -->
     <div v-if="adminMode && adminAction === 'eliminar'" style="margin-bottom:1em;">
       <div class="galeria-grid">
         <div
@@ -281,7 +266,6 @@ onMounted(() => {
       </div>
     </div>
     
-    <!-- Vista normal -->
     <div v-if="!adminMode" class="galeria-grid">
       <div
         v-for="(galeria, i) in galerias"
@@ -307,7 +291,6 @@ onMounted(() => {
     </button>
     <p v-else-if="!adminMode && totalLoaded" class="fin fade-in">No hay más imágenes.</p>
 
-    <!-- Modal para añadir imágenes -->
     <div v-if="showAddModal" class="modal-overlay" @click.self="desactivarAdmin">
       <div class="modal-content modal-form">
         <button class="cerrar-modal" @click="desactivarAdmin">×</button>
@@ -404,7 +387,6 @@ onMounted(() => {
       </div>
     </div>
 
-    <!-- Modal de imágenes con carrusel -->
     <div v-if="modalOpen" class="modal-overlay" @click.self="cerrarModal">
       <div class="modal-content modal-carousel">
         <button class="cerrar-modal" @click="cerrarModal">×</button>
@@ -436,7 +418,6 @@ onMounted(() => {
       </div>
     </div>
     
-    <!-- Menú modal pequeño para elegir acción -->
     <div v-if="showAdminMenu" class="admin-menu-modal" @click.self="cerrarAdminMenu">
       <div class="admin-menu-content">
         <button @click="seleccionarAccion('eliminar')">Eliminar grupos</button>
@@ -867,13 +848,11 @@ h1::after {
   }
 }
 
-/* Asegurar que todos los h2 del componente usen la fuente correcta */
 h2 {
   font-family: 'DM Serif Display', serif !important;
   font-style: italic;
 }
 
-/* Estilos para el formulario de añadir imágenes */
 form {
   display: flex;
   flex-direction: column;

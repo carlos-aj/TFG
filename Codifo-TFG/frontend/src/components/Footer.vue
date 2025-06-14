@@ -1,7 +1,6 @@
 <template>
     <v-footer class="footer" width="100%">
         <v-container class="pa-0 footer-container" fluid>
-            <!-- Parte superior del footer con la información principal -->
             <v-row class="footer-content py-8 px-4 mx-0" no-gutters>
                 <v-col cols="12" sm="6" md="3" lg="3" class="px-3 mb-6 text-left">
                     <h2 class="text-h5 font-weight-bold mb-4 footer-heading font-italic dm-serif">Horario</h2>
@@ -84,7 +83,6 @@
 </template>
 
 <script setup>
-// No script logic needed for a simple footer
 </script>
 
 <style scoped>
@@ -202,7 +200,6 @@
     white-space: normal !important;
 }
 
-/* Aplicar color al texto para todos los elementos */
 .text-subtitle-1, .text-body-2, .v-list-item__title {
     color: var(--text-color) !important;
 }

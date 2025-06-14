@@ -16,7 +16,6 @@ import CitasEmpleadosAdmin from '../components/CitasEmpleadosAdmin.vue'
 import NotFound from '../components/404.vue'
 import CitaExito from '../components/CitaExito.vue'
 
-// Define las rutas
 const routes = [
   { path: '/', component: Landing, name: 'home', meta: { requiresAuth: false } },
   { path: '/login', component: Login, name: 'login', meta: { requiresAuth: false } },
@@ -34,20 +33,16 @@ const routes = [
   { path: '/:pathMatch(.*)*', name: 'NotFound', component: NotFound }, 
 ]
 
-// Crea el router
 const router = createRouter({
   history: createWebHistory(),
   routes,
   scrollBehavior() {
-    // Siempre vuelve al inicio cuando se navega
     return { top: 0 }
   }
 })
 
-// Navegación global
 router.beforeEach((to, from, next) => {
   try {
-    // Verificar si el usuario está autenticado
     const authenticated = checkAuthenticated();
     const userRole = getUserRole();
     
@@ -58,14 +53,12 @@ router.beforeEach((to, from, next) => {
       rol: userRole
     });
 
-    // Si la ruta requiere autenticación y el usuario no está autenticado
     if (to.meta.requiresAuth && !authenticated) {
       console.log('Redirigiendo a login: ruta protegida sin autenticación');
       next({ name: 'login' });
       return;
     }
     
-    // Si la ruta requiere un rol específico
     if (to.meta.requiredRole && authenticated) {
       const requiredRoles = Array.isArray(to.meta.requiredRole) 
         ? to.meta.requiredRole 
@@ -73,7 +66,6 @@ router.beforeEach((to, from, next) => {
         
       if (!requiredRoles.includes(userRole)) {
         console.log('Acceso denegado: rol incorrecto');
-        // Redirigir según el rol actual
         if (userRole === 'admin' || userRole === 'empleado') {
           next({ name: 'citas-empleados-admin' });
         } else {
@@ -83,9 +75,7 @@ router.beforeEach((to, from, next) => {
       }
     }
     
-    // Si el usuario ya está autenticado y trata de ir a login
     if (to.path === '/login' && authenticated) {
-      // Redirigir según el rol
       if (userRole === 'admin' || userRole === 'empleado') {
         console.log('Usuario ya autenticado, redirigiendo a panel admin/empleado');
         next({ name: 'citas-empleados-admin' });
@@ -96,7 +86,6 @@ router.beforeEach((to, from, next) => {
       return;
     }
     
-    // En cualquier otro caso, permitir la navegación
     next();
   } catch (error) {
     console.error('Error en navegación:', error);

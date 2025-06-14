@@ -1,21 +1,17 @@
-/* Importa las fuentes de Google Fonts */
 @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Serif:ital@0;1&display=swap');
 
-/* Variables globales */
 :root {
-  --main-bg-color: #2B2B2B;      /* Fondo principal */
-  --text-color: #D9D9D9;          /* Color de texto principal */
-  --accent-color: #F5E009;       /* Color de acento para elementos relevantes */
-  --footer-color: #656565;       /* Color del footer */
+  --main-bg-color: #2B2B2B;     
+  --text-color: #D9D9D9;       
+  --accent-color: #F5E009;       
+  --footer-color: #656565;      
   --font-primary: 'DM Serif', serif;
 }
 
-/* Aplicar la fuente a TODOS los elementos */
 * {
   font-family: var(--font-primary);
 }
 
-/* Estilos base para todo el proyecto */
 body {
   font-family: var(--font-primary);
   background-color: var(--main-bg-color);
@@ -23,25 +19,21 @@ body {
   line-height: 1.6;
 }
 
-/* Todos los títulos en itálica */
 h1, h2, h3, h4, h5, h6 {
   font-family: 'DM Serif', serif !important;
   color: var(--text-color);
   font-style: italic;
 }
 
-/* Clases de Vuetify para títulos */
 .v-card-title, .text-h1, .text-h2, .text-h3, .text-h4, .text-h5, .text-h6 {
   font-family: 'DM Serif', serif !important;
   font-style: italic !important;
 }
 
-/* Estilos de botón consistentes */
 .v-btn {
   font-family: var(--font-primary) !important;
 }
 
-/* Asegurar que las etiquetas y textos de entrada usan la fuente correcta */
 .v-label, .v-text-field input, .v-textarea textarea, 
 .v-list-item__title, .v-list-item__subtitle,
 .v-card-title, .v-card-subtitle, .v-card-text,
@@ -49,22 +41,18 @@ h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-primary) !important;
 }
 
-/* Clase de utilidad para fuentes */
 .font-primary {
   font-family: var(--font-primary) !important;
 }
 
-/* Clases de utilidad para itálica */
 .font-italic {
   font-style: italic !important;
 }
 
-/* Clase específica para DM Serif */
 .dm-serif {
   font-family: 'DM Serif', serif !important;
 }
 
-/* Clases de utilidad para colores */
 .bg-main {
   background-color: var(--main-bg-color) !important;
 }
@@ -81,7 +69,6 @@ h1, h2, h3, h4, h5, h6 {
   color: var(--accent-color) !important;
 }
 
-/* Botones de color accent con texto legible */
 .v-btn.v-btn--variant-elevated.v-theme--barberTheme.bg-primary,
 .v-btn.v-btn--variant-elevated.v-theme--barberTheme.bg-accent,
 .v-btn[color="accent"],

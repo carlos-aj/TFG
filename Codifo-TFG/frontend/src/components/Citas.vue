@@ -6,7 +6,6 @@
         <v-card-title class="text-h4 text-center dm-serif font-italic mb-4">Reservar Cita</v-card-title>
         
         <v-card-text>
-          <!-- Mensaje de error general -->
           <v-alert
             v-if="errores.general"
             type="error"
@@ -145,7 +144,6 @@
               </v-col>
             </v-row>
             
-            <!-- Botón para mostrar el formulario de invitación con animación -->
             <v-slide-y-transition>
               <v-row v-if="puedeInvitar && !mostrarFormularioInvitado && !pagarAhora">
                 <v-col cols="12" class="text-center my-4">
@@ -164,7 +162,6 @@
               </v-row>
             </v-slide-y-transition>
 
-            <!-- Formulario de invitación con animación mejorada -->
             <v-expand-transition>
               <v-card
                 v-if="puedeInvitar && mostrarFormularioInvitado && !pagarAhora"
@@ -265,7 +262,6 @@
     </div>
   </div>
 
-  <!-- Snackbar solo para mensajes de éxito -->
   <v-snackbar 
     v-model="snackbar" 
     :timeout="5000" 
@@ -294,13 +290,12 @@ import { loadStripe } from '@stripe/stripe-js'
 import { API_URL } from '../config'
 import { useRouter } from 'vue-router'
 
-// Define component name for keep-alive
 defineComponent({
   name: 'Citas'
 })
 
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY);
-const pagarAhora = ref(false) // NUEVO
+const pagarAhora = ref(false) 
 const servicios = ref([])
 const barberos = ref([])
 const servicioSeleccionado = ref(null)
@@ -317,15 +312,12 @@ const barberoInvitado = ref(null)
 const horasOcupadasInvitado = ref([]);
 const horasOcupadasPorBarbero = ref({});
 
-// Para el snackbar de confirmación y errores
 const snackbar = ref(false);
 const snackbarText = ref('');
 const snackbarColor = ref('success');
 
-// Para el diálogo del date picker
 const datePickerDialog = ref(false)
 
-// Para el manejo de validaciones
 const errores = ref({
   servicio: '',
   barbero: '',
@@ -338,13 +330,11 @@ const errores = ref({
   general: ''
 });
 
-// Estado de validación del formulario
 const formTouched = ref(false);
 const invitadoTouched = ref(false);
 
 const router = useRouter()
 
-// Validadores computados - Ya no los usamos para :error
 const servicioValido = computed(() => !formTouched.value || !!servicioSeleccionado.value);
 const barberoValido = computed(() => !formTouched.value || !!barberoSeleccionado.value);
 const fechaValida = computed(() => !formTouched.value || !!fechaSeleccionada.value);
@@ -355,44 +345,37 @@ const servicioInvitadoValido = computed(() => !invitadoTouched.value || !mostrar
 const barberoInvitadoValido = computed(() => !invitadoTouched.value || !mostrarFormularioInvitado.value || !!barberoInvitado.value);
 const horaInvitadoValida = computed(() => !invitadoTouched.value || !mostrarFormularioInvitado.value || !!horaInvitado.value);
 
-// Función para mostrar mensajes en el snackbar
 function mostrarMensaje(mensaje, tipo = 'success') {
   snackbarText.value = mensaje;
   snackbarColor.value = tipo;
   snackbar.value = true;
 }
 
-// Función para validar el formulario principal
 function validarFormulario() {
   formTouched.value = true;
   let esValido = true;
   
-  // Limpiar errores previos
   errores.value.servicio = '';
   errores.value.barbero = '';
   errores.value.fecha = '';
   errores.value.hora = '';
   errores.value.general = '';
   
-  // Validar servicio
   if (!servicioSeleccionado.value) {
     errores.value.servicio = 'Por favor, selecciona un servicio';
     esValido = false;
   }
   
-  // Validar barbero
   if (!barberoSeleccionado.value) {
     errores.value.barbero = 'Por favor, selecciona un barbero';
     esValido = false;
   }
   
-  // Validar fecha
   if (!fechaSeleccionada.value) {
     errores.value.fecha = 'Por favor, selecciona una fecha';
     esValido = false;
   }
   
-  // Validar hora
   if (!horaSeleccionada.value) {
     errores.value.hora = 'Por favor, selecciona una hora';
     esValido = false;
@@ -401,38 +384,32 @@ function validarFormulario() {
   return esValido;
 }
 
-// Función para validar el formulario de invitado
 function validarFormularioInvitado() {
   if (!mostrarFormularioInvitado.value) return true;
   
   invitadoTouched.value = true;
   let esValido = true;
   
-  // Limpiar errores previos
   errores.value.nombreInvitado = '';
   errores.value.servicioInvitado = '';
   errores.value.barberoInvitado = '';
   errores.value.horaInvitado = '';
   
-  // Validar nombre del invitado
   if (!nombreInvitado.value) {
     errores.value.nombreInvitado = 'Por favor, introduce el nombre del invitado';
     esValido = false;
   }
   
-  // Validar servicio del invitado
   if (!servicioInvitado.value) {
     errores.value.servicioInvitado = 'Por favor, selecciona un servicio para el invitado';
     esValido = false;
   }
   
-  // Validar barbero del invitado
   if (!barberoInvitado.value) {
     errores.value.barberoInvitado = 'Por favor, selecciona un barbero para el invitado';
     esValido = false;
   }
   
-  // Validar hora del invitado
   if (!horaInvitado.value) {
     errores.value.horaInvitado = 'Por favor, selecciona una hora para el invitado';
     esValido = false;
@@ -444,15 +421,13 @@ function validarFormularioInvitado() {
 function getHorasDisponibles() {
   if (!fechaSeleccionada.value) return [];
   const fecha = new Date(fechaSeleccionada.value);
-  const dia = fecha.getDay(); // 0=Domingo, 1=Lunes, ..., 5=Viernes
+  const dia = fecha.getDay(); 
   if (dia >= 1 && dia <= 4) {
-    // Lunes a Jueves
     return [
       '09:30', '10:00', '10:30', '11:00', '11:30', '12:00', '12:30', '13:00', '13:30',
       '16:00', '16:30', '17:00', '17:30', '18:00', '18:30', '19:00', '19:30', '20:00'
     ];
   } else if (dia === 5) {
-    // Viernes
     return [
       '10:00', '10:30', '11:00', '11:30', '12:00', '12:30', '13:00', '13:30', '14:00',
       '16:00', '16:30', '17:00', '17:30', '18:00', '18:30', '19:00', '19:30'
@@ -462,29 +437,23 @@ function getHorasDisponibles() {
 }
 
 function getBarberosDisponibles() {
-  // Siempre muestra todos los barberos si no hay fecha seleccionada
   if (!fechaSeleccionada.value) return barberos.value;
-  // Muestra todos los barberos, pero si el barbero está completamente ocupado, lo deshabilitas en el select
   return barberos.value;
 }
 
-// Función para limpiar todos los campos del formulario
 function limpiarFormulario() {
-  // Limpiar selecciones principales
   servicioSeleccionado.value = null;
   barberoSeleccionado.value = null;
   fechaSeleccionada.value = null;
   horaSeleccionada.value = '';
   pagarAhora.value = false;
   
-  // Limpiar datos de invitado
   mostrarFormularioInvitado.value = false;
   nombreInvitado.value = '';
   servicioInvitado.value = null;
   barberoInvitado.value = null;
   horaInvitado.value = '';
   
-  // Limpiar errores
   errores.value = {
     servicio: '',
     barbero: '',
@@ -497,18 +466,15 @@ function limpiarFormulario() {
     general: ''
   };
   
-  // Resetear estados de validación
   formTouched.value = false;
   invitadoTouched.value = false;
   
   console.log('Formulario limpiado correctamente');
 }
 
-// Función para refrescar los datos cuando el componente se activa (al volver a la página)
 async function refreshData() {
   console.log('Refrescando datos de citas...');
   
-  // Limpiar el formulario al volver a la página
   limpiarFormulario();
   
   if (fechaSeleccionada.value && barberoSeleccionado.value) {
@@ -519,7 +485,6 @@ async function refreshData() {
 
 onMounted(async () => {
   try {
-    // Limpiar el formulario al montar el componente
     limpiarFormulario();
     
     const resServicios = await fetch(`${API_URL}/api/servicio`, {
@@ -538,8 +503,6 @@ onMounted(async () => {
     }
     barberos.value = await resBarberos.json()
     
-    // Si ya hay una fecha seleccionada (por ejemplo, al volver a la página),
-    // cargar las horas ocupadas inmediatamente
     if (fechaSeleccionada.value) {
       await cargarHorasOcupadas();
     }
@@ -554,7 +517,6 @@ async function checkPuedeInvitar() {
     return
   }
 
-  // Formatear la fecha correctamente para evitar problemas de zona horaria
   const fechaObj = new Date(fechaSeleccionada.value);
   const fechaFormateada = `${fechaObj.getFullYear()}-${String(fechaObj.getMonth() + 1).padStart(2, '0')}-${String(fechaObj.getDate()).padStart(2, '0')}`;
   console.log('Fecha seleccionada original en checkPuedeInvitar:', fechaSeleccionada.value);
@@ -582,48 +544,38 @@ async function checkPuedeInvitar() {
   }
 }
 
-// Ocultar el formulario de invitado si las condiciones cambian
 watch(puedeInvitar, (esPosible) => {
   if (!esPosible) {
     mostrarFormularioInvitado.value = false;
   }
 });
 
-// Añadir un watcher para pagarAhora
 watch(pagarAhora, (valor) => {
   if (valor) {
-    // Si se activa pagarAhora, desactivar la opción de invitados
     puedeInvitar.value = false;
     mostrarFormularioInvitado.value = false;
-    // Limpiar datos del invitado
     nombreInvitado.value = '';
     servicioInvitado.value = null;
     barberoInvitado.value = null;
     horaInvitado.value = '';
   } else {
-    // Si se desactiva pagarAhora, verificar si puede invitar
     checkPuedeInvitar();
   }
 });
 
-// Watcher combinado para barberoSeleccionado y fechaSeleccionada
 watch([barberoSeleccionado, fechaSeleccionada], async () => {
   if (!barberoSeleccionado.value || !fechaSeleccionada.value) {
     horasOcupadas.value = [];
     return;
   }
   
-  // Cargar las horas ocupadas para todos los barberos
   await cargarHorasOcupadas();
   
-  // Actualizar las horas ocupadas para el barbero seleccionado
   horasOcupadas.value = horasOcupadasPorBarbero.value[barberoSeleccionado.value] || [];
   
-  // Verificar si se puede invitar
   checkPuedeInvitar();
 });
 
-// Add a watcher for horaSeleccionada to check if invites are possible
 watch(horaSeleccionada, () => {
   checkPuedeInvitar();
 });
@@ -633,11 +585,9 @@ watch([barberoInvitado, fechaSeleccionada], async () => {
     horasOcupadasInvitado.value = [];
     return;
   }
-  // Si ya tenemos los datos cargados, usarlos
   if (horasOcupadasPorBarbero.value[barberoInvitado.value]) {
     horasOcupadasInvitado.value = horasOcupadasPorBarbero.value[barberoInvitado.value];
   } else {
-    // De lo contrario, cargar todo de nuevo
     await cargarHorasOcupadas();
   }
 });
@@ -652,15 +602,13 @@ watch(fechaSeleccionada, async () => {
 });
 
 async function reservarCita() {
-  // Validar el formulario principal
   if (!validarFormulario()) {
-    return; // Solo muestra los errores bajo cada campo, sin snackbar
+    return; 
   }
   
-  // Validar el formulario de invitado si está visible
   if (puedeInvitar.value && mostrarFormularioInvitado.value && !pagarAhora.value) {
     if (!validarFormularioInvitado()) {
-      return; // Solo muestra los errores bajo cada campo, sin snackbar
+      return;
     }
   }
 
@@ -670,19 +618,15 @@ async function reservarCita() {
     return;
   }
 
-  // El backend espera la fecha en formato YYYY-MM-DD.
-  // v-date-picker puede devolver un objeto Date o un string ISO, así que lo formateamos.
   const fechaObj = new Date(fechaSeleccionada.value);
-  // Formatear la fecha correctamente para evitar problemas de zona horaria
   const fechaFormateada = `${fechaObj.getFullYear()}-${String(fechaObj.getMonth() + 1).padStart(2, '0')}-${String(fechaObj.getDate()).padStart(2, '0')}`;
   console.log('Fecha seleccionada original:', fechaSeleccionada.value);
   console.log('Fecha formateada para el backend:', fechaFormateada);
 
-  // Prepara el objeto cita
   const cita = {
     servicio_id: servicioSeleccionado.value,
     barbero_id: barberoSeleccionado.value,
-    fecha: fechaFormateada, // Usar la fecha formateada
+    fecha: fechaFormateada,
     hora: horaSeleccionada.value,
     estado: false,
     pagado: false,
@@ -693,7 +637,6 @@ async function reservarCita() {
     cita.pago_online = true;
   }
 
-  // Añadir información del invitado si corresponde
   if (
     !pagarAhora.value && 
     puedeInvitar.value &&
@@ -705,11 +648,8 @@ async function reservarCita() {
     cita.hora_invitado = horaInvitado.value;
   }
 
-  // Si el usuario quiere pagar ahora, inicia Stripe Checkout
   if (pagarAhora.value) {
     try {
-      // Primero crear la cita
-      console.log('DEBUG: Datos de la cita a enviar (pago online):', JSON.stringify(cita, null, 2));
       const resCita = await fetch(`${API_URL}/api/cita`, {
         method: 'POST',
         credentials: 'include',
@@ -727,31 +667,25 @@ async function reservarCita() {
       const citaCreada = await resCita.json();
       console.log('Cita creada:', citaCreada);
       
-      // Guardar el ID de la cita en localStorage para recuperarlo en CitaExito.vue
       if (citaCreada && citaCreada.id) {
         localStorage.setItem('ultima_cita_id', citaCreada.id.toString());
         console.log('ID de cita guardado en localStorage:', citaCreada.id);
       }
 
-      // Actualizar las horas ocupadas para reflejar la nueva reserva
       await cargarHorasOcupadas();
 
-      // Busca el precio del servicio seleccionado
       const servicio = servicios.value.find(s => s.id === servicioSeleccionado.value)
       if (!servicio) {
         throw new Error('No se encontró el servicio seleccionado');
       }
 
-      const amount = Math.round(servicio.precio * 100); // en céntimos
+      const amount = Math.round(servicio.precio * 100); 
       
-      // Guardar información importante antes de limpiar el formulario
       const citaId = citaCreada.id;
       
-      // Limpiar el formulario después de obtener la información necesaria
       limpiarFormulario();
       console.log('Iniciando pago:', { amount, citaId });
 
-      // Crear la sesión de Stripe Checkout
       const res = await fetch(`${API_URL}/api/cita/pago`, {
         method: 'POST',
         credentials: 'include',
@@ -779,7 +713,6 @@ async function reservarCita() {
         throw new Error('No se pudo inicializar Stripe');
       }
 
-      // Redirige a Stripe Checkout
       const { error } = await stripe.redirectToCheckout({ sessionId: data.sessionId });
       if (error) {
         throw error;
@@ -791,7 +724,6 @@ async function reservarCita() {
     return;
   }
 
-  // Si no paga ahora, reserva la cita normalmente
   try {
     console.log('DEBUG: Datos de la cita a enviar (sin pago):', JSON.stringify(cita, null, 2));
     const res = await fetch(`${API_URL}/api/cita`, {
@@ -811,23 +743,19 @@ async function reservarCita() {
     const citaCreada = await res.json();
     console.log('Cita creada (sin pago):', citaCreada);
     
-    // Guardar el ID de la cita en localStorage para recuperarlo si es necesario
     if (citaCreada && citaCreada.id) {
       localStorage.setItem('ultima_cita_id', citaCreada.id.toString());
       console.log('ID de cita guardado en localStorage:', citaCreada.id);
     }
 
-    // Actualizar las horas ocupadas para reflejar la nueva reserva
     await cargarHorasOcupadas();
 
-    // Limpiar el formulario después de la reserva exitosa
     limpiarFormulario();
 
-    // Muestra mensaje de éxito y redirige
     mostrarMensaje('¡Cita reservada! Revisa tu correo para la confirmación.', 'success');
     setTimeout(() => {
       router.push('/');
-    }, 3000); // Redirige después de 3 segundos
+    }, 3000); 
 
   } catch (error) {
     console.error('Error al reservar cita:', error);
@@ -842,17 +770,14 @@ function getHorasInvitado() {
 
   let opciones = [];
   if (barberoInvitado.value === barberoSeleccionado.value) {
-    // Mismo barbero: solo anterior y siguiente
     if (idx > 0) opciones.push(horas[idx - 1]);
     if (idx < horas.length - 1) opciones.push(horas[idx + 1]);
   } else {
-    // Otro barbero: misma, anterior y siguiente
     if (idx > 0) opciones.push(horas[idx - 1]);
     opciones.push(horaSeleccionada.value);
     if (idx < horas.length - 1) opciones.push(horas[idx + 1]);
   }
 
-  // Solo muestra horas que estén libres para el barbero invitado
   const ocupadas = horasOcupadasInvitado.value || [];
   return opciones.filter(hora => !ocupadas.includes(hora));
 }
@@ -860,22 +785,21 @@ function getHorasInvitado() {
 function isWeekday(date) {
   const d = new Date(date);
   const day = d.getDay();
-  return day !== 0 && day !== 6; // 0 = domingo, 6 = sábado
+  return day !== 0 && day !== 6; 
 }
 
 function isWeekend(date) {
   const d = new Date(date);
   const day = d.getDay();
-  return day === 0 || day === 6; // 0 = domingo, 6 = sábado
+  return day === 0 || day === 6; 
 }
 
 function formatDate(date) {
   if (!date) return '';
   const d = new Date(date);
-  return d.toLocaleDateString('es-ES'); // Format as DD/MM/YYYY
+  return d.toLocaleDateString('es-ES'); 
 }
 
-// Function to load occupied time slots for all barbers
 async function cargarHorasOcupadas() {
   if (!fechaSeleccionada.value) {
     horasOcupadasPorBarbero.value = {};
@@ -883,14 +807,12 @@ async function cargarHorasOcupadas() {
   }
   
   try {
-    // Formatear la fecha correctamente para evitar problemas de zona horaria
     const fechaObj = new Date(fechaSeleccionada.value);
     const fechaFormateada = `${fechaObj.getFullYear()}-${String(fechaObj.getMonth() + 1).padStart(2, '0')}-${String(fechaObj.getDate()).padStart(2, '0')}`;
     console.log('Cargando horas ocupadas para fecha:', fechaFormateada);
     
     const ocupadas = {};
     for (const barbero of barberos.value) {
-      // Usar cache:no-store para forzar una solicitud fresca cada vez
       const res = await fetch(`${API_URL}/api/cita?barbero_id=${barbero.id}&fecha=${fechaFormateada}&_=${new Date().getTime()}`, {
         credentials: 'include',
         cache: 'no-store'
@@ -911,12 +833,10 @@ async function cargarHorasOcupadas() {
     }
     horasOcupadasPorBarbero.value = ocupadas;
     
-    // Actualizar las horas ocupadas para el barbero seleccionado
     if (barberoSeleccionado.value) {
       horasOcupadas.value = ocupadas[barberoSeleccionado.value] || [];
     }
     
-    // Actualizar las horas ocupadas para el barbero invitado
     if (barberoInvitado.value) {
       horasOcupadasInvitado.value = ocupadas[barberoInvitado.value] || [];
     }
@@ -928,7 +848,6 @@ async function cargarHorasOcupadas() {
   }
 }
 
-// Refrescar datos cuando se activa el componente (al volver a la página)
 onActivated(() => {
   refreshData();
 });
@@ -978,7 +897,7 @@ onActivated(() => {
 
 .reserve-button {
   font-weight: bold !important;
-  color: #2B2B2B !important; /* Color oscuro para el texto */
+  color: #2B2B2B !important; 
   font-size: 1.1rem !important;
   letter-spacing: 1px;
   transition: all 0.3s ease;
@@ -988,7 +907,7 @@ onActivated(() => {
 
 .invite-button {
   font-weight: bold !important;
-  color: #2B2B2B !important; /* Color oscuro para el texto */
+  color: #2B2B2B !important; 
   font-size: 1rem !important;
   letter-spacing: 0.5px;
   transition: all 0.3s ease;

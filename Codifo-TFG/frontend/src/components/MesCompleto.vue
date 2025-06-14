@@ -16,10 +16,9 @@ const selectedBarbero = ref(null)
 const showBarberoSelector = ref(false)
 const showCitasModal = ref(false)
 
-// Usar la fecha actual
 const today = new Date()
 const year = ref(today.getFullYear())
-const month = ref(today.getMonth()) // 0-indexed
+const month = ref(today.getMonth()) 
 const selectedDay = ref(null)
 
 const daysShort = ['L', 'M', 'X', 'J', 'V', 'S', 'D']
@@ -34,22 +33,18 @@ const daysInMonth = computed(() => {
 })
 
 const firstDayOfWeek = computed(() => {
-  // Lunes = 0, Domingo = 6
   let day = new Date(year.value, month.value, 1).getDay()
   return day === 0 ? 6 : day - 1
 })
 
-// Observar cuando se abre el modal de citas
 watch(showCitasModal, (newVal) => {
   if (newVal) {
-    // Cargar las citas del día seleccionado
     console.log(`Mostrando citas para el día ${selectedDay.value}`);
   }
 });
 
 onMounted(async () => {
   try {
-    // Cargar barberos primero para poder asociar el empleado con su barbero
     const resBarberos = await fetch(`${API_URL}/api/barbero`, {
       credentials: 'include',
       headers: {
@@ -59,17 +54,14 @@ onMounted(async () => {
     const barberosData = await resBarberos.json();
     barberos.value = barberosData;
     
-    // Si el usuario es empleado/barbero, verificar si tiene un barbero asignado
     if ((rol === 'empleado' || rol === 'barbero')) {
       if (barbero_id && barbero_id !== '0' && barbero_id !== 'null') {
-        // Verificar que el barbero existe
         const barberoExiste = barberosData.find(b => b.id === Number(barbero_id));
         if (!barberoExiste) {
           console.log(`El barbero_id ${barbero_id} no existe en la lista de barberos`);
           showBarberoSelector.value = true;
         }
       } else if (nombre) {
-        // Buscar por nombre si no hay barbero_id guardado
         const barberoCorrespondiente = barberosData.find(
           b => b.nombre.toLowerCase().includes(nombre.toLowerCase()) || nombre.toLowerCase().includes(b.nombre.toLowerCase())
         );
@@ -86,10 +78,8 @@ onMounted(async () => {
       }
     }
     
-    // Cargar citas
     await loadCitas();
     
-    // Animaciones iniciales
     gsap.from('.primary-title', {
       opacity: 0,
       y: -30,
@@ -124,16 +114,13 @@ const loadCitas = async () => {
   try {
     loading.value = true;
     
-    // Crear la fecha del primer día del mes
     const primerDia = `${year.value}-${monthString.value}-01`;
     console.log(`[DEBUG FECHAS] Primer día del mes: ${primerDia}`);
     
-    // Calcular el último día del mes
     const ultimoDia = new Date(year.value, month.value + 1, 0);
     const ultimoDiaStr = `${year.value}-${monthString.value}-${String(ultimoDia.getDate()).padStart(2, '0')}`;
     console.log(`[DEBUG FECHAS] Último día del mes: ${ultimoDiaStr}`);
     
-    // Obtener las citas directamente sin ajustes de fechas
     let data;
     if (rol === 'empleado' && barbero_id) {
       const response = await fetch(`${API_URL}/api/cita?barbero_id=${barbero_id}&fecha_inicio=${primerDia}&fecha_fin=${ultimoDiaStr}&includeRelations=true`, {
@@ -160,7 +147,6 @@ const loadCitas = async () => {
     citas.value = data;
     console.log(`[DEBUG FECHAS] Citas obtenidas: ${citas.value.length}`);
     
-    // Procesar las citas para el calendario
     processCitasForCalendar();
   } catch (error) {
     console.error('Error al cargar citas:', error);
@@ -178,7 +164,6 @@ async function seleccionarBarbero() {
   
   localStorage.setItem('barbero_id', selectedBarbero.value.toString());
   
-  // Actualizar en la base de datos si es posible
   try {
     const res = await fetch(`${API_URL}/api/user/${user_id}/asignar-barbero-empleado`, {
       method: 'POST',
@@ -208,23 +193,18 @@ const citasFiltradas = computed(() => {
   console.log(`[DEBUG FECHAS] Total citas a filtrar: ${citas.value.length}`);
   
   let filtradas = citas.value.filter(c => {
-    // Solo citas del mes y año actual
     if (!c.fecha) {
       console.log(`[DEBUG FECHAS] Ignorando cita sin fecha`);
       return false;
     }
     
-    // Obtener el mes y año directamente de la fecha original
     let fechaOriginal;
     try {
-      // Intentar obtener la fecha como string
       if (typeof c.fecha === 'string') {
         fechaOriginal = c.fecha.slice(0, 10);
       } else if (c.fecha instanceof Date) {
-        // Si es un objeto Date
         fechaOriginal = `${c.fecha.getFullYear()}-${String(c.fecha.getMonth() + 1).padStart(2, '0')}-${String(c.fecha.getDate()).padStart(2, '0')}`;
       } else {
-        // Si es otro tipo de dato, convertirlo a string
         fechaOriginal = String(c.fecha);
         console.log(`[DEBUG FECHAS] Formato de fecha desconocido: ${typeof c.fecha}`, c.fecha);
       }
@@ -233,7 +213,6 @@ const citasFiltradas = computed(() => {
       return false;
     }
     
-    // Intentar extraer año y mes
     try {
       const fechaParts = fechaOriginal.split('-');
       if (fechaParts.length !== 3) {
@@ -247,7 +226,6 @@ const citasFiltradas = computed(() => {
       console.log(`[DEBUG FECHAS] Cita ID ${c.id}, fecha original: ${fechaOriginal}, mes: ${mes}, año: ${anio}`);
       console.log(`[DEBUG FECHAS] Comparando con mes: ${month.value + 1}, año: ${year.value}`);
       
-      // Usar la fecha original para filtrar
       const coincide = anio === year.value && mes === month.value + 1;
       console.log(`[DEBUG FECHAS] Coincide: ${coincide}`);
       return coincide;
@@ -305,12 +283,10 @@ function closeCitasModal() {
 const citasDelDia = computed(() => {
   if (!selectedDay.value) return []
   
-  // Crear la fecha correctamente sin usar toISOString para evitar problemas de zona horaria
   const fechaStr = `${year.value}-${monthString.value}-${String(selectedDay.value).padStart(2, '0')}`;
   console.log(`[DEBUG FECHAS] Fecha seleccionada: ${fechaStr}`);
   console.log(`[DEBUG FECHAS] Total citas filtradas para el mes: ${citasFiltradas.value.length}`);
   
-  // Usar la fecha sin ajustes para filtrar
   const citasDelDiaActual = citasFiltradas.value.filter(c => {
     if (!c.fecha) {
       console.log(`[DEBUG FECHAS] Cita sin fecha`);
@@ -319,14 +295,11 @@ const citasDelDia = computed(() => {
     
     let fechaCita;
     try {
-      // Intentar obtener la fecha como string
       if (typeof c.fecha === 'string') {
         fechaCita = c.fecha.slice(0, 10);
       } else if (c.fecha instanceof Date) {
-        // Si es un objeto Date
         fechaCita = `${c.fecha.getFullYear()}-${String(c.fecha.getMonth() + 1).padStart(2, '0')}-${String(c.fecha.getDate()).padStart(2, '0')}`;
       } else {
-        // Si es otro tipo de dato, convertirlo a string
         fechaCita = String(c.fecha);
         console.log(`[DEBUG FECHAS] Formato de fecha desconocido: ${typeof c.fecha}`, c.fecha);
       }
@@ -366,22 +339,17 @@ function nextMonth() {
 }
 
 function getMaxCitas(day) {
-  // day: 1 = lunes, ..., 5 = viernes, 6 = sábado, 0 = domingo
   const date = new Date(year.value, month.value, day);
-  const weekday = date.getDay(); // 0 = domingo, 1 = lunes, ..., 6 = sábado
+  const weekday = date.getDay();
 
-  if (weekday === 0 || weekday === 6) return 0; // cerrado
+  if (weekday === 0 || weekday === 6) return 0; 
 
-  // Si es admin, multiplica por número de barberos
   if (rol === 'admin') {
-    // Puedes guardar el número de barberos en una variable reactiva si lo tienes en la API
     return (weekday === 5 ? 17 : 18) * numBarberos.value;
   }
-  // Si es barbero, solo su cupo
   return weekday === 5 ? 17 : 18;
 }
 
-// Número de barberos (solo para admin)
 const numBarberos = ref(1);
 onMounted(async () => {
   if (rol === 'admin') {
@@ -398,18 +366,12 @@ onMounted(async () => {
 });
 
 const processCitasForCalendar = () => {
-  // Esta función se llama después de cargar las citas para hacer cualquier procesamiento adicional
   console.log('[DEBUG FECHAS] Procesando citas para el calendario');
-  
-  // Aquí podemos hacer cualquier procesamiento adicional de las citas para el calendario
-  // Por ejemplo, agrupar por día, etc.
-  
-  // Por ahora, solo registramos algunas estadísticas
+
   if (citas.value.length > 0) {
     const diasConCitas = new Set(citas.value.map(c => c.fecha ? c.fecha.slice(0, 10) : null).filter(Boolean));
     console.log(`[DEBUG FECHAS] Citas distribuidas en ${diasConCitas.size} días diferentes`);
     
-    // Mostrar la primera cita como ejemplo
     const primeraCita = citas.value[0];
     if (primeraCita && primeraCita.fecha) {
       console.log(`[DEBUG FECHAS] Primera cita: ID ${primeraCita.id}, fecha ${primeraCita.fecha.slice(0, 10)}, hora ${primeraCita.hora}`);
@@ -472,7 +434,6 @@ const processCitasForCalendar = () => {
       </v-row>
 
       <template v-else>
-        <!-- Calendario -->
         <v-row>
           <v-col cols="12">
             <v-card class="glass-card fade-in">
@@ -524,7 +485,6 @@ const processCitasForCalendar = () => {
           </v-col>
         </v-row>
 
-        <!-- Modal de citas del día seleccionado -->
         <v-dialog v-model="showCitasModal" max-width="600px">
           <v-card class="glass-card">
             <v-card-title class="text-h5 py-4 px-6 d-flex align-center justify-space-between">
@@ -706,7 +666,6 @@ const processCitasForCalendar = () => {
   opacity: 0.8;
 }
 
-/* Responsive adjustments */
 @media (max-width: 960px) {
   .primary-title {
     font-size: 2.5rem !important;

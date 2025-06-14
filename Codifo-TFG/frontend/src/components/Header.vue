@@ -15,7 +15,6 @@ const lastScrollPosition = ref(0)
 const isHeaderVisible = ref(true)
 const headerHeight = ref(100)
 
-// Computar la ruta activa para el resaltado en el menú móvil
 const currentRoute = computed(() => route.path)
 
 function checkAuth() {
@@ -34,7 +33,6 @@ function logout() {
     router.push({ name: 'login' })
   }).catch(error => {
     console.error('Error al cerrar sesión:', error)
-    // Limpiar datos de autenticación incluso si hay error
     clearAuthData()
     isAuthenticated.value = false
     userRole.value = null
@@ -43,7 +41,6 @@ function logout() {
 }
 
 function onScroll() {
-  // Detectar la sección oscura para cambiar color
   const darkSection = document.querySelector('.equipo')
   const header = document.querySelector('.header-section')
   if (darkSection && header) {
@@ -51,18 +48,14 @@ function onScroll() {
     isOverDarkSection.value = rect.top <= 0 && rect.bottom > header.offsetHeight
   }
   
-  // Calcular posición de scroll para efectos visuales
   const currentScrollPosition = window.pageYOffset || document.documentElement.scrollTop
   
-  // Efecto de scroll para mostrar/ocultar header
   if (currentScrollPosition < 0) {
     return
   }
   
-  // Establecer el estado de scroll (para estilos)
   isScrolled.value = currentScrollPosition > 50
   
-  // Determinar si mostrar u ocultar el header
   if (currentScrollPosition < lastScrollPosition.value) {
     isHeaderVisible.value = true
   } else if (currentScrollPosition > 100) {
@@ -76,7 +69,6 @@ onMounted(() => {
   window.addEventListener('scroll', onScroll)
   checkAuth()
   window.addEventListener('storage', checkAuth)
-  // Inicializar el valor de altura
   headerHeight.value = 100
 })
 
@@ -87,7 +79,6 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <!-- Header para pantallas grandes -->
   <v-app-bar 
     :class="{ 
       'header-dark': isOverDarkSection, 
@@ -115,11 +106,9 @@ onUnmounted(() => {
     
     <v-spacer></v-spacer>
     
-    <!-- Menú para pantallas grandes -->
     <div class="d-none d-md-block">
       <v-tabs class="custom-tabs" :height="isScrolled ? 80 : 100" show-arrows align-tabs="center">
         <v-tab to="/" :ripple="false" class="font-weight-bold">Inicio</v-tab>
-        <!-- Caso 1: No registrado -->
         <template v-if="!isAuthenticated">
           <v-tab to="/conocenos" :ripple="false" class="font-weight-bold">Conócenos</v-tab>
           <v-tab to="/galeria" :ripple="false" class="font-weight-bold">Galería</v-tab>
@@ -128,7 +117,6 @@ onUnmounted(() => {
             LogIn
           </v-tab>
         </template>
-        <!-- Caso 2: Registrado user -->
         <template v-else-if="userRole === 'user' || userRole === 'cliente'">
           <v-tab to="/conocenos" :ripple="false" class="font-weight-bold">Conócenos</v-tab>
           <v-tab to="/galeria" :ripple="false" class="font-weight-bold">Galería</v-tab>
@@ -137,7 +125,6 @@ onUnmounted(() => {
             Logout
           </v-tab>
         </template>
-        <!-- Caso 3: Registrado empleado -->
         <template v-else-if="userRole === 'empleado'">
           <v-tab to="/citas-empleados-admin" :ripple="false" class="font-weight-bold">Citas</v-tab>
           <v-tab to="/mes-completo" :ripple="false" class="font-weight-bold">Mes Completo</v-tab>
@@ -145,7 +132,6 @@ onUnmounted(() => {
             Logout
           </v-tab>
         </template>
-        <!-- Caso 4: Registrado admin -->
         <template v-else-if="userRole === 'admin'">
           <v-tab to="/empleados" :ripple="false" class="font-weight-bold">Empleados</v-tab>
           <v-tab to="/servicios" :ripple="false" class="font-weight-bold">Servicios</v-tab>
@@ -160,7 +146,6 @@ onUnmounted(() => {
       </v-tabs>
     </div>
     
-    <!-- Botón de menú para móviles -->
     <v-app-bar-nav-icon 
       @click="drawer = !drawer" 
       class="d-md-none hamburguesa-icon"
@@ -169,7 +154,6 @@ onUnmounted(() => {
     ></v-app-bar-nav-icon>
   </v-app-bar>
 
-  <!-- Drawer para navegación móvil -->
   <v-navigation-drawer
     v-model="drawer"
     temporary
@@ -189,7 +173,6 @@ onUnmounted(() => {
       
       <v-divider></v-divider>
       
-      <!-- Caso 1: No registrado -->
       <template v-if="!isAuthenticated">
         <v-list-item
           to="/conocenos"
@@ -236,7 +219,6 @@ onUnmounted(() => {
         </v-list-item>
       </template>
       
-      <!-- Caso 2: Registrado user -->
       <template v-else-if="userRole === 'user' || userRole === 'cliente'">
         <v-list-item
           to="/conocenos"
@@ -282,7 +264,6 @@ onUnmounted(() => {
         </v-list-item>
       </template>
       
-      <!-- Caso 3: Registrado empleado -->
       <template v-else-if="userRole === 'empleado'">
         <v-list-item
           to="/citas-empleados-admin"
@@ -317,7 +298,6 @@ onUnmounted(() => {
         </v-list-item>
       </template>
       
-      <!-- Caso 4: Registrado admin -->
       <template v-else-if="userRole === 'admin'">
         <v-list-item
           to="/empleados"
@@ -486,7 +466,6 @@ onUnmounted(() => {
   text-shadow: 0 0 10px rgba(245, 224, 9, 0.4);
 }
 
-/* Efecto especial para el botón de login/logout */
 .custom-tabs :deep(.v-tab:last-child) {
   margin-left: 6px;
   border-radius: 4px;
@@ -499,7 +478,6 @@ onUnmounted(() => {
   background-color: rgba(245, 224, 9, 0.1);
 }
 
-/* Drawer styles */
 :deep(.v-navigation-drawer) {
   background-color: var(--main-bg-color);
 }
@@ -534,7 +512,6 @@ onUnmounted(() => {
   border-color: rgba(255, 255, 255, 0.1);
 }
 
-/* Ajustes responsive */
 @media (max-width: 960px) {
   .custom-tabs :deep(.v-tab) {
     font-size: 18px;
