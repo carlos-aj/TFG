@@ -90,7 +90,6 @@ async function sendCitaEmail(to, citaInfo) {
     console.log('Correo de cita enviado: %s', info.messageId);
 }
 function formatFecha(fecha) {
-    // Si ya es tipo Date, conviértelo a string ISO
     const d = new Date(fecha);
     const dia = String(d.getDate()).padStart(2, '0');
     const mes = String(d.getMonth() + 1).padStart(2, '0');

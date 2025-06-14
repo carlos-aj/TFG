@@ -26,7 +26,6 @@ export async function getAllUsers(req: Request, res: Response): Promise<void> {
   try{
     const users = await UserService.getAllUsers();
     
-    // Si el usuario es empleado, filtrar la información sensible
     if (req.user && req.user.rol === 'empleado') {
       const filteredUsers = users.map(user => ({
         id: user.id,
@@ -35,7 +34,6 @@ export async function getAllUsers(req: Request, res: Response): Promise<void> {
       }));
       res.json(filteredUsers);
     } else {
-      // Para admin, devolver todos los datos
       res.json(users);
     }
   }catch (err){
@@ -179,7 +177,6 @@ export async function login(req: Request, res: Response): Promise<void> {
       maxAge: 60 * 60 * 1000
     });
 
-    // Preparar la respuesta
     const responseData: any = { 
       success: true,
       token, 
@@ -190,7 +187,6 @@ export async function login(req: Request, res: Response): Promise<void> {
       email: user.email
     };
 
-    // Incluir barbero_id para usuarios con rol empleado (incluso si es null)
     if (rol === 'empleado') {
       responseData.barbero_id = user.barbero_id || null;
     }
@@ -256,14 +252,12 @@ export async function asignarBarbero(req: Request, res: Response): Promise<void>
       return;
     }
     
-    // Verificar que el barbero existe
     const barbero = await UserService.getBarberoById(parseInt(barbero_id));
     if (!barbero) {
       res.status(404).json({ message: 'Barbero no encontrado' });
       return;
     }
     
-    // Actualizar el usuario con el barbero_id
     const updated = await UserService.updateUser({ barbero_id: parseInt(barbero_id) }, userId);
     
     res.json({ 
@@ -290,7 +284,6 @@ export async function asignarBarberoEmpleado(req: Request, res: Response): Promi
       return;
     }
     
-    // Verificar que el usuario existe y es el mismo que hace la petición o un admin
     const user = await UserService.getUserById(userId);
     if (!user) {
       res.status(404).json({ message: 'Usuario no encontrado' });
@@ -302,14 +295,12 @@ export async function asignarBarberoEmpleado(req: Request, res: Response): Promi
       return;
     }
     
-    // Verificar que el barbero existe
     const barbero = await UserService.getBarberoById(parseInt(barbero_id));
     if (!barbero) {
       res.status(404).json({ message: 'Barbero no encontrado' });
       return;
     }
     
-    // Actualizar el usuario con el barbero_id
     const updated = await UserService.updateUser({ barbero_id: parseInt(barbero_id) }, userId);
     
     res.json({ 

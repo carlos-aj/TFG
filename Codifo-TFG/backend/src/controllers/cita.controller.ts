@@ -19,19 +19,15 @@ export async function getAllCitas(req: Request, res: Response, next: NextFunctio
       console.log(`[DEBUG FECHAS] getAllCitas - Buscando citas por barbero y fecha específica`);
       citas = await CitaService.getCitasByBarberoYFecha(Number(barbero_id), String(fecha_inicio));
     } else if (barbero_id && fecha) {
-      // Mantener compatibilidad con el parámetro fecha
       console.log(`[DEBUG FECHAS] getAllCitas - Buscando citas por barbero y fecha específica (parámetro legacy)`);
       citas = await CitaService.getCitasByBarberoYFecha(Number(barbero_id), String(fecha));
     } else if (barbero_id) {
-      // Añadimos filtro por barbero_id incluso cuando no hay fecha
       console.log(`[DEBUG FECHAS] getAllCitas - Buscando citas solo por barbero`);
       citas = await CitaService.getCitasByBarbero(Number(barbero_id));
     } else if (fecha_inicio && fecha_fin) {
-      // Buscar por rango de fechas sin filtrar por barbero
       console.log(`[DEBUG FECHAS] getAllCitas - Buscando citas por rango de fechas sin filtrar por barbero`);
       citas = await CitaService.getCitasByFecha(String(fecha_inicio), String(fecha_fin));
     } else if (fecha_inicio) {
-      // Buscar por fecha específica sin filtrar por barbero
       console.log(`[DEBUG FECHAS] getAllCitas - Buscando citas por fecha específica sin filtrar por barbero`);
       citas = await CitaService.getCitasByFecha(String(fecha_inicio));
     } else {
@@ -39,14 +35,12 @@ export async function getAllCitas(req: Request, res: Response, next: NextFunctio
       citas = await CitaService.getAllCitas();
     }
     
-    // Añadir información de depuración
     if (citas && Array.isArray(citas)) {
       console.log(`[DEBUG FECHAS] getAllCitas - Total citas encontradas: ${citas.length}`);
       if (citas.length > 0) {
         const primeraFecha = citas[0].fecha;
         console.log(`[DEBUG FECHAS] getAllCitas - Primera cita fecha: ${primeraFecha}`);
         
-        // Verificar el tipo de dato antes de usar slice
         try {
           if (primeraFecha && typeof primeraFecha === 'string') {
             console.log(`[DEBUG FECHAS] getAllCitas - Primera cita fecha formateada: ${primeraFecha.slice(0, 10)}`);
@@ -59,7 +53,6 @@ export async function getAllCitas(req: Request, res: Response, next: NextFunctio
       }
     }
     
-    // Si se solicitan las relaciones, cargarlas para cada cita
     if (includeRelations === 'true' && citas && citas.length > 0) {
       console.log(`[DEBUG FECHAS] getAllCitas - Cargando relaciones para ${citas.length} citas`);
       try {
@@ -68,19 +61,16 @@ export async function getAllCitas(req: Request, res: Response, next: NextFunctio
           .findByIds(citasIds)
           .withGraphFetched('[user, barbero, servicio]');
         
-        // Crear un mapa para facilitar la búsqueda
         const citasMap: Record<number, any> = {};
         citasConRelaciones.forEach(c => {
           citasMap[c.id] = c;
         });
         
-        // Reemplazar las citas con sus versiones con relaciones
         citas = citas.map(c => citasMap[c.id] || c);
         
         console.log(`[DEBUG FECHAS] getAllCitas - Relaciones cargadas correctamente`);
       } catch (e) {
         console.error(`[DEBUG FECHAS] getAllCitas - Error al cargar relaciones: ${e}`);
-        // Continuamos con las citas sin relaciones
       }
     }
     
@@ -115,14 +105,12 @@ export async function createCita(req: Request, res: Response, next: NextFunction
     console.log(`[DEBUG FECHAS] createCita - Fecha recibida: ${data.fecha}`);
     
     if (data.fecha) {
-      // Analizar la fecha recibida
       const fechaObj = new Date(data.fecha);
       console.log(`[DEBUG FECHAS] createCita - Fecha como objeto Date: ${fechaObj}`);
       console.log(`[DEBUG FECHAS] createCita - Fecha ISO: ${fechaObj.toISOString()}`);
       console.log(`[DEBUG FECHAS] createCita - Fecha local: ${fechaObj.getFullYear()}-${String(fechaObj.getMonth() + 1).padStart(2, '0')}-${String(fechaObj.getDate()).padStart(2, '0')}`);
     }
 
-    // Validar datos requeridos
     if (!data.servicio_id || !data.barbero_id || !data.fecha || !data.hora) {
       console.error('[DEBUG FECHAS] createCita - Faltan datos requeridos para la cita:', { 
         servicio_id: data.servicio_id, 
@@ -134,7 +122,6 @@ export async function createCita(req: Request, res: Response, next: NextFunction
       return;
     }
 
-    // Verificar penalizaciones del usuario
     if (data.user_id) {
       try {
         const user = await User.query().findById(data.user_id);
@@ -146,11 +133,9 @@ export async function createCita(req: Request, res: Response, next: NextFunction
         }
       } catch (userErr) {
         console.error('Error al verificar usuario:', userErr);
-        // Continuamos aunque haya error en la verificación del usuario
       }
     }
 
-    // Verificar servicio
     let servicio;
     try {
       servicio = await Servicio.query().findById(data.servicio_id);
@@ -166,7 +151,6 @@ export async function createCita(req: Request, res: Response, next: NextFunction
       return;
     }
 
-    // Calcular franjas horarias
     try {
       const franjas = Math.ceil(servicio.duracion / 30);
       console.log(`Servicio requiere ${franjas} franjas de 30 minutos`);
@@ -183,7 +167,6 @@ export async function createCita(req: Request, res: Response, next: NextFunction
       
       console.log('Franjas horarias a verificar:', horas);
 
-      // Verificar disponibilidad de horarios
       for (const hora of horas) {
         try {
           const citaExistente = await CitaService.findCitaByBarberoFechaHora(
@@ -202,9 +185,7 @@ export async function createCita(req: Request, res: Response, next: NextFunction
         }
       }
 
-      // Utilizar una transacción para asegurar la atomicidad de las operaciones
       const newCita = await transaction(Cita.knex(), async (trx) => {
-        // Crear la cita principal
         console.log('Creando cita principal...');
         const citaPrincipal = await CitaService.createCita({
           servicio_id: data.servicio_id,
@@ -214,11 +195,10 @@ export async function createCita(req: Request, res: Response, next: NextFunction
           estado: false,
           pagado: false,
           user_id: data.user_id
-        }, trx); // Pasar la transacción al servicio
+        }, trx);
         
         console.log('Cita principal creada con ID:', citaPrincipal.id);
 
-        // Procesar invitado si existe
         if (
           data.nombre_invitado &&
           data.servicio_id_invitado &&
@@ -264,13 +244,12 @@ export async function createCita(req: Request, res: Response, next: NextFunction
             estado: false,
             pagado: false,
             nombre_invitado: data.nombre_invitado
-          }, trx); // Pasar la transacción al servicio
+          }, trx); 
         }
         
         return citaPrincipal;
       });
 
-      // Enviar email solo si no es un flujo de pago online
       if (!data.pago_online) {
         try {
           console.log('Obteniendo información para email (cita no pagada online)...');
@@ -295,7 +274,7 @@ export async function createCita(req: Request, res: Response, next: NextFunction
               barbero: barbero?.nombre || 'N/A',
               fecha: data.fecha,
               hora: data.hora,
-              importe_pagado: null, // No hay pago inmediato
+              importe_pagado: null,
               invitado: invitadoInfo
             });
             console.log('Email enviado correctamente');
@@ -321,7 +300,6 @@ export async function createCita(req: Request, res: Response, next: NextFunction
 export async function confirmarPagoCita(req: Request, res: Response): Promise<void> {
   const { cita_id, force_confirm } = req.body;
 
-  // Si no hay cita_id pero se solicita force_confirm, intentamos encontrar la cita más reciente
   if (!cita_id && force_confirm) {
     console.log('Solicitud de confirmación forzada sin ID específico');
     console.log('Esta funcionalidad requiere autenticación. Devolviendo error.');
@@ -329,7 +307,6 @@ export async function confirmarPagoCita(req: Request, res: Response): Promise<vo
     return;
   }
   
-  // A partir de aquí, continuamos con la lógica existente
   const citaId = req.body.cita_id;
   
   if (!citaId) {
@@ -340,16 +317,13 @@ export async function confirmarPagoCita(req: Request, res: Response): Promise<vo
   try {
     console.log('Recibida solicitud para confirmar pago de cita:', citaId);
     
-    // 1. Marcar la cita como pagada
     try {
       await CitaService.updateCita(citaId, { pagado: true });
       console.log('Cita marcada como pagada correctamente');
     } catch (updateError) {
       console.error('Error al actualizar el estado de pago de la cita:', updateError);
-      // Continuamos aunque falle la actualización
     }
 
-    // 2. Obtener la cita completa con sus relaciones
     let cita;
     try {
       cita = await CitaService.getCitaById(citaId);
@@ -365,9 +339,7 @@ export async function confirmarPagoCita(req: Request, res: Response): Promise<vo
       return;
     }
     
-    // 3. Obtener la información completa del usuario y servicios
     try {
-      // Cargar explícitamente las relaciones que necesitamos
       const citaCompleta = await Cita.query()
         .findById(citaId)
         .withGraphFetched('[user, barbero, servicio]');
@@ -378,15 +350,12 @@ export async function confirmarPagoCita(req: Request, res: Response): Promise<vo
         return;
       }
       
-      // Actualizar nuestra variable cita con la información completa
       cita = citaCompleta;
       console.log('Relaciones de la cita cargadas correctamente');
     } catch (relationsError) {
       console.error('Error al cargar las relaciones de la cita:', relationsError);
-      // Continuamos con la información que tengamos
     }
     
-    // 4. Enviar el email con los datos de la cita
     try {
       if (cita.user && cita.user.email) {
         console.log('Preparando para enviar email a:', cita.user.email);
@@ -402,13 +371,6 @@ export async function confirmarPagoCita(req: Request, res: Response): Promise<vo
             hora: cita.hora_invitado
           };
         }
-
-        console.log('Enviando email con la siguiente información:');
-        console.log('- Servicio:', cita.servicio?.nombre || 'N/A');
-        console.log('- Barbero:', cita.barbero?.nombre || 'N/A');
-        console.log('- Fecha:', cita.fecha);
-        console.log('- Hora:', cita.hora);
-        console.log('- Importe pagado:', cita.servicio?.precio ? Number(cita.servicio.precio) : null);
         
         await sendCitaEmail(cita.user.email, {
           servicio: cita.servicio?.nombre || 'N/A',
@@ -424,7 +386,6 @@ export async function confirmarPagoCita(req: Request, res: Response): Promise<vo
       }
     } catch (emailError) {
       console.error('Error al enviar el email de confirmación:', emailError);
-      // Continuamos aunque falle el envío del email
     }
 
     res.status(200).json({ message: 'Cita confirmada y email enviado' });

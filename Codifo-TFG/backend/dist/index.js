@@ -50,16 +50,13 @@ const security_middleware_1 = require("./middlewares/security.middleware");
 const knex_1 = __importDefault(require("./db/knex"));
 const cors = require('cors');
 const app = (0, express_1.default)();
-// Configuración de CORS más segura
 const allowedOrigins = [
     process.env.FRONTEND_URL || 'http://localhost:5173',
     'https://tfg-gamma.vercel.app'
 ];
-// Asegurarse de que las URLs no terminen en /
 const cleanAllowedOrigins = allowedOrigins.map(origin => origin.endsWith('/') ? origin.slice(0, -1) : origin);
 app.use(cors({
     origin: function (origin, callback) {
-        // Permitir solicitudes sin origen (como aplicaciones móviles o curl)
         if (!origin)
             return callback(null, true);
         if (cleanAllowedOrigins.indexOf(origin) !== -1) {
@@ -73,22 +70,17 @@ app.use(cors({
 }));
 app.use(express_1.default.json());
 app.use((0, cookie_parser_1.default)());
-// Servir archivos estáticos
 app.use('/galeria', express_1.default.static(path_1.default.join(__dirname, 'ApiGaleria')));
 app.use('/public', express_1.default.static(path_1.default.join(__dirname, '../../public')));
-// Aplicar middleware de seguridad para proteger todas las rutas de la API
 app.use(security_middleware_1.protectApi);
-// Conexión base de datos
 knex_1.default.raw('SELECT 1')
     .then(() => console.log('✅ Conexión a la base de datos exitosa'))
     .catch(err => console.error('❌ Error conectando a la base de datos', err));
-// Rutas
 app.use('/api/user', user_routes_1.userRouter);
 app.use('/api/barbero', barbero_routes_1.barberoRouter);
 app.use('/api/servicio', servicio_routes_1.servicioRouter);
 app.use('/api/cita', cita_routes_1.citaRouter);
 app.use('/api/galeria', galeria_routes_1.galeriaRouter);
-// Iniciar servidor
 const PORT = Number(process.env.PORT) || 3000;
 app.listen(PORT, '0.0.0.0', () => {
     console.log(`Servidor en puerto ${PORT}`);

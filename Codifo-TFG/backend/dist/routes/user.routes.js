@@ -39,15 +39,12 @@ const UserController = __importStar(require("../controllers/user.controller"));
 const auth_middleware_1 = require("../middlewares/auth.middleware");
 exports.userRouter = (0, express_1.Router)();
 console.log('user.routes.ts cargado');
-// Rutas públicas
-exports.userRouter.post('/', UserController.createUser); // Registro de usuarios
-exports.userRouter.get('/confirm', UserController.confirmUser); // Confirmación de email
-exports.userRouter.post('/login', UserController.login); // Login
-exports.userRouter.post('/logout', UserController.logout); // Logout
-// Rutas protegidas para admin
+exports.userRouter.post('/', UserController.createUser); 
+exports.userRouter.get('/confirm', UserController.confirmUser); 
+exports.userRouter.post('/login', UserController.login); 
+exports.userRouter.post('/logout', UserController.logout); 
 exports.userRouter.get('/', auth_middleware_1.isAuthenticated, (0, auth_middleware_1.hasRole)(['admin']), UserController.getAllUsers);
 exports.userRouter.post('/:id/sancionar', auth_middleware_1.isAuthenticated, (0, auth_middleware_1.hasRole)(['admin']), UserController.sancionarUsuario);
-// Rutas protegidas para el propietario o admin
 exports.userRouter.get('/:id', auth_middleware_1.isAuthenticated, (0, auth_middleware_1.isOwnerOrAdmin)('id'), UserController.getUserById);
 exports.userRouter.put('/:id', auth_middleware_1.isAuthenticated, (0, auth_middleware_1.isOwnerOrAdmin)('id'), UserController.updateUser);
 exports.userRouter.delete('/:id', auth_middleware_1.isAuthenticated, (0, auth_middleware_1.hasRole)(['admin']), UserController.deleteUser);

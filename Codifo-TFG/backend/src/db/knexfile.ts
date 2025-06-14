@@ -39,7 +39,4 @@ const config: { [key: string]: Knex.Config } = {
   }
 };
 
-// Asegurarse de que la configuración está correcta
-console.log('Configuración de Knex cargada:', Object.keys(config));
-
 module.exports = config; 

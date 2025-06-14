@@ -10,10 +10,8 @@ export async function getAllCitas() {
       .orderBy('barbero_id', 'asc')
       .orderBy('hora', 'asc');
     
-    // Transformar las fechas a string ISO para evitar problemas
     const citasFormateadas = citas.map(c => {
       if (c.fecha && typeof c.fecha !== 'string') {
-        // Si es un objeto Date, convertirlo a string ISO
         const fecha = new Date(c.fecha);
         return {
           ...c,
@@ -32,7 +30,6 @@ export async function getAllCitas() {
 
 export async function getCitaById(id: number) {
   try {
-    // Cargar la cita con sus relaciones para tener toda la información necesaria
     return await Cita.query()
       .findById(id)
       .withGraphFetched('[user, barbero, servicio]');
@@ -46,9 +43,8 @@ export async function createCita(data: Partial<ICita>, trx?: import('knex').Knex
   try {
     console.log('Creando cita con datos:', JSON.stringify(data, null, 2));
     
-    // Asegurarse de que user_id sea null si no está definido
     if (data.user_id === undefined) {
-      data.user_id = null as any; // Necesario para compatibilidad con la base de datos
+      data.user_id = null as any; 
     }
     
     const query = Cita.query(trx).insert(data);
@@ -112,7 +108,6 @@ export async function puedeInvitar(barbero_id: number, fecha: string, hora: stri
   try {
     console.log(`Verificando si puede invitar: barbero ${barbero_id}, fecha ${fecha}, hora ${hora}`);
     
-    // Busca si hay alguna cita en esa fecha y hora (con cualquier barbero)
     const citaExistente = await Cita.query()
       .where('fecha', fecha)
       .where('hora', hora)
@@ -121,7 +116,6 @@ export async function puedeInvitar(barbero_id: number, fecha: string, hora: stri
     const resultado = !citaExistente;
     console.log(`Resultado de puedeInvitar: ${resultado}`);
     
-    // Si NO hay ninguna cita, puedes invitar
     return resultado;
   } catch (error) {
     console.error(`Error al verificar si puede invitar: barbero ${barbero_id}, fecha ${fecha}, hora ${hora}:`, error);
@@ -146,25 +140,20 @@ export async function getCitasByBarberoYFecha(barbero_id: number, fecha_inicio: 
     let query = Cita.query().where('barbero_id', barbero_id);
     
     if (fecha_fin) {
-      // Si tenemos fecha de inicio y fin, buscar en el rango
       query = query.whereRaw('fecha::date >= ?::date', [fecha_inicio])
                    .whereRaw('fecha::date <= ?::date', [fecha_fin]);
     } else {
-      // Si solo tenemos fecha de inicio, buscar para ese día específico
       query = query.whereRaw('fecha::date = ?::date', [fecha_inicio]);
     }
     
-    // Añadir relaciones
     query = query.withGraphFetched('[user, barbero, servicio]')
-                .orderBy('hora', 'asc'); // Ordenar por hora ascendente
+                .orderBy('hora', 'asc');
     
     const citas = await query;
     console.log(`[DEBUG FECHAS] Encontradas ${citas.length} citas para barbero ${barbero_id}`);
     
-    // Transformar las fechas a string ISO para evitar problemas
     const citasFormateadas = citas.map(c => {
       if (c.fecha && typeof c.fecha !== 'string') {
-        // Si es un objeto Date, convertirlo a string ISO
         const fecha = new Date(c.fecha);
         return {
           ...c,
@@ -185,7 +174,6 @@ export async function getCitasByBarbero(barbero_id: number) {
   try {
     console.log(`[DEBUG FECHAS] Buscando todas las citas para barbero ${barbero_id}`);
     
-    // Usar la misma estructura que getCitasByBarberoYFecha pero sin filtro de fecha
     const citas = await Cita.query()
       .where('barbero_id', barbero_id)
       .withGraphFetched('[user, barbero, servicio]')
@@ -194,10 +182,8 @@ export async function getCitasByBarbero(barbero_id: number) {
     
     console.log(`[DEBUG FECHAS] Encontradas ${citas.length} citas para barbero ${barbero_id}`);
     
-    // Transformar las fechas a string ISO para evitar problemas
     const citasFormateadas = citas.map(c => {
       if (c.fecha && typeof c.fecha !== 'string') {
-        // Si es un objeto Date, convertirlo a string ISO
         const fecha = new Date(c.fecha);
         return {
           ...c,
@@ -221,26 +207,21 @@ export async function getCitasByFecha(fecha_inicio: string, fecha_fin?: string) 
     let query = Cita.query();
     
     if (fecha_fin) {
-      // Si tenemos fecha de inicio y fin, buscar en el rango
       query = query.whereRaw('fecha::date >= ?::date', [fecha_inicio])
                    .whereRaw('fecha::date <= ?::date', [fecha_fin]);
     } else {
-      // Si solo tenemos fecha de inicio, buscar para ese día específico
       query = query.whereRaw('fecha::date = ?::date', [fecha_inicio]);
     }
     
-    // Añadir relaciones y ordenamiento
     query = query.withGraphFetched('[user, barbero, servicio]')
-                .orderBy('barbero_id', 'asc')  // Primero ordenar por barbero
-                .orderBy('hora', 'asc');       // Luego por hora
+                .orderBy('barbero_id', 'asc')  
+                .orderBy('hora', 'asc');       
     
     const citas = await query;
     console.log(`[DEBUG FECHAS] Encontradas ${citas.length} citas en el rango de fechas`);
     
-    // Transformar las fechas a string ISO para evitar problemas
     const citasFormateadas = citas.map(c => {
       if (c.fecha && typeof c.fecha !== 'string') {
-        // Si es un objeto Date, convertirlo a string ISO
         const fecha = new Date(c.fecha);
         return {
           ...c,

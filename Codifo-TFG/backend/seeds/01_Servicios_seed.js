@@ -3,7 +3,6 @@
  * @returns { Promise<void> }
  */
 exports.seed = async function(knex) {
-  // Deletes ALL existing entries
   await knex('servicios').del();
   await knex.raw('ALTER SEQUENCE servicios_id_seq RESTART WITH 1');
   await knex('servicios').insert([

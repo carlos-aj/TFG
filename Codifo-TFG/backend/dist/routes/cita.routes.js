@@ -39,14 +39,10 @@ const CitaController = __importStar(require("../controllers/cita.controller"));
 const PaymentController = __importStar(require("../controllers/payment.controller"));
 const auth_middleware_1 = require("../middlewares/auth.middleware");
 exports.citaRouter = (0, express_1.Router)();
-// Rutas que requieren autenticación
 exports.citaRouter.get('/puede-invitar/check', auth_middleware_1.isAuthenticated, CitaController.checkPuedeInvitar);
 exports.citaRouter.post('/pago', auth_middleware_1.isAuthenticated, PaymentController.createCheckoutSession);
-// Rutas para usuarios autenticados y admin
-// Simplificamos esta ruta ya que protectApi ya verifica el token
 exports.citaRouter.get('/', CitaController.getAllCitas);
 exports.citaRouter.post('/', auth_middleware_1.isAuthenticated, CitaController.createCita);
-// Rutas que requieren ser propietario o admin
 exports.citaRouter.get('/:id', auth_middleware_1.isAuthenticated, (0, auth_middleware_1.isOwnerOrAdmin)('id'), CitaController.getCitaById);
 exports.citaRouter.put('/:id', auth_middleware_1.isAuthenticated, (0, auth_middleware_1.isOwnerOrAdmin)('id'), CitaController.updateCita);
 exports.citaRouter.delete('/:id', auth_middleware_1.isAuthenticated, (0, auth_middleware_1.isOwnerOrAdmin)('id'), CitaController.deleteCita);

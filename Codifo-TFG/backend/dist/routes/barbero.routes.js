@@ -38,10 +38,8 @@ const express_1 = require("express");
 const BarberoController = __importStar(require("../controllers/barbero.controller"));
 const auth_middleware_1 = require("../middlewares/auth.middleware");
 exports.barberoRouter = (0, express_1.Router)();
-// Rutas públicas
 exports.barberoRouter.get('/', BarberoController.getAllBarberos);
 exports.barberoRouter.get('/:id', BarberoController.getBarberoById);
-// Rutas protegidas para admin y empleados
 exports.barberoRouter.post('/', auth_middleware_1.isAuthenticated, (0, auth_middleware_1.hasRole)(['admin', 'empleado']), BarberoController.createBarbero);
 exports.barberoRouter.delete('/:id', auth_middleware_1.isAuthenticated, (0, auth_middleware_1.hasRole)(['admin']), BarberoController.deleteBarbero);
 exports.barberoRouter.put('/:id', auth_middleware_1.isAuthenticated, (0, auth_middleware_1.hasRole)(['admin', 'empleado']), BarberoController.updateBarbero);

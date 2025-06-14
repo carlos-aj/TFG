@@ -7,7 +7,7 @@ exports.up = function(knex) {
       table.increments('id').primary();
       table.string('nombre').notNullable();
       table.string('especialidad').notNullable();
-      table.timestamps(true, true); // created_at y updated_at
+      table.timestamps(true, true); 
     });
   };
   

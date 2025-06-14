@@ -18,7 +18,6 @@ if (!environmentConfig) {
 console.log(`Conectando a la base de datos en entorno: ${environment}`);
 const knex = Knex(environmentConfig);
 
-// Inicializar Objection.js
 Model.knex(knex);
 
 export default knex;

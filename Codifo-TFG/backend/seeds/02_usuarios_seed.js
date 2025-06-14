@@ -3,7 +3,6 @@ const bcrypt = require('bcrypt');
 exports.seed = async function(knex) {
   const userPassword = await bcrypt.hash('user123', 10);
 
-  // Empieza en id 5 porque ya tienes 4 usuarios
   const clientes = [];
   for (let i = 5; i <= 20; i++) {
     clientes.push({

@@ -16,7 +16,6 @@ exports.seed = async function(knex) {
   for (const img of imagenes) {
     const match = img.match(/^([^-]+)-(\d+)-\d+\./);
     if (!match) continue;
-    // Convierte guiones bajos a espacios para buscar el nombre real
     const barberoNombre = match[1].replace(/_/g, ' ');
     const identificador = match[2];
     const key = `${barberoNombre}-${identificador}`;
@@ -25,7 +24,6 @@ exports.seed = async function(knex) {
   }
 
   for (const { barberoNombre, imagenes } of Object.values(grupos)) {
-    // Busca el id del barbero por su nombre
     const barbero = await knex('barbero').where('nombre', barberoNombre).first();
     if (!barbero) {
       console.warn(`Barbero no encontrado: ${barberoNombre}, saltando grupo`);

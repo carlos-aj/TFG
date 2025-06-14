@@ -1,5 +1,5 @@
 exports.seed = async function(knex) {
-  await knex('galeria').del(); // Borra primero la galería
+  await knex('galeria').del(); 
   await knex('barbero').del();
   await knex.raw('ALTER SEQUENCE barbero_id_seq RESTART WITH 1');
   await knex('barbero').insert([

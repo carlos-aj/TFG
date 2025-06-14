@@ -3,7 +3,6 @@ import jwt from 'jsonwebtoken';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'tu_clave_secreta';
 
-// Extender la interfaz Request para incluir el usuario
 declare global {
   namespace Express {
     interface Request {

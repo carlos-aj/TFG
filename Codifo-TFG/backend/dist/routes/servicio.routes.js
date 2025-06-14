@@ -38,10 +38,8 @@ const express_1 = require("express");
 const ServicoController = __importStar(require("../controllers/servicio.controller"));
 const auth_middleware_1 = require("../middlewares/auth.middleware");
 exports.servicioRouter = (0, express_1.Router)();
-// Rutas públicas
 exports.servicioRouter.get('/', ServicoController.getAllServicios);
 exports.servicioRouter.get('/:id', ServicoController.getServicioById);
-// Rutas protegidas para admin
 exports.servicioRouter.post('/', auth_middleware_1.isAuthenticated, (0, auth_middleware_1.hasRole)(['admin']), ServicoController.createServicio);
 exports.servicioRouter.delete('/:id', auth_middleware_1.isAuthenticated, (0, auth_middleware_1.hasRole)(['admin']), ServicoController.deleteServicio);
 exports.servicioRouter.put('/:id', auth_middleware_1.isAuthenticated, (0, auth_middleware_1.hasRole)(['admin']), ServicoController.updateServicio);

@@ -1,6 +1,4 @@
 import { Model } from 'objection';
-// Eliminamos la importación directa para evitar ciclos
-// import { Cita } from './Cita';
 
 export interface IServicio {
   id: number;
@@ -21,9 +19,7 @@ export class Servicio extends Model implements IServicio {
 
   static tableName = 'servicios';
 
-  // Usamos una función para definir las relaciones para evitar ciclos
   static get relationMappings() {
-    // Importamos el modelo dentro de la función para evitar ciclos
     const { Cita } = require('./Cita');
     
     return {

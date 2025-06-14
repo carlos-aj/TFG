@@ -27,7 +27,6 @@ export async function sendConfirmationEmail(to: string, token: string) {
   console.log('Correo de confirmación enviado: %s', info.messageId);
 }
 
-// Definir interfaces para tipar correctamente los datos
 interface InvitadoInfo {
   nombre: string;
   servicio: string | number;
@@ -87,7 +86,6 @@ export async function sendCitaEmail(to: string, citaInfo: CitaEmailInfo) {
 
 function formatFecha(fecha: string) {
   try {
-    // Si ya es tipo Date, conviértelo a string ISO
     const d = new Date(fecha);
     const dia = String(d.getDate()).padStart(2, '0');
     const mes = String(d.getMonth() + 1).padStart(2, '0');
@@ -95,6 +93,6 @@ function formatFecha(fecha: string) {
     return `${dia}/${mes}/${anio}`;
   } catch (error) {
     console.error('Error al formatear fecha:', error);
-    return fecha; // Devolver la fecha original si hay error
+    return fecha;
   }
 }

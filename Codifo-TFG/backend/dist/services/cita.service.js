@@ -41,12 +41,10 @@ async function getCitaInfoForEmail(data) {
     return { user, barbero, servicio };
 }
 async function puedeInvitar(barbero_id, fecha, hora) {
-    // Busca si hay alguna cita en esa fecha y hora (con cualquier barbero)
     const citaExistente = await Cita_1.Cita.query()
         .where('fecha', fecha)
         .where('hora', hora)
         .first();
-    // Si NO hay ninguna cita, puedes invitar
     return !citaExistente;
 }
 async function getBarberoNombreById(id) {

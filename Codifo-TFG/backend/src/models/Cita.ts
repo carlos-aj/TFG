@@ -1,12 +1,9 @@
 import { Model } from 'objection';
-// Eliminamos las importaciones directas para evitar ciclos
-// import { User } from './User';
-// import { Barbero } from './Barbero';
-// import { Servicio } from './Servicio';
+
 
 export interface ICita {
   id: number;
-  user_id: number | null;  // Puede ser null para citas de invitados
+  user_id: number | null;  
   barbero_id: number;
   servicio_id: number;
   fecha: string;
@@ -23,7 +20,7 @@ export interface ICita {
 
 export class Cita extends Model implements ICita {
   id!: number;
-  user_id!: number | null;  // Puede ser null para citas de invitados
+  user_id!: number | null;  
   barbero_id!: number;
   servicio_id!: number;
   fecha!: string;
@@ -35,8 +32,7 @@ export class Cita extends Model implements ICita {
   barbero_id_invitado?: number | null;
   hora_invitado?: string | null;
 
-  // Propiedades de las relaciones (opcionales)
-  user?: any; // Tipado dinámico para evitar ciclos
+  user?: any;
   barbero?: any;
   servicio?: any;
 
@@ -47,7 +43,7 @@ export class Cita extends Model implements ICita {
     required: ['barbero_id', 'servicio_id', 'fecha', 'hora'],
     properties: {
       id: { type: 'integer' },
-      user_id: { type: ['integer', 'null'] },  // Puede ser null
+      user_id: { type: ['integer', 'null'] },
       barbero_id: { type: 'integer' },
       servicio_id: { type: 'integer' },
       fecha: { type: 'string', format: 'date' },
@@ -63,9 +59,7 @@ export class Cita extends Model implements ICita {
     }
   };
 
-  // Usamos una función para definir las relaciones para evitar ciclos
   static get relationMappings() {
-    // Importamos los modelos dentro de la función para evitar ciclos
     const { User } = require('./User');
     const { Barbero } = require('./Barbero');
     const { Servicio } = require('./Servicio');
