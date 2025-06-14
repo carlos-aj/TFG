@@ -49,7 +49,7 @@ const transporter = nodemailer.createTransport({
 async function sendConfirmationEmail(to, token) {
     const confirmUrl = `${process.env.FRONTEND_URL}/confirm?token=${token}`;
     const info = await transporter.sendMail({
-        from: '"Tu App" <no-reply@tuapp.com>',
+        from: '"Rasoio Barber Shop" <no-reply@rasoio.com>',
         to,
         subject: 'Confirma tu cuenta',
         html: `<p>Haz clic en el siguiente enlace para confirmar tu cuenta:</p>
@@ -74,7 +74,7 @@ async function sendCitaEmail(to, citaInfo) {
         ? `<p><b>Importe pagado:</b> ${citaInfo.importe_pagado / 100} €</p>`
         : '';
     const info = await transporter.sendMail({
-        from: '"Barbería" <no-reply@barberia.com>',
+        from: '"Rasoio Barber Shop" <no-reply@barberia.com>',
         to,
         subject: 'Confirmación de tu cita',
         html: `
