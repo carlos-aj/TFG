@@ -68,32 +68,6 @@ function abrirModal(galeria) {
   galeriaActual.value = galeria
   imagenesModal.value = galeria.imagenes
   modalOpen.value = true
-  
-  // Animar la apertura del modal
-  setTimeout(() => {
-    gsap.from('.modal-content', {
-      opacity: 0,
-      scale: 0.8,
-      duration: 0.5,
-      ease: 'back.out(1.7)'
-    });
-    
-    gsap.from('.modal-content .title-underline', {
-      opacity: 0,
-      width: 0,
-      duration: 0.8,
-      delay: 0.3,
-      ease: 'power2.out'
-    });
-    
-    gsap.from('.carousel-container', {
-      opacity: 0,
-      y: 30,
-      duration: 0.8,
-      delay: 0.2,
-      ease: 'power2.out'
-    });
-  }, 10);
 }
 
 function cerrarModal() {
@@ -105,16 +79,6 @@ function cerrarModal() {
 // --- ADMIN FUNCIONES ---
 function abrirAdminMenu() {
   showAdminMenu.value = true
-  
-  // Animar la apertura del menú admin
-  setTimeout(() => {
-    gsap.from('.admin-menu-content', {
-      opacity: 0,
-      y: 30,
-      duration: 0.5,
-      ease: 'back.out(1.7)'
-    });
-  }, 10);
 }
 
 function cerrarAdminMenu() {
@@ -130,33 +94,6 @@ function seleccionarAccion(accion) {
   newBarberoId.value = ''
   if (accion === 'añadir') {
     showAddModal.value = true
-    
-    // Animar el modal de añadir
-    setTimeout(() => {
-      gsap.from('.modal-content', {
-        opacity: 0,
-        scale: 0.8,
-        duration: 0.5,
-        ease: 'back.out(1.7)'
-      });
-      
-      gsap.from('.modal-content .title-underline', {
-        opacity: 0,
-        width: 0,
-        duration: 0.8,
-        delay: 0.3,
-        ease: 'power2.out'
-      });
-      
-      gsap.from('.fade-in', {
-        opacity: 0,
-        y: 30,
-        duration: 0.8,
-        stagger: 0.2,
-        delay: 0.2,
-        ease: 'power2.out'
-      });
-    }, 10);
   }
 }
 
@@ -221,15 +158,6 @@ async function guardarNuevaImagen() {
 }
 
 onMounted(() => {
-  // Animación para el título y elementos con fade-in
-  gsap.from('.fade-in', {
-    opacity: 0,
-    y: 30,
-    duration: 1,
-    stagger: 0.2,
-    ease: 'power2.out'
-  });
-  
   // Animación específica para el subrayado
   gsap.from('.title-underline', {
     opacity: 0,
@@ -239,16 +167,6 @@ onMounted(() => {
     ease: 'power2.out'
   });
   
-  // Animación para las tarjetas de la galería
-  gsap.from('.galeria-item', {
-    opacity: 0,
-    y: 50,
-    duration: 0.8,
-    stagger: 0.2,
-    delay: 0.5,
-    ease: 'back.out(1.7)'
-  });
-  
   fetchGalerias()
   fetchBarberos()
 })
@@ -256,18 +174,11 @@ onMounted(() => {
 
 <template>
   <div class="landing">
-    <h1 class="fade-in">Galería</h1>
+    <h1 class="primary-title fade-in">GALERÍA</h1>
     <div class="title-underline mx-auto fade-in"></div>
     <div v-if="isAdmin" class="admin-bar fade-in">
       <button class="admin-btn" @click="abrirAdminMenu" v-if="!adminMode">Administrar galería</button>
       <button class="admin-btn" @click="desactivarAdmin" v-if="adminMode">Salir administración</button>
-      <!-- Menú modal pequeño para elegir acción -->
-      <div v-if="showAdminMenu" class="admin-menu-modal" @click.self="cerrarAdminMenu">
-        <div class="admin-menu-content">
-          <button @click="seleccionarAccion('eliminar')">Eliminar grupos</button>
-          <button @click="seleccionarAccion('añadir')">Añadir imágenes</button>
-        </div>
-      </div>
     </div>
     
     <!-- Estado de carga -->
@@ -313,32 +224,7 @@ onMounted(() => {
         <p v-else-if="totalLoaded" class="fin">No hay más imágenes.</p>
       </div>
     </div>
-    <!-- Modal para añadir imágenes -->
-    <div v-if="showAddModal" class="modal-overlay" @click.self="desactivarAdmin">
-      <div class="modal-content">
-        <button class="cerrar-modal" @click="desactivarAdmin">×</button>
-        <h2 class="fade-in">Añadir imágenes</h2>
-        <div class="title-underline mx-auto fade-in"></div>
-        <form @submit.prevent="guardarNuevaImagen" style="margin-top:1em;" class="fade-in">
-          <label>Barbero:</label>
-          <select v-model="newBarberoId" required>
-            <option value="" disabled>Selecciona un barbero</option>
-            <option v-for="barbero in barberos" :key="barbero.id" :value="barbero.id">
-              {{ barbero.nombre }}
-            </option>
-          </select>
-          <label>Añadir imagen(es):</label>
-          <input type="file" accept="image/*" @change="subirImagen" multiple required>
-          <ul>
-            <li v-for="(file, idx) in newImageFiles" :key="file.name">
-              {{ file.name }}
-              <button type="button" @click="newImageFiles.value.splice(idx, 1)">Quitar</button>
-            </li>
-          </ul>
-          <button type="submit" class="añadir-btn">Añadir imágenes</button>
-        </form>
-      </div>
-    </div>
+    
     <!-- Vista normal -->
     <div v-if="!adminMode" class="galeria-grid">
       <div
@@ -365,11 +251,38 @@ onMounted(() => {
     </button>
     <p v-else-if="!adminMode && totalLoaded" class="fin fade-in">No hay más imágenes.</p>
 
+    <!-- Modal para añadir imágenes -->
+    <div v-if="showAddModal" class="modal-overlay" @click.self="desactivarAdmin">
+      <div class="modal-content modal-form">
+        <button class="cerrar-modal" @click="desactivarAdmin">×</button>
+        <h2 class="primary-title fade-in">Añadir imágenes</h2>
+        <div class="title-underline mx-auto fade-in"></div>
+        <form @submit.prevent="guardarNuevaImagen" style="margin-top:1em;" class="fade-in">
+          <label>Barbero:</label>
+          <select v-model="newBarberoId" required>
+            <option value="" disabled>Selecciona un barbero</option>
+            <option v-for="barbero in barberos" :key="barbero.id" :value="barbero.id">
+              {{ barbero.nombre }}
+            </option>
+          </select>
+          <label>Añadir imagen(es):</label>
+          <input type="file" accept="image/*" @change="subirImagen" multiple required>
+          <ul>
+            <li v-for="(file, idx) in newImageFiles" :key="file.name">
+              {{ file.name }}
+              <button type="button" @click="newImageFiles.value.splice(idx, 1)">Quitar</button>
+            </li>
+          </ul>
+          <button type="submit" class="añadir-btn">Añadir imágenes</button>
+        </form>
+      </div>
+    </div>
+
     <!-- Modal de imágenes con carrusel -->
     <div v-if="modalOpen" class="modal-overlay" @click.self="cerrarModal">
-      <div class="modal-content">
+      <div class="modal-content modal-carousel">
         <button class="cerrar-modal" @click="cerrarModal">×</button>
-        <h2 v-if="galeriaActual" class="fade-in">{{ galeriaActual.barbero?.nombre }}</h2>
+        <h2 v-if="galeriaActual" class="primary-title fade-in">{{ galeriaActual.barbero?.nombre }}</h2>
         <div class="title-underline mx-auto fade-in"></div>
         
         <v-carousel
@@ -396,6 +309,14 @@ onMounted(() => {
         </v-carousel>
       </div>
     </div>
+    
+    <!-- Menú modal pequeño para elegir acción -->
+    <div v-if="showAdminMenu" class="admin-menu-modal" @click.self="cerrarAdminMenu">
+      <div class="admin-menu-content">
+        <button @click="seleccionarAccion('eliminar')">Eliminar grupos</button>
+        <button @click="seleccionarAccion('añadir')">Añadir imágenes</button>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -408,6 +329,17 @@ onMounted(() => {
   background-color: var(--main-bg-color);
   color: var(--text-color);
   min-height: 100vh;
+}
+
+.primary-title {
+  color: var(--text-color);
+  letter-spacing: 3px;
+  margin-bottom: 0.3rem;
+  font-size: 3rem !important;
+  font-family: 'DM Serif Display', serif !important;
+  font-style: italic;
+  position: relative;
+  display: inline-block;
 }
 
 h1 {
@@ -434,6 +366,9 @@ h1::after {
 .admin-bar {
   margin-bottom: 1.5rem;
   text-align: right;
+  display: flex;
+  justify-content: flex-end;
+  padding: 0 1rem;
 }
 
 .galeria-grid {
@@ -448,13 +383,14 @@ h1::after {
 
 .galeria-item {
   position: relative;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
   border-radius: 12px;
   overflow: hidden;
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
 }
 
 .galeria-item.clickable {
   cursor: pointer;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
 .galeria-item.clickable:hover {
@@ -462,12 +398,15 @@ h1::after {
   box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
 }
 
+.galeria-item.clickable:hover .galeria-img {
+  transform: scale(1.05);
+}
+
 .galeria-img {
   width: 100%;
   height: 300px;
   object-fit: cover;
   border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   transition: all 0.3s ease;
 }
 
@@ -476,9 +415,9 @@ h1::after {
   bottom: 0;
   left: 0;
   right: 0;
-  background: rgba(0, 0, 0, 0.7);
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.9), rgba(0, 0, 0, 0.5), transparent);
   color: var(--text-color);
-  padding: 12px;
+  padding: 20px 12px 12px;
   font-family: 'DM Serif', serif;
   font-style: italic;
   font-weight: 500;
@@ -497,6 +436,13 @@ h1::after {
   align-items: center;
   gap: 4px;
   font-size: 0.8rem;
+  transition: all 0.3s ease;
+}
+
+.galeria-item:hover .multi-image-badge {
+  background-color: var(--accent-color);
+  color: var(--main-bg-color);
+  transform: translateY(-3px);
 }
 
 .cargar-btn {
@@ -508,15 +454,9 @@ h1::after {
   border-radius: 6px;
   cursor: pointer;
   margin-top: 2em;
-  transition: all 0.3s ease;
   font-weight: bold;
   letter-spacing: 1px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-}
-
-.cargar-btn:hover:enabled {
-  transform: translateY(-3px);
-  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
 }
 
 .cargar-btn:disabled {
@@ -540,7 +480,7 @@ h1::after {
   align-items: center;
   justify-content: center;
   z-index: 2000;
-  backdrop-filter: blur(5px);
+  backdrop-filter: blur(8px);
 }
 
 .modal-content {
@@ -549,11 +489,18 @@ h1::after {
   border-radius: 12px;
   max-width: 90vw;
   max-height: 90vh;
-  overflow: auto;
   position: relative;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.6);
   border-left: 4px solid var(--accent-color);
   color: var(--text-color);
+}
+
+.modal-form {
+  overflow: auto;
+}
+
+.modal-carousel {
+  overflow: hidden;
 }
 
 .cerrar-modal {
@@ -571,17 +518,11 @@ h1::after {
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.3s ease;
   z-index: 10;
 }
 
-.cerrar-modal:hover {
-  background: var(--accent-color);
-  color: var(--main-bg-color);
-}
-
 .modal-content h2 {
-  font-family: 'DM Serif Display', serif;
+  font-family: 'DM Serif Display', serif !important;
   font-style: italic;
   font-size: 2rem;
   margin-bottom: 0.3rem;
@@ -687,22 +628,37 @@ h1::after {
   top: 0; left: 0; right: 0; bottom: 0;
   background: rgba(0, 0, 0, 0.5);
   display: flex;
-  align-items: flex-start;
-  justify-content: flex-end;
-  z-index: 3000;
+  align-items: center;
+  justify-content: center;
+  z-index: 9000;
   backdrop-filter: blur(3px);
 }
 
 .admin-menu-content {
   background: var(--main-bg-color);
-  margin: 2em 2em 0 0;
   border-radius: 10px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
-  padding: 1.5em;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4);
+  padding: 2em;
   display: flex;
   flex-direction: column;
-  gap: 1em;
-  border-left: 3px solid var(--accent-color);
+  gap: 1.5em;
+  border-left: 4px solid var(--accent-color);
+  z-index: 9001;
+  position: relative;
+  width: 300px;
+  max-width: 90%;
+}
+
+.admin-menu-content::before {
+  content: "Opciones";
+  display: block;
+  font-family: 'DM Serif Display', serif;
+  font-style: italic;
+  font-size: 1.5rem;
+  margin-bottom: 0.5em;
+  color: var(--text-color);
+  text-align: center;
+  letter-spacing: 1px;
 }
 
 .admin-menu-content button {
@@ -710,17 +666,78 @@ h1::after {
   color: var(--text-color);
   border: none;
   border-radius: 6px;
-  padding: 0.8em 1.5em;
+  padding: 1em 1.5em;
   font-size: 1rem;
   cursor: pointer;
   transition: all 0.3s ease;
   text-align: left;
+  font-weight: 500;
 }
 
 .admin-menu-content button:hover {
   background: var(--accent-color);
   color: var(--main-bg-color);
   padding-left: 2em;
+  transform: translateY(-2px);
+}
+
+@media (max-width: 768px) {
+  .galeria-grid {
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 16px;
+    padding: 0 10px;
+  }
+  
+  .galeria-img {
+    height: 200px;
+  }
+  
+  h1 {
+    font-size: 2.5rem;
+  }
+  
+  .modal-content {
+    padding: 1.5em;
+    max-width: 95vw;
+  }
+  
+  .carousel-container {
+    height: 300px !important;
+  }
+
+  .barbero-nombre {
+    font-size: 0.9rem;
+    padding: 15px 8px 8px;
+  }
+}
+
+@media (max-width: 480px) {
+  .galeria-grid {
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    gap: 12px;
+  }
+  
+  .galeria-img {
+    height: 150px;
+  }
+  
+  h1 {
+    font-size: 2rem;
+  }
+  
+  .modal-content {
+    padding: 1em;
+  }
+  
+  .carousel-container {
+    height: 250px !important;
+  }
+}
+
+/* Asegurar que todos los h2 del componente usen la fuente correcta */
+h2 {
+  font-family: 'DM Serif Display', serif !important;
+  font-style: italic;
 }
 
 /* Estilos para el formulario de añadir imágenes */
@@ -779,34 +796,5 @@ form li button {
 .añadir-btn {
   background-color: var(--accent-color);
   color: var(--main-bg-color);
-}
-
-.añadir-btn:hover {
-  background-color: #e6d208;
-  transform: translateY(-2px);
-}
-
-@media (max-width: 768px) {
-  .galeria-grid {
-    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-    gap: 16px;
-  }
-  
-  .galeria-img {
-    height: 200px;
-  }
-  
-  h1 {
-    font-size: 2.5rem;
-  }
-  
-  .modal-content {
-    padding: 1.5em;
-    max-width: 95vw;
-  }
-  
-  .carousel-container {
-    height: 300px !important;
-  }
 }
 </style>

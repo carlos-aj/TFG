@@ -15,9 +15,8 @@ const selectedBarbero = ref(null)
 const showBarberoSelector = ref(false)
 const showCitasModal = ref(false)
 
-// IMPORTANTE: Forzar la fecha a 12 de junio de 2025 para depuración
-// const today = new Date()
-const today = new Date('2025-06-12T12:00:00')
+// Usar la fecha actual
+const today = new Date()
 const year = ref(today.getFullYear())
 const month = ref(today.getMonth()) // 0-indexed
 const selectedDay = ref(null)
@@ -133,14 +132,14 @@ const loadCitas = async () => {
     // Obtener las citas directamente sin ajustes de fechas
     let data;
     if (rol === 'empleado' && barbero_id) {
-      const response = await fetch(`${API_URL}/api/cita?barbero_id=${barbero_id}&fecha_inicio=${primerDia}&fecha_fin=${ultimoDiaStr}`, {
+      const response = await fetch(`${API_URL}/api/cita?barbero_id=${barbero_id}&fecha_inicio=${primerDia}&fecha_fin=${ultimoDiaStr}&includeRelations=true`, {
         credentials: 'include'
       });
       console.log(`[DEBUG FECHAS] Obteniendo citas para barbero ${barbero_id} del ${primerDia} al ${ultimoDiaStr}`);
       if (!response.ok) throw new Error('Error al cargar citas');
       data = await response.json();
     } else {
-      const response = await fetch(`${API_URL}/api/cita?fecha_inicio=${primerDia}&fecha_fin=${ultimoDiaStr}`, {
+      const response = await fetch(`${API_URL}/api/cita?fecha_inicio=${primerDia}&fecha_fin=${ultimoDiaStr}&includeRelations=true`, {
         credentials: 'include'
       });
       console.log(`[DEBUG FECHAS] Obteniendo todas las citas del ${primerDia} al ${ultimoDiaStr}`);
@@ -527,8 +526,8 @@ const processCitasForCalendar = () => {
                 <v-list-item
                   v-for="cita in citasDelDia"
                   :key="cita.id"
-                  :title="`${cita.hora} - Cliente: ${cita.nombre_invitado || 'Usuario #' + cita.user_id}`"
-                  :subtitle="`Barbero: ${cita.barbero_id} - Servicio: ${cita.servicio_id}`"
+                  :title="`${cita.hora} - Cliente: ${cita.nombre_invitado || (cita.user ? cita.user.nombre : 'Usuario #' + cita.user_id)}`"
+                  :subtitle="`Barbero: ${cita.barbero ? cita.barbero.nombre : 'Barbero #' + cita.barbero_id} - Servicio: ${cita.servicio ? cita.servicio.nombre : 'Servicio #' + cita.servicio_id}`"
                   :prepend-icon="cita.estado ? 'mdi-check-circle' : 'mdi-clock-outline'"
                   :color="cita.estado ? 'success' : ''"
                   class="cita-item"

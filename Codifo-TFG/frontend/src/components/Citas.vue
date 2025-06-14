@@ -66,7 +66,7 @@
             <v-row>
               <v-col cols="12" md="6">
                 <v-text-field
-                  v-model="fechaSeleccionada"
+                  :model-value="fechaSeleccionada ? formatDate(fechaSeleccionada) : ''"
                   label="Fecha"
                   readonly
                   @click="datePickerDialog = true"
@@ -840,6 +840,12 @@ function isWeekend(date) {
   const d = new Date(date);
   const day = d.getDay();
   return day === 0 || day === 6; // 0 = domingo, 6 = sábado
+}
+
+function formatDate(date) {
+  if (!date) return '';
+  const d = new Date(date);
+  return d.toLocaleDateString('es-ES'); // Format as DD/MM/YYYY
 }
 </script>
 

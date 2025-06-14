@@ -17,9 +17,8 @@ const barbero_id = localStorage.getItem('barbero_id')
 const selectedBarbero = ref(null)
 const showBarberoSelector = ref(false)
 
-// IMPORTANTE: Forzar la fecha a 12 de junio de 2025 para depuración
-// const fechaActual = new Date();
-const fechaActual = new Date('2025-06-12T12:00:00');
+// Usar la fecha actual
+const fechaActual = new Date();
 console.log('[DEBUG FECHAS] Fecha actual como objeto Date:', fechaActual);
 console.log('[DEBUG FECHAS] Fecha actual como ISO string:', fechaActual.toISOString());
 console.log('[DEBUG FECHAS] Fecha actual local:', `${fechaActual.getFullYear()}-${String(fechaActual.getMonth() + 1).padStart(2, '0')}-${String(fechaActual.getDate()).padStart(2, '0')}`);
@@ -155,6 +154,9 @@ async function cargarCitas() {
     params.append('fecha_inicio', hoy);
     params.append('fecha_fin', hoy);
     console.log(`[DEBUG FECHAS] Filtrando citas para fecha: ${hoy}`);
+    
+    // Añadir el parámetro para incluir relaciones
+    params.append('includeRelations', 'true');
     
     // Añadir los parámetros a la URL
     if (params.toString()) {
@@ -466,12 +468,15 @@ async function sancionarUsuario(userId) {
                             <template v-if="cita.nombre_invitado">
                               {{ cita.nombre_invitado }} <v-chip size="x-small" color="primary" class="ml-1">Invitado</v-chip>
                             </template>
+                            <template v-else-if="cita.user">
+                              {{ cita.user.nombre }} {{ cita.user.apellidos }}
+                            </template>
                             <template v-else>
                               {{ getNombreUsuario(cita.user_id) }}
                             </template>
                           </td>
-                          <td>{{ getNombreBarbero(cita.barbero_id) }}</td>
-                          <td>{{ getNombreServicio(cita.servicio_id) }}</td>
+                          <td>{{ cita.barbero ? cita.barbero.nombre : getNombreBarbero(cita.barbero_id) }}</td>
+                          <td>{{ cita.servicio ? cita.servicio.nombre : getNombreServicio(cita.servicio_id) }}</td>
                           <td class="text-center font-weight-medium">{{ cita.hora }}</td>
                           <td class="text-center">
                             <v-switch
