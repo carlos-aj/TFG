@@ -275,6 +275,7 @@
 import { ref, onMounted, computed } from 'vue'
 import { API_URL } from '../config'
 import { gsap } from 'gsap'
+import { getAuthHeaders } from '../utils/auth'
 
 const usuarios = ref([])
 const form = ref({
@@ -311,7 +312,10 @@ const paginatedServicios = computed(() => {
 async function cargarUsuarios() {
   try {
     const response = await fetch(`${API_URL}/api/user`, {
-      credentials: 'include'
+      credentials: 'include',
+      headers: {
+        ...getAuthHeaders()
+      }
     })
     if (response.ok) {
       const data = await response.json()
@@ -337,7 +341,10 @@ async function crearUsuario() {
     const response = await fetch(`${API_URL}/api/user`, {
       method: 'POST',
       credentials: 'include',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 
+        'Content-Type': 'application/json',
+        ...getAuthHeaders()
+      },
       body: JSON.stringify(form.value)
     })
     if (response.ok) {
@@ -363,7 +370,10 @@ async function eliminarUsuario(id) {
   try {
     const response = await fetch(`${API_URL}/api/user/${id}`, {
       method: 'DELETE',
-      credentials: 'include'
+      credentials: 'include',
+      headers: {
+        ...getAuthHeaders()
+      }
     })
     if (response.ok) {
       await cargarUsuarios()
@@ -405,7 +415,10 @@ async function saveEdit(id) {
     const response = await fetch(`${API_URL}/api/user/${id}`, {
       method: 'PUT',
       credentials: 'include',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 
+        'Content-Type': 'application/json',
+        ...getAuthHeaders()
+      },
       body: JSON.stringify(editForm.value)
     })
     if (response.ok) {
