@@ -1,9 +1,9 @@
 <template>
     <v-footer class="footer" width="100%">
-        <v-container class="pa-0 footer-container">
+        <v-container class="pa-0 footer-container" fluid>
             <!-- Parte superior del footer con la información principal -->
-            <v-row class="footer-content py-8 px-4 mx-auto" no-gutters>
-                <v-col cols="12" sm="6" md="3" class="px-3 mb-6">
+            <v-row class="footer-content py-8 px-4 mx-0" no-gutters>
+                <v-col cols="12" sm="6" md="3" lg="3" class="px-3 mb-6 text-left">
                     <h2 class="text-h5 font-weight-bold mb-4 footer-heading font-italic dm-serif">Horario</h2>
                     <div class="d-flex align-start mb-3">
                         <v-icon icon="mdi-clock-outline" class="me-2 mt-1 accent-icon"></v-icon>
@@ -21,7 +21,7 @@
                     </div>
                 </v-col>
                 
-                <v-col cols="12" sm="6" md="3" class="px-3 mb-6">
+                <v-col cols="12" sm="6" md="3" lg="3" class="px-3 mb-6 text-left">
                     <h2 class="text-h5 font-weight-bold mb-4 footer-heading font-italic dm-serif">Contacto</h2>
                     <div class="d-flex align-start mb-3">
                         <v-icon icon="mdi-phone" class="me-2 mt-1 accent-icon"></v-icon>
@@ -37,7 +37,7 @@
                     </div>
                 </v-col>
                 
-                <v-col cols="12" sm="6" md="3" class="px-3 mb-6">
+                <v-col cols="12" sm="6" md="3" lg="3" class="px-3 mb-6 text-left">
                     <h2 class="text-h5 font-weight-bold mb-10 footer-heading font-italic dm-serif">Redes</h2>
                     <div class="social-icons-row">
                         <a href="#" target="_blank" class="social-icon-simple">
@@ -52,7 +52,7 @@
                     </div>
                 </v-col>
                 
-                <v-col cols="12" sm="6" md="3" class="px-3 mb-6">
+                <v-col cols="12" sm="6" md="3" lg="3" class="px-3 mb-6 text-left">
                     <h2 class="text-h5 font-weight-bold mb-4 footer-heading font-italic dm-serif">Legal</h2>
                     <v-list density="compact" class="footer-legal-list pa-0">
                         <v-list-item
@@ -105,16 +105,17 @@
 }
 
 .footer-container {
-    max-width: 1200px;
     width: 100%;
+    max-width: 100% !important;
+    padding: 0;
 }
 
 .footer-content {
     width: 100%;
-    margin: 0 auto;
+    margin: 0;
     position: relative;
     display: flex;
-    justify-content: center;
+    justify-content: space-between;
 }
 
 .footer-heading {
@@ -124,6 +125,7 @@
     color: var(--text-color);
     font-style: italic;
     font-family: 'DM Serif', serif !important;
+    text-align: left;
 }
 
 .dm-serif {
@@ -176,7 +178,8 @@
 
 .footer-legal-list {
     background-color: transparent !important;
-    max-width: 220px;
+    max-width: none;
+    width: 100%;
 }
 
 .legal-item {
@@ -210,24 +213,24 @@
 
 @media (max-width: 600px) {
     .footer-heading {
-        text-align: center;
+        text-align: left;
     }
     
     .footer-heading::after {
-        left: 50%;
-        transform: translateX(-50%);
+        left: 0;
+        transform: none;
     }
     
     .d-flex {
-        justify-content: center;
+        justify-content: flex-start;
     }
     
     .social-icons-row {
-        justify-content: center;
+        justify-content: flex-start;
     }
     
     .footer-legal-list {
-        margin: 0 auto;
+        margin: 0;
     }
 }
 </style>
