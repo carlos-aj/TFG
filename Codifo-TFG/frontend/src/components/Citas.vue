@@ -289,10 +289,15 @@
 </template>
 
 <script setup>
-import { ref, onMounted, watch, computed } from 'vue'
+import { ref, onMounted, watch, computed, onActivated, defineComponent } from 'vue'
 import { loadStripe } from '@stripe/stripe-js'
 import { API_URL } from '../config'
 import { useRouter } from 'vue-router'
+
+// Define component name for keep-alive
+defineComponent({
+  name: 'Citas'
+})
 
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY);
 const pagarAhora = ref(false) // NUEVO
@@ -463,6 +468,20 @@ function getBarberosDisponibles() {
   return barberos.value;
 }
 
+// Función para refrescar los datos cuando el componente se activa (al volver a la página)
+async function refreshData() {
+  console.log('Refrescando datos de citas...');
+  if (fechaSeleccionada.value && barberoSeleccionado.value) {
+    await cargarHorasOcupadas();
+    checkPuedeInvitar();
+  }
+}
+
+// Refrescar datos cuando se activa el componente (al volver a la página)
+onActivated(() => {
+  refreshData();
+});
+
 onMounted(async () => {
   try {
     const resServicios = await fetch(`${API_URL}/api/servicio`, {
@@ -480,6 +499,12 @@ onMounted(async () => {
       throw new Error('Error al cargar los barberos');
     }
     barberos.value = await resBarberos.json()
+    
+    // Si ya hay una fecha seleccionada (por ejemplo, al volver a la página),
+    // cargar las horas ocupadas inmediatamente
+    if (fechaSeleccionada.value) {
+      await cargarHorasOcupadas();
+    }
   } catch (error) {
     errores.value.general = `Error: ${error.message}`;
   }
@@ -543,29 +568,26 @@ watch(pagarAhora, (valor) => {
   }
 });
 
-watch([barberoSeleccionado, fechaSeleccionada], () => {
-  checkPuedeInvitar();
-});
-
+// Watcher combinado para barberoSeleccionado y fechaSeleccionada
 watch([barberoSeleccionado, fechaSeleccionada], async () => {
   if (!barberoSeleccionado.value || !fechaSeleccionada.value) {
     horasOcupadas.value = [];
     return;
   }
-  try {
-    const fechaFormateada = new Date(fechaSeleccionada.value).toISOString().split('T')[0];
-    const res = await fetch(`${API_URL}/api/cita?barbero_id=${barberoSeleccionado.value}&fecha=${fechaFormateada}`, {
-      credentials: 'include'
-    });
-    if (!res.ok) {
-      throw new Error('Error al cargar las horas ocupadas');
-    }
-    const citas = await res.json();
-    // Normaliza a formato HH:mm
-    horasOcupadas.value = citas.map(c => c.hora.slice(0,5));
-  } catch (error) {
-    errores.value.general = `Error: ${error.message}`;
-  }
+  
+  // Cargar las horas ocupadas para todos los barberos
+  await cargarHorasOcupadas();
+  
+  // Actualizar las horas ocupadas para el barbero seleccionado
+  horasOcupadas.value = horasOcupadasPorBarbero.value[barberoSeleccionado.value] || [];
+  
+  // Verificar si se puede invitar
+  checkPuedeInvitar();
+});
+
+// Add a watcher for horaSeleccionada to check if invites are possible
+watch(horaSeleccionada, () => {
+  checkPuedeInvitar();
 });
 
 watch([barberoInvitado, fechaSeleccionada], async () => {
@@ -573,18 +595,12 @@ watch([barberoInvitado, fechaSeleccionada], async () => {
     horasOcupadasInvitado.value = [];
     return;
   }
-  try {
-    const fechaFormateada = new Date(fechaSeleccionada.value).toISOString().split('T')[0];
-    const res = await fetch(`${API_URL}/api/cita?barbero_id=${barberoInvitado.value}&fecha=${fechaFormateada}`, {
-      credentials: 'include'
-    });
-    if (!res.ok) {
-      throw new Error('Error al cargar las horas ocupadas para el invitado');
-    }
-    const citas = await res.json();
-    horasOcupadasInvitado.value = citas.map(c => c.hora.slice(0,5));
-  } catch (error) {
-    errores.value.general = `Error: ${error.message}`;
+  // Si ya tenemos los datos cargados, usarlos
+  if (horasOcupadasPorBarbero.value[barberoInvitado.value]) {
+    horasOcupadasInvitado.value = horasOcupadasPorBarbero.value[barberoInvitado.value];
+  } else {
+    // De lo contrario, cargar todo de nuevo
+    await cargarHorasOcupadas();
   }
 });
 
@@ -594,49 +610,7 @@ watch(fechaSeleccionada, async () => {
     return;
   }
   
-  try {
-    // Formatear la fecha correctamente para evitar problemas de zona horaria
-    const fechaObj = new Date(fechaSeleccionada.value);
-    const fechaFormateada = `${fechaObj.getFullYear()}-${String(fechaObj.getMonth() + 1).padStart(2, '0')}-${String(fechaObj.getDate()).padStart(2, '0')}`;
-    console.log('Fecha seleccionada original en watch:', fechaSeleccionada.value);
-    console.log('Fecha formateada para consulta en watch:', fechaFormateada);
-    
-    const ocupadas = {};
-    for (const barbero of barberos.value) {
-      const res = await fetch(`${API_URL}/api/cita?barbero_id=${barbero.id}&fecha=${fechaFormateada}`, {
-        credentials: 'include'
-      });
-      if (!res.ok) {
-        throw new Error(`Error al cargar las horas ocupadas para el barbero ${barbero.nombre}`);
-      }
-      const citas = await res.json();
-      ocupadas[barbero.id] = citas.map(c => {
-        if (typeof c.hora === 'string') return c.hora.slice(0,5);
-        // Si c.hora es objeto tipo { hours: 9, minutes: 30, seconds: 0 }
-        if (typeof c.hora === 'object' && c.hora !== null) {
-          const h = String(c.hora.hours).padStart(2, '0');
-          const m = String(c.hora.minutes).padStart(2, '0');
-          return `${h}:${m}`;
-        }
-        return c.hora; // fallback
-      });
-    }
-    horasOcupadasPorBarbero.value = ocupadas;
-    console.log('Barberos:', barberos.value);
-    console.log('Horas ocupadas por barbero:', ocupadas);
-    console.log('Horas disponibles:', getHorasDisponibles());
-  } catch (error) {
-    errores.value.general = `Error: ${error.message}`;
-  }
-});
-
-watch([barberoSeleccionado, fechaSeleccionada], () => {
-  if (!barberoSeleccionado.value || !fechaSeleccionada.value) {
-    horasOcupadas.value = [];
-    return;
-  }
-  // Espera a que horasOcupadasPorBarbero esté listo
-  horasOcupadas.value = horasOcupadasPorBarbero.value[barberoSeleccionado.value] || [];
+  await cargarHorasOcupadas();
 });
 
 async function reservarCita() {
@@ -721,6 +695,9 @@ async function reservarCita() {
         console.log('ID de cita guardado en localStorage:', citaCreada.id);
       }
 
+      // Actualizar las horas ocupadas para reflejar la nueva reserva
+      await cargarHorasOcupadas();
+
       // Busca el precio del servicio seleccionado
       const servicio = servicios.value.find(s => s.id === servicioSeleccionado.value)
       if (!servicio) {
@@ -796,6 +773,9 @@ async function reservarCita() {
       console.log('ID de cita guardado en localStorage:', citaCreada.id);
     }
 
+    // Actualizar las horas ocupadas para reflejar la nueva reserva
+    await cargarHorasOcupadas();
+
     // Muestra mensaje de éxito y redirige
     mostrarMensaje('¡Cita reservada! Revisa tu correo para la confirmación.', 'success');
     setTimeout(() => {
@@ -846,6 +826,59 @@ function formatDate(date) {
   if (!date) return '';
   const d = new Date(date);
   return d.toLocaleDateString('es-ES'); // Format as DD/MM/YYYY
+}
+
+// Function to load occupied time slots for all barbers
+async function cargarHorasOcupadas() {
+  if (!fechaSeleccionada.value) {
+    horasOcupadasPorBarbero.value = {};
+    return;
+  }
+  
+  try {
+    // Formatear la fecha correctamente para evitar problemas de zona horaria
+    const fechaObj = new Date(fechaSeleccionada.value);
+    const fechaFormateada = `${fechaObj.getFullYear()}-${String(fechaObj.getMonth() + 1).padStart(2, '0')}-${String(fechaObj.getDate()).padStart(2, '0')}`;
+    console.log('Cargando horas ocupadas para fecha:', fechaFormateada);
+    
+    const ocupadas = {};
+    for (const barbero of barberos.value) {
+      // Usar cache:no-store para forzar una solicitud fresca cada vez
+      const res = await fetch(`${API_URL}/api/cita?barbero_id=${barbero.id}&fecha=${fechaFormateada}&_=${new Date().getTime()}`, {
+        credentials: 'include',
+        cache: 'no-store'
+      });
+      if (!res.ok) {
+        throw new Error(`Error al cargar las horas ocupadas para el barbero ${barbero.nombre}`);
+      }
+      const citas = await res.json();
+      ocupadas[barbero.id] = citas.map(c => {
+        if (typeof c.hora === 'string') return c.hora.slice(0,5);
+        if (typeof c.hora === 'object' && c.hora !== null) {
+          const h = String(c.hora.hours).padStart(2, '0');
+          const m = String(c.hora.minutes).padStart(2, '0');
+          return `${h}:${m}`;
+        }
+        return c.hora;
+      });
+    }
+    horasOcupadasPorBarbero.value = ocupadas;
+    
+    // Actualizar las horas ocupadas para el barbero seleccionado
+    if (barberoSeleccionado.value) {
+      horasOcupadas.value = ocupadas[barberoSeleccionado.value] || [];
+    }
+    
+    // Actualizar las horas ocupadas para el barbero invitado
+    if (barberoInvitado.value) {
+      horasOcupadasInvitado.value = ocupadas[barberoInvitado.value] || [];
+    }
+    
+    console.log('Horas ocupadas actualizadas:', ocupadas);
+  } catch (error) {
+    console.error('Error al cargar horas ocupadas:', error);
+    errores.value.general = `Error: ${error.message}`;
+  }
 }
 </script>
 

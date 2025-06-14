@@ -6,7 +6,11 @@ import Footer from './components/Footer.vue';
   <v-app>
     <Header />
     <v-main class="main-content">
-      <router-view></router-view>
+      <router-view v-slot="{ Component }">
+        <keep-alive include="Citas">
+          <component :is="Component" />
+        </keep-alive>
+      </router-view>
     </v-main>
     <Footer />
   </v-app>
