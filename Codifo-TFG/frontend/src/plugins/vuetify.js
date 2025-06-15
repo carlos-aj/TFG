@@ -27,6 +27,7 @@ export default createVuetify({
           warning: '#FFC107',
           'on-background': '#D9D9D9',
           'on-surface': '#D9D9D9',
+          accent: '#F5E009',
         }
       }
     }
@@ -52,6 +53,13 @@ export default createVuetify({
     },
     VList: {
       fontFamily: 'DM Serif, serif',
+    },
+    VDialog: {
+      fontFamily: 'DM Serif, serif',
+      width: '500px',
+      persistent: false,
+      scrollable: false,
+      transition: 'dialog-transition',
     }
   }
 }) 
