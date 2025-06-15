@@ -8,13 +8,21 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: '2025-05
 export const publicRouter = Router();
 
 publicRouter.post('/stripe-webhook', async (req: Request, res: Response) => {
+  console.log('Webhook de Stripe recibido');
   const sig = req.headers['stripe-signature'];
   const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
+
+  console.log('Verificando firma con secreto:', { 
+    tieneSignature: !!sig, 
+    tieneEndpointSecret: !!endpointSecret,
+    bodyType: typeof req.body
+  });
 
   let event: Stripe.Event;
 
   try {
     event = stripe.webhooks.constructEvent(req.body, sig as string, endpointSecret as string);
+    console.log('Evento de Stripe verificado correctamente:', event.type);
   } catch (err: any) {
     console.error('Error verificando webhook:', err.message);
     res.status(400).send(`Webhook Error: ${err.message}`);

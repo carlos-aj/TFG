@@ -13,6 +13,12 @@ export async function createCheckoutSession(req: Request, res: Response, next: N
   }
 
   try {
+    console.log('Creando sesión de pago con:', { 
+      amount, 
+      citaId,
+      stripeKeyConfigured: !!process.env.STRIPE_SECRET_KEY,
+      frontendUrl: process.env.FRONTEND_URL
+    });
 
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
@@ -35,11 +41,14 @@ export async function createCheckoutSession(req: Request, res: Response, next: N
       }
     });
     
+    console.log('Sesión de pago creada correctamente:', { sessionId: session.id });
     res.json({ sessionId: session.id });
   } catch (err: any) {
     console.error('Error detallado al crear sesión de pago:', {
       message: err.message,
       type: err.type,
+      code: err.code,
+      param: err.param,
       stack: err.stack
     });
     res.status(500).json({ message: 'Error creando sesión de pago', error: err.message });
