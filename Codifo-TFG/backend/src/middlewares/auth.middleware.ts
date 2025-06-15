@@ -24,14 +24,11 @@ export const isAuthenticated = async (req: Request, res: Response, next: NextFun
 
     if (authHeader && authHeader.startsWith('Bearer ')) {
       token = authHeader.split(' ')[1];
-      console.log('Token encontrado en Authorization header');
     } else {
       token = req.cookies?.token;
-      console.log('Token encontrado en cookies:', token ? 'Sí' : 'No');
     }
 
     if (!token) {
-      console.log('No se proporcionó token');
       res.status(401).json({ message: 'No token provided' });
       return;
     }
@@ -45,15 +42,9 @@ export const isAuthenticated = async (req: Request, res: Response, next: NextFun
 
     try {
       const decoded = jwt.verify(token, JWT_SECRET) as JwtPayload;
-      console.log('Token decodificado:', {
-        userId: decoded.userId || decoded.id,
-        email: decoded.email,
-        rol: decoded.rol
-      });
 
       const userId = decoded.userId || decoded.id;
       if (!userId) {
-        console.log('Token inválido: no contiene ID de usuario');
         res.status(401).json({ message: 'Invalid token: no user ID' });
         return;
       }
@@ -61,7 +52,6 @@ export const isAuthenticated = async (req: Request, res: Response, next: NextFun
       const user = await User.query().findById(userId);
 
       if (!user) {
-        console.log('Usuario no encontrado en la base de datos');
         res.status(401).json({ message: 'User not found' });
         return;
       }
@@ -89,7 +79,6 @@ export const hasRole = (roles: string[]) => {
 
       const userRole = user.rol === 'user' ? 'cliente' : user.rol;
       
-      console.log(`Verificando rol: Usuario tiene ${userRole}, se requiere uno de: ${roles.join(', ')}`);
       
       if (roles.includes(userRole)) {
         next();

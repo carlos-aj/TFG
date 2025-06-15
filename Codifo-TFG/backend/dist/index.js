@@ -52,7 +52,7 @@ const cors = require('cors');
 const app = (0, express_1.default)();
 const allowedOrigins = [
     process.env.FRONTEND_URL || 'http://localhost:5173',
-    'https://tfg-gamma.vercel.app'
+    'https://www.rasoio.es'
 ];
 const cleanAllowedOrigins = allowedOrigins.map(origin => origin.endsWith('/') ? origin.slice(0, -1) : origin);
 app.use(cors({

@@ -41,7 +41,6 @@ export async function getCitaById(id: number) {
 
 export async function createCita(data: Partial<ICita>, trx?: import('knex').Knex.Transaction) {
   try {
-    console.log('Creando cita con datos:', JSON.stringify(data, null, 2));
     
     if (data.user_id === undefined) {
       data.user_id = null as any; 
@@ -49,7 +48,6 @@ export async function createCita(data: Partial<ICita>, trx?: import('knex').Knex
     
     const query = Cita.query(trx).insert(data);
     const result = await query;
-    console.log('Cita creada correctamente:', result.id);
     return result;
   } catch (error) {
     console.error('Error al crear cita:', error);
@@ -106,7 +104,6 @@ export async function getCitaInfoForEmail(data: any) {
 
 export async function puedeInvitar(barbero_id: number, fecha: string, hora: string) {
   try {
-    console.log(`Verificando si puede invitar: barbero ${barbero_id}, fecha ${fecha}, hora ${hora}`);
     
     const citaExistente = await Cita.query()
       .where('fecha', fecha)
@@ -114,7 +111,6 @@ export async function puedeInvitar(barbero_id: number, fecha: string, hora: stri
       .first();
 
     const resultado = !citaExistente;
-    console.log(`Resultado de puedeInvitar: ${resultado}`);
     
     return resultado;
   } catch (error) {
@@ -135,7 +131,6 @@ export async function getBarberoNombreById(id: number) {
 
 export async function getCitasByBarberoYFecha(barbero_id: number, fecha_inicio: string, fecha_fin?: string) {
   try {
-    console.log(`[DEBUG FECHAS] Buscando citas para barbero ${barbero_id} desde ${fecha_inicio}${fecha_fin ? ' hasta ' + fecha_fin : ''}`);
     
     let query = Cita.query().where('barbero_id', barbero_id);
     
@@ -150,7 +145,6 @@ export async function getCitasByBarberoYFecha(barbero_id: number, fecha_inicio: 
                 .orderBy('hora', 'asc');
     
     const citas = await query;
-    console.log(`[DEBUG FECHAS] Encontradas ${citas.length} citas para barbero ${barbero_id}`);
     
     const citasFormateadas = citas.map(c => {
       if (c.fecha && typeof c.fecha !== 'string') {
@@ -172,7 +166,6 @@ export async function getCitasByBarberoYFecha(barbero_id: number, fecha_inicio: 
 
 export async function getCitasByBarbero(barbero_id: number) {
   try {
-    console.log(`[DEBUG FECHAS] Buscando todas las citas para barbero ${barbero_id}`);
     
     const citas = await Cita.query()
       .where('barbero_id', barbero_id)
@@ -180,7 +173,6 @@ export async function getCitasByBarbero(barbero_id: number) {
       .orderBy('fecha', 'asc')
       .orderBy('hora', 'asc');
     
-    console.log(`[DEBUG FECHAS] Encontradas ${citas.length} citas para barbero ${barbero_id}`);
     
     const citasFormateadas = citas.map(c => {
       if (c.fecha && typeof c.fecha !== 'string') {
@@ -202,7 +194,6 @@ export async function getCitasByBarbero(barbero_id: number) {
 
 export async function getCitasByFecha(fecha_inicio: string, fecha_fin?: string) {
   try {
-    console.log(`[DEBUG FECHAS] Buscando citas por rango de fechas desde ${fecha_inicio}${fecha_fin ? ' hasta ' + fecha_fin : ''}`);
     
     let query = Cita.query();
     
@@ -218,7 +209,6 @@ export async function getCitasByFecha(fecha_inicio: string, fecha_fin?: string) 
                 .orderBy('hora', 'asc');       
     
     const citas = await query;
-    console.log(`[DEBUG FECHAS] Encontradas ${citas.length} citas en el rango de fechas`);
     
     const citasFormateadas = citas.map(c => {
       if (c.fecha && typeof c.fecha !== 'string') {

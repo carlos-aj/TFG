@@ -3,7 +3,6 @@ import * as UserController from '../controllers/user.controller';
 import { isAuthenticated, hasRole, isOwnerOrAdmin } from '../middlewares/auth.middleware';
 
 export const userRouter: Router = express.Router();
-console.log('user.routes.ts cargado');
 
 userRouter.post('/', UserController.createUser);
 userRouter.get('/confirm', UserController.confirmUser);

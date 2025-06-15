@@ -469,11 +469,9 @@ function limpiarFormulario() {
   formTouched.value = false;
   invitadoTouched.value = false;
   
-  console.log('Formulario limpiado correctamente');
 }
 
 async function refreshData() {
-  console.log('Refrescando datos de citas...');
   
   limpiarFormulario();
   
@@ -519,8 +517,6 @@ async function checkPuedeInvitar() {
 
   const fechaObj = new Date(fechaSeleccionada.value);
   const fechaFormateada = `${fechaObj.getFullYear()}-${String(fechaObj.getMonth() + 1).padStart(2, '0')}-${String(fechaObj.getDate()).padStart(2, '0')}`;
-  console.log('Fecha seleccionada original en checkPuedeInvitar:', fechaSeleccionada.value);
-  console.log('Fecha formateada para consulta en checkPuedeInvitar:', fechaFormateada);
 
   try {
     const params = new URLSearchParams({
@@ -535,7 +531,6 @@ async function checkPuedeInvitar() {
       throw new Error('Error al verificar disponibilidad para invitados');
     }
     const data = await res.json()
-    console.log('Respuesta puedeInvitar:', data)
 
     puedeInvitar.value = data.puedeInvitar
   } catch (error) {
@@ -620,8 +615,7 @@ async function reservarCita() {
 
   const fechaObj = new Date(fechaSeleccionada.value);
   const fechaFormateada = `${fechaObj.getFullYear()}-${String(fechaObj.getMonth() + 1).padStart(2, '0')}-${String(fechaObj.getDate()).padStart(2, '0')}`;
-  console.log('Fecha seleccionada original:', fechaSeleccionada.value);
-  console.log('Fecha formateada para el backend:', fechaFormateada);
+
 
   const cita = {
     servicio_id: servicioSeleccionado.value,
@@ -665,11 +659,9 @@ async function reservarCita() {
       }
 
       const citaCreada = await resCita.json();
-      console.log('Cita creada:', citaCreada);
       
       if (citaCreada && citaCreada.id) {
         localStorage.setItem('ultima_cita_id', citaCreada.id.toString());
-        console.log('ID de cita guardado en localStorage:', citaCreada.id);
       }
 
       await cargarHorasOcupadas();
@@ -684,7 +676,6 @@ async function reservarCita() {
       const citaId = citaCreada.id;
       
       limpiarFormulario();
-      console.log('Iniciando pago:', { amount, citaId });
 
       const res = await fetch(`${API_URL}/api/cita/pago`, {
         method: 'POST',
@@ -702,7 +693,6 @@ async function reservarCita() {
       }
 
       const data = await res.json();
-      console.log('Sesión de pago creada:', data);
 
       if (!data.sessionId) {
         throw new Error('No se recibió el ID de sesión de pago');
@@ -725,7 +715,6 @@ async function reservarCita() {
   }
 
   try {
-    console.log('DEBUG: Datos de la cita a enviar (sin pago):', JSON.stringify(cita, null, 2));
     const res = await fetch(`${API_URL}/api/cita`, {
       method: 'POST',
       credentials: 'include',
@@ -741,11 +730,9 @@ async function reservarCita() {
     }
     
     const citaCreada = await res.json();
-    console.log('Cita creada (sin pago):', citaCreada);
     
     if (citaCreada && citaCreada.id) {
       localStorage.setItem('ultima_cita_id', citaCreada.id.toString());
-      console.log('ID de cita guardado en localStorage:', citaCreada.id);
     }
 
     await cargarHorasOcupadas();
@@ -809,7 +796,6 @@ async function cargarHorasOcupadas() {
   try {
     const fechaObj = new Date(fechaSeleccionada.value);
     const fechaFormateada = `${fechaObj.getFullYear()}-${String(fechaObj.getMonth() + 1).padStart(2, '0')}-${String(fechaObj.getDate()).padStart(2, '0')}`;
-    console.log('Cargando horas ocupadas para fecha:', fechaFormateada);
     
     const ocupadas = {};
     for (const barbero of barberos.value) {
@@ -841,7 +827,6 @@ async function cargarHorasOcupadas() {
       horasOcupadasInvitado.value = ocupadas[barberoInvitado.value] || [];
     }
     
-    console.log('Horas ocupadas actualizadas:', ocupadas);
   } catch (error) {
     console.error('Error al cargar horas ocupadas:', error);
     errores.value.general = `Error: ${error.message}`;

@@ -36,8 +36,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.sendConfirmationEmail = sendConfirmationEmail;
 exports.sendCitaEmail = sendCitaEmail;
 const nodemailer = __importStar(require("nodemailer"));
-console.log('SMTP_USER:', process.env.SMTP_USER);
-console.log('SMTP_PASS:', process.env.SMTP_PASS);
 const transporter = nodemailer.createTransport({
     host: process.env.SMTP_HOST || 'smtp.ethereal.email',
     port: Number(process.env.SMTP_PORT) || 587,
@@ -55,7 +53,6 @@ async function sendConfirmationEmail(to, token) {
         html: `<p>Haz clic en el siguiente enlace para confirmar tu cuenta:</p>
            <a href="${confirmUrl}">Confirmar cuenta</a>`,
     });
-    console.log('Correo de confirmación enviado: %s', info.messageId);
 }
 async function sendCitaEmail(to, citaInfo) {
     let invitadoHtml = '';
@@ -87,7 +84,6 @@ async function sendCitaEmail(to, citaInfo) {
       ${invitadoHtml}
     `,
     });
-    console.log('Correo de cita enviado: %s', info.messageId);
 }
 function formatFecha(fecha) {
     const d = new Date(fecha);

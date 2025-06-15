@@ -45,16 +45,8 @@ router.beforeEach((to, from, next) => {
   try {
     const authenticated = checkAuthenticated();
     const userRole = getUserRole();
-    
-    console.log('Navegación:', { 
-      ruta: to.path, 
-      requiereAuth: to.meta.requiresAuth, 
-      autenticado: authenticated,
-      rol: userRole
-    });
 
     if (to.meta.requiresAuth && !authenticated) {
-      console.log('Redirigiendo a login: ruta protegida sin autenticación');
       next({ name: 'login' });
       return;
     }
@@ -65,7 +57,6 @@ router.beforeEach((to, from, next) => {
         : [to.meta.requiredRole];
         
       if (!requiredRoles.includes(userRole)) {
-        console.log('Acceso denegado: rol incorrecto');
         if (userRole === 'admin' || userRole === 'empleado') {
           next({ name: 'citas-empleados-admin' });
         } else {
@@ -77,10 +68,8 @@ router.beforeEach((to, from, next) => {
     
     if (to.path === '/login' && authenticated) {
       if (userRole === 'admin' || userRole === 'empleado') {
-        console.log('Usuario ya autenticado, redirigiendo a panel admin/empleado');
         next({ name: 'citas-empleados-admin' });
       } else {
-        console.log('Usuario ya autenticado, redirigiendo a citas');
         next({ name: 'citas' });
       }
       return;

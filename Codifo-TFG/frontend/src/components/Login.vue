@@ -126,7 +126,6 @@ async function login() {
     }
 
     const data = await response.json();
-    console.log('Respuesta de login:', data);
 
     saveAuthData(data);
     

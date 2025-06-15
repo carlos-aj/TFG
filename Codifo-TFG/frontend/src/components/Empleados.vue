@@ -280,11 +280,9 @@ watch(showStats, (newVal) => {
 });
 
 async function cargarBarberos() {
-  console.log('Iniciando carga de barberos...');
   error.value = '';
   
   try {
-    console.log('Realizando petición a la API...');
     const response = await fetch(`${API_URL}/api/barbero`, {
       credentials: 'include',
       headers: {
@@ -292,18 +290,15 @@ async function cargarBarberos() {
       }
     });
     
-    console.log('Respuesta recibida:', response.status);
     
     if (response.ok) {
       const data = await response.json();
-      console.log('Datos recibidos:', data);
       barberos.value = data;
       
       if (currentPage.value > totalPages.value) {
         currentPage.value = totalPages.value || 1;
       }
       
-      console.log('Barberos cargados:', barberos.value.length);
       
       setTimeout(() => {
         animateTableRows();

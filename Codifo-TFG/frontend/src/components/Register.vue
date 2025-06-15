@@ -233,7 +233,6 @@ const register = () => {
     return response.json()
   })
   .then((data) => {
-    console.log('Success:', data)
     successMessage.value = 'Registro exitoso. Por favor, revisa tu correo para validar tu cuenta.'
     resetForm()
   })

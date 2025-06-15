@@ -18,16 +18,10 @@ const selectedBarbero = ref(null)
 const showBarberoSelector = ref(false)
 
 const fechaActual = new Date();
-console.log('[DEBUG FECHAS] Fecha actual como objeto Date:', fechaActual);
-console.log('[DEBUG FECHAS] Fecha actual como ISO string:', fechaActual.toISOString());
-console.log('[DEBUG FECHAS] Fecha actual local:', `${fechaActual.getFullYear()}-${String(fechaActual.getMonth() + 1).padStart(2, '0')}-${String(fechaActual.getDate()).padStart(2, '0')}`);
-console.log('[DEBUG FECHAS] Fecha actual con toLocaleDateString:', fechaActual.toLocaleDateString());
 
 const fechaISO = fechaActual.toISOString().split('T')[0];
-console.log('[DEBUG FECHAS] Fecha actual como ISO string partido:', fechaISO);
 
 const hoy = `${fechaActual.getFullYear()}-${String(fechaActual.getMonth() + 1).padStart(2, '0')}-${String(fechaActual.getDate()).padStart(2, '0')}`;
-console.log('[DEBUG FECHAS] Fecha HOY corregida:', hoy);
 
 onMounted(async () => {
   try {
@@ -40,7 +34,6 @@ onMounted(async () => {
       if (empleadoBarberoId.value) {
         const barberoExiste = barberos.value.find(b => b.id === Number(empleadoBarberoId.value));
         if (!barberoExiste) {
-          console.log(`El barbero_id ${empleadoBarberoId.value} no existe en la lista de barberos`);
           showBarberoSelector.value = true;
         }
       } else if (nombre) {
@@ -49,11 +42,9 @@ onMounted(async () => {
         );
         
         if (barberoCorrespondiente) {
-          console.log(`Empleado ${nombre} asociado automáticamente con barbero ${barberoCorrespondiente.nombre} (ID: ${barberoCorrespondiente.id})`);
           empleadoBarberoId.value = barberoCorrespondiente.id;
           localStorage.setItem('barbero_id', barberoCorrespondiente.id.toString());
         } else {
-          console.log(`No se encontró un barbero correspondiente para el empleado ${nombre}`);
           showBarberoSelector.value = true;
         }
       } else {
@@ -94,7 +85,6 @@ onMounted(async () => {
         if (resUsuarios.ok) {
           usuarios.value = await resUsuarios.json()
         } else {
-          console.log('No se pudieron cargar los usuarios - acceso restringido')
           usuarios.value = []
         }
       } catch (e) {
@@ -125,12 +115,10 @@ async function cargarCitas() {
     
     if (rol === 'empleado' && empleadoBarberoId.value) {
       params.append('barbero_id', empleadoBarberoId.value.toString());
-      console.log(`[DEBUG FECHAS] Filtrando citas para barbero_id: ${empleadoBarberoId.value}`);
     }
     
     params.append('fecha_inicio', hoy);
     params.append('fecha_fin', hoy);
-    console.log(`[DEBUG FECHAS] Filtrando citas para fecha: ${hoy}`);
     
     params.append('includeRelations', 'true');
     
@@ -138,7 +126,6 @@ async function cargarCitas() {
       citasUrl += `?${params.toString()}`;
     }
     
-    console.log(`[DEBUG FECHAS] URL completa: ${citasUrl}`);
     
     const res = await fetch(citasUrl, {
       credentials: 'include'
@@ -150,11 +137,9 @@ async function cargarCitas() {
     }
     
     citas.value = await res.json();
-    console.log(`[DEBUG FECHAS] Citas cargadas: ${citas.value.length}`);
     
     citas.value.forEach(c => {
       if (c.fecha) {
-        console.log(`[DEBUG FECHAS] Cita ID ${c.id}, fecha: ${c.fecha.slice(0, 10)}, barbero_id: ${c.barbero_id}`);
       }
     });
   } catch (e) {
@@ -183,9 +168,7 @@ async function seleccionarBarbero() {
     });
     
     if (res.ok) {
-      console.log('Barbero asignado correctamente en la base de datos');
     } else {
-      console.log('No se pudo actualizar el barbero en la base de datos, pero se guardó localmente');
     }
   } catch (e) {
     console.error('Error al asignar barbero:', e);
@@ -222,14 +205,11 @@ const citasFiltradas = computed(() => {
     return [];
   }
   
-  console.log(`[DEBUG FECHAS] Total citas cargadas: ${citas.value.length}`);
 
   let filtradas = citas.value;
   
   if (rol === 'empleado' && empleadoBarberoId.value) {
-    console.log(`[DEBUG FECHAS] Filtrando citas para barbero_id: ${empleadoBarberoId.value}`);
     filtradas = filtradas.filter(c => c.barbero_id === empleadoBarberoId.value);
-    console.log(`[DEBUG FECHAS] Citas finales después de filtrar por barbero: ${filtradas.length}`);
   }
   
   if (rol === 'empleado') {

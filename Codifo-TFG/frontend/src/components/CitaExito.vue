@@ -49,11 +49,9 @@ onMounted(async () => {
     let citaId = route.query.cita_id;
 
     if (!citaId) {
-      console.log('No se encontró ID de cita en la URL. Usando ID predeterminado.');
       citaId = localStorage.getItem('ultima_cita_id') || '1';
     }
 
-    console.log('Confirmando pago para la cita ID:', citaId);
     const response = await fetch(`${API_URL}/api/cita/confirmar-pago`, {
       method: 'POST',
       headers: {
@@ -66,7 +64,6 @@ onMounted(async () => {
     if (!response.ok) {
       console.error('Error en la respuesta del servidor:', await response.text());
     } else {
-      console.log('Confirmación de la cita procesada correctamente.');
     }
   } catch (error) {
     console.error('Error al procesar la confirmación de la cita:', error);

@@ -5,7 +5,6 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: '2025-05
 
 export async function createCheckoutSession(req: Request, res: Response, next: NextFunction): Promise<void> {
   const { amount, citaId } = req.body;
-  console.log('Creando sesión de pago:', { amount, citaId });
   
   if (!amount || !citaId) {
     console.error('Faltan datos requeridos:', { amount, citaId });
@@ -14,10 +13,6 @@ export async function createCheckoutSession(req: Request, res: Response, next: N
   }
 
   try {
-    console.log('Configuración de Stripe:', {
-      secretKey: process.env.STRIPE_SECRET_KEY ? 'Configurada' : 'No configurada',
-      frontendUrl: process.env.FRONTEND_URL
-    });
 
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
@@ -40,7 +35,6 @@ export async function createCheckoutSession(req: Request, res: Response, next: N
       }
     });
     
-    console.log('Sesión de pago creada:', session.id);
     res.json({ sessionId: session.id });
   } catch (err: any) {
     console.error('Error detallado al crear sesión de pago:', {

@@ -103,7 +103,6 @@ export async function updateUser(req: Request, res: Response): Promise<void> {
 }
 
 export async function confirmUser(req: Request, res: Response): Promise<void> {
-  console.log('Entrando en confirmUser');
   try{
     const token = req.query.token as string;
     const user = await UserService.confirmUser(token);
@@ -153,10 +152,8 @@ export async function login(req: Request, res: Response): Promise<void> {
     }
 
     let rol = user.rol;
-    console.log('Rol original del usuario:', rol);
     
     if (rol !== 'admin' && rol !== 'empleado' && rol !== 'user' && rol !== 'cliente') {
-      console.log('Rol no reconocido, asignando cliente por defecto');
       rol = 'cliente';
     }
     
@@ -190,13 +187,6 @@ export async function login(req: Request, res: Response): Promise<void> {
     if (rol === 'empleado') {
       responseData.barbero_id = user.barbero_id || null;
     }
-
-    console.log('Login exitoso:', { 
-      id: user.id, 
-      rol, 
-      barbero_id: user.barbero_id || 'N/A',
-      token: token.substring(0, 20) + '...' 
-    });
 
     res.json(responseData);
   } catch (err) {

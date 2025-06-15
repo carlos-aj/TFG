@@ -16,7 +16,6 @@ export const protectApi = (req: Request, res: Response, next: NextFunction): voi
   const token = req.cookies?.token || (req.headers.authorization?.startsWith('Bearer ') && req.headers.authorization.split(' ')[1]);
   
   if (!token && !isPublicRoute(req.path, req.method)) {
-    console.log('Acceso denegado a ruta protegida:', req.path, req.method);
     res.status(401).json({ 
       message: 'Acceso denegado. Inicia sesión para acceder a esta ruta.',
       error: 'UNAUTHORIZED'
@@ -34,10 +33,6 @@ export const protectApi = (req: Request, res: Response, next: NextFunction): voi
       }
 
       const decoded = jwt.verify(token, JWT_SECRET) as JwtPayload;
-      console.log('Token verificado en protectApi:', { 
-        userId: decoded.userId || decoded.id, 
-        rol: decoded.rol 
-      });
     } catch (err) {
       console.warn('Token inválido en protectApi, continuando...', err);
     }
@@ -61,30 +56,24 @@ const publicRoutes = [
 ];
 
 const isPublicRoute = (path: string, method: string): boolean => {
-  console.log('Verificando si la ruta es pública:', path, method);
   
   if (path === '/api/user/login' || path === '/api/user' && method === 'POST') {
-    console.log('Ruta de login/registro permitida');
     return true;
   }
   
   if (publicRoutes.includes(path)) {
-    console.log('Ruta exacta permitida:', path);
     return true;
   }
   
   for (const route of publicRoutes) {
     if (path.startsWith(`${route}/`)) {
-      console.log('Ruta con prefijo permitida:', path);
       return true;
     }
   }
   
   if (path === '/api/cita' && method === 'GET') {
-    console.log('GET a /api/cita permitido');
     return true;
   }
   
-  console.log('Ruta no pública:', path);
   return false;
 }; 

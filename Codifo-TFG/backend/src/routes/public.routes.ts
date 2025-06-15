@@ -33,7 +33,6 @@ publicRouter.post('/stripe-webhook', async (req: Request, res: Response) => {
       
       try {
         await CitaService.updateCita(parseInt(citaId), { pagado: true });
-        console.log(`Cita ${citaId} marcada como pagada.`);
 
         const cita = await CitaService.getCitaById(parseInt(citaId));
         if (!cita) {
@@ -52,14 +51,12 @@ publicRouter.post('/stripe-webhook', async (req: Request, res: Response) => {
             importe_pagado: session.amount_total || null,
             invitado: null
           });
-          console.log(`Correo de confirmación enviado para la cita ${citaId}`);
         }
       } catch (err: any) {
         console.error(`Error al procesar el webhook para la cita ${citaId}:`, err.message);
       }
       break;
     default:
-      console.log(`Evento no manejado: ${event.type}`);
   }
 
   res.json({ received: true });

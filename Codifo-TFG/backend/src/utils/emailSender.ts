@@ -1,9 +1,5 @@
 import * as nodemailer from 'nodemailer';
 
-
-console.log('SMTP_USER:', process.env.SMTP_USER);
-console.log('SMTP_PASS:', process.env.SMTP_PASS);
-
 const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST || 'smtp.ethereal.email',
   port: Number(process.env.SMTP_PORT) || 587,
@@ -24,7 +20,6 @@ export async function sendConfirmationEmail(to: string, token: string) {
            <a href="${confirmUrl}">Confirmar cuenta</a>`,
   });
 
-  console.log('Correo de confirmación enviado: %s', info.messageId);
 }
 
 interface InvitadoInfo {
@@ -77,7 +72,6 @@ export async function sendCitaEmail(to: string, citaInfo: CitaEmailInfo) {
         ${invitadoHtml}
       `,
     });
-    console.log('Correo de cita enviado: %s', info.messageId);
   } catch (error) {
     console.error('Error al enviar correo de cita:', error);
     throw error;

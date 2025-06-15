@@ -137,7 +137,6 @@ async function updateUser(req, res) {
     }
 }
 async function confirmUser(req, res) {
-    console.log('Entrando en confirmUser');
     try {
         const token = req.query.token;
         const user = await UserService.confirmUser(token);
