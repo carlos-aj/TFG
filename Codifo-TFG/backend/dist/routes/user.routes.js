@@ -32,19 +32,26 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.userRouter = void 0;
-const express_1 = require("express");
+const express_1 = __importDefault(require("express"));
 const UserController = __importStar(require("../controllers/user.controller"));
 const auth_middleware_1 = require("../middlewares/auth.middleware");
-exports.userRouter = (0, express_1.Router)();
-console.log('user.routes.ts cargado');
-exports.userRouter.post('/', UserController.createUser); 
-exports.userRouter.get('/confirm', UserController.confirmUser); 
-exports.userRouter.post('/login', UserController.login); 
-exports.userRouter.post('/logout', UserController.logout); 
-exports.userRouter.get('/', auth_middleware_1.isAuthenticated, (0, auth_middleware_1.hasRole)(['admin']), UserController.getAllUsers);
+exports.userRouter = express_1.default.Router();
+exports.userRouter.post('/', UserController.createUser);
+exports.userRouter.get('/confirm', UserController.confirmUser);
+exports.userRouter.post('/login', UserController.login);
+exports.userRouter.post('/logout', UserController.logout);
+exports.userRouter.get('/', auth_middleware_1.isAuthenticated, (0, auth_middleware_1.hasRole)(['admin', 'empleado']), UserController.getAllUsers);
+exports.userRouter.get('/verify-token', auth_middleware_1.isAuthenticated, (req, res) => {
+    res.status(200).json({ valid: true, user: req.user });
+});
 exports.userRouter.post('/:id/sancionar', auth_middleware_1.isAuthenticated, (0, auth_middleware_1.hasRole)(['admin']), UserController.sancionarUsuario);
+exports.userRouter.post('/:id/asignar-barbero', auth_middleware_1.isAuthenticated, (0, auth_middleware_1.hasRole)(['admin']), UserController.asignarBarbero);
+exports.userRouter.post('/:id/asignar-barbero-empleado', auth_middleware_1.isAuthenticated, (0, auth_middleware_1.isOwnerOrAdmin)('id'), UserController.asignarBarberoEmpleado);
 exports.userRouter.get('/:id', auth_middleware_1.isAuthenticated, (0, auth_middleware_1.isOwnerOrAdmin)('id'), UserController.getUserById);
 exports.userRouter.put('/:id', auth_middleware_1.isAuthenticated, (0, auth_middleware_1.isOwnerOrAdmin)('id'), UserController.updateUser);
 exports.userRouter.delete('/:id', auth_middleware_1.isAuthenticated, (0, auth_middleware_1.hasRole)(['admin']), UserController.deleteUser);

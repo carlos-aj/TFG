@@ -10,7 +10,9 @@ exports.deleteUser = deleteUser;
 exports.updateUser = updateUser;
 exports.confirmUser = confirmUser;
 exports.getUserByEmail = getUserByEmail;
+exports.getBarberoById = getBarberoById;
 const User_1 = require("../models/User");
+const Barbero_1 = require("../models/Barbero");
 const emailSender_1 = require("../utils/emailSender");
 const crypto_1 = __importDefault(require("crypto"));
 const bcrypt_1 = __importDefault(require("bcrypt"));
@@ -37,8 +39,14 @@ async function createUser(data) {
 async function deleteUser(id) {
     return await User_1.User.query().deleteById(id);
 }
-async function updateUser(data, id) {
-    return await User_1.User.query().patchAndFetchById(id, data);
+async function updateUser(data, userId) {
+    try {
+        return await User_1.User.query().patchAndFetchById(userId, data);
+    }
+    catch (error) {
+        console.error(`Error al actualizar usuario ${userId}:`, error);
+        throw error;
+    }
 }
 async function confirmUser(token) {
     const user = await User_1.User.query().findOne({ auth_token: token });
@@ -50,4 +58,7 @@ async function confirmUser(token) {
 }
 async function getUserByEmail(email) {
     return await User_1.User.query().findOne({ email });
+}
+async function getBarberoById(id) {
+    return await Barbero_1.Barbero.query().findById(id);
 }

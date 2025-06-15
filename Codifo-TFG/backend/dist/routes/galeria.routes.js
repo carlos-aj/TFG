@@ -42,6 +42,14 @@ const multer_1 = __importDefault(require("multer"));
 const path_1 = __importDefault(require("path"));
 const UploadController = __importStar(require("../controllers/upload.controller"));
 const GaleriaController = __importStar(require("../controllers/galeria.controller"));
+const fileFilter = (req, file, cb) => {
+    if (file.mimetype.startsWith('image/')) {
+        cb(null, true);
+    }
+    else {
+        cb(null, false);
+    }
+};
 const storage = multer_1.default.diskStorage({
     destination: function (req, file, cb) {
         cb(null, path_1.default.join(__dirname, '../ApiGaleria'));
@@ -50,11 +58,33 @@ const storage = multer_1.default.diskStorage({
         cb(null, Date.now() + '-' + file.originalname);
     }
 });
-const upload = (0, multer_1.default)({ storage });
+const upload = (0, multer_1.default)({
+    storage,
+    fileFilter,
+    limits: {
+        fileSize: 5 * 1024 * 1024,
+    }
+});
 exports.galeriaRouter = (0, express_1.Router)();
-exports.galeriaRouter.get('/:id', GaleriaController.getGaleriaById);
 exports.galeriaRouter.get('/', GaleriaController.getGalerias);
 exports.galeriaRouter.post('/', GaleriaController.createGaleria);
-exports.galeriaRouter.put('/:id', GaleriaController.updateGaleria);
-exports.galeriaRouter.delete('/:id', GaleriaController.deleteGaleria);
-exports.galeriaRouter.post('/upload', upload.array('imagenes'), UploadController.uploadImagen);
+exports.galeriaRouter.post('/upload', (req, res) => {
+    upload.array('imagenes')(req, res, (err) => {
+        if (err instanceof multer_1.default.MulterError) {
+            if (err.code === 'LIMIT_FILE_SIZE') {
+                return res.status(400).json({
+                    message: 'El archivo es demasiado grande. Tamaño máximo: 5MB'
+                });
+            }
+            return res.status(400).json({ message: err.message });
+        }
+        else if (err) {
+            return res.status(400).json({ message: err.message });
+        }
+        UploadController.uploadImagen(req, res);
+    });
+});
+exports.galeriaRouter.get('/item/:id', GaleriaController.getGaleriaById);
+exports.galeriaRouter.put('/item/:id', GaleriaController.updateGaleria);
+exports.galeriaRouter.delete('/item/:id', GaleriaController.deleteGaleria);
+exports.galeriaRouter.get('/:filename', GaleriaController.getImagenByName);

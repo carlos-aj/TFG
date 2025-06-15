@@ -32,44 +32,101 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getGalerias = getGalerias;
 exports.getGaleriaById = getGaleriaById;
 exports.createGaleria = createGaleria;
 exports.updateGaleria = updateGaleria;
 exports.deleteGaleria = deleteGaleria;
+exports.getImagenByName = getImagenByName;
 const GaleriaService = __importStar(require("../services/galeria.service"));
+const path_1 = __importDefault(require("path"));
 async function getGalerias(req, res) {
-    const limit = req.query.limit ? Number(req.query.limit) : undefined;
-    const galerias = await GaleriaService.getGalerias(limit);
-    res.json(galerias);
+    try {
+        const limit = req.query.limit ? parseInt(req.query.limit) : undefined;
+        const galerias = await GaleriaService.getGalerias(limit);
+        res.json(galerias);
+    }
+    catch (error) {
+        console.error('Error en getGalerias:', error);
+        res.status(500).json({ error: 'Error interno del servidor' });
+    }
 }
 async function getGaleriaById(req, res) {
-    const galeria = await GaleriaService.getGaleriaById(Number(req.params.id));
-    if (!galeria)
-        res.status(404).json({ message: 'No encontrada' });
-    res.json(galeria);
+    try {
+        const galeria = await GaleriaService.getGaleriaById(Number(req.params.id));
+        if (!galeria) {
+            res.status(404).json({ message: 'No encontrada' });
+            return;
+        }
+        res.json(galeria);
+    }
+    catch (error) {
+        console.error('Error en getGaleriaById:', error);
+        res.status(500).json({ error: 'Error interno del servidor' });
+    }
 }
 async function createGaleria(req, res) {
-    const { barbero_id, imagenes } = req.body;
-    if (!barbero_id || !imagenes)
-        res.status(400).json({ message: 'Faltan datos' });
-    const nueva = await GaleriaService.createGaleria(barbero_id, imagenes);
-    res.status(201).json(nueva);
+    try {
+        const { barbero_id, imagenes } = req.body;
+        if (!barbero_id || !imagenes) {
+            res.status(400).json({ message: 'Faltan datos' });
+            return;
+        }
+        const nueva = await GaleriaService.createGaleria(barbero_id, imagenes);
+        res.status(201).json(nueva);
+    }
+    catch (error) {
+        console.error('Error en createGaleria:', error);
+        res.status(500).json({ error: 'Error interno del servidor' });
+    }
 }
 async function updateGaleria(req, res) {
-    const { barbero, imagenes } = req.body;
-    const galeria = await GaleriaService.updateGaleria(Number(req.params.id), barbero, imagenes);
-    if (!galeria)
-        res.status(404).json({ message: 'No encontrada' });
-    res.json(galeria);
+    try {
+        const { barbero, imagenes } = req.body;
+        const galeria = await GaleriaService.updateGaleria(Number(req.params.id), barbero, imagenes);
+        if (!galeria) {
+            res.status(404).json({ message: 'No encontrada' });
+            return;
+        }
+        res.json(galeria);
+    }
+    catch (error) {
+        console.error('Error en updateGaleria:', error);
+        res.status(500).json({ error: 'Error interno del servidor' });
+    }
 }
 async function deleteGaleria(req, res) {
-    const numDeleted = await GaleriaService.deleteGaleria(Number(req.params.id));
-    if (!numDeleted) {
-        res.status(404).json({ message: 'No encontrada' });
-    }
-    else {
+    try {
+        const numDeleted = await GaleriaService.deleteGaleria(Number(req.params.id));
+        if (!numDeleted) {
+            res.status(404).json({ message: 'No encontrada' });
+            return;
+        }
         res.json({ message: 'Eliminada correctamente' });
+    }
+    catch (error) {
+        console.error('Error en deleteGaleria:', error);
+        res.status(500).json({ error: 'Error interno del servidor' });
+    }
+}
+async function getImagenByName(req, res) {
+    try {
+        const { filename } = req.params;
+        const imagePath = path_1.default.join(__dirname, '../ApiGaleria', filename);
+        res.sendFile(imagePath, (err) => {
+            if (err) {
+                console.error('Error al enviar imagen:', err);
+                console.error('Path intentado:', imagePath);
+                res.status(404).send('Imagen no encontrada');
+            }
+        });
+    }
+    catch (error) {
+        console.error('Error en getImagenByName:', error);
+        res.status(500).json({ error: 'Error interno del servidor' });
     }
 }

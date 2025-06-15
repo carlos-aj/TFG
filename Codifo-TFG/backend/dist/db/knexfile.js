@@ -36,20 +36,41 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const knex_1 = __importDefault(require("knex"));
-const objection_1 = require("objection");
 const dotenv = __importStar(require("dotenv"));
 const path_1 = __importDefault(require("path"));
 dotenv.config({ path: path_1.default.join(__dirname, '../../.env') });
-const environment = process.env.NODE_ENV || 'development';
-const config = require('./knexfile');
-const environmentConfig = config[environment];
-if (!environmentConfig) {
-    console.error(`No se encontró configuración para el entorno: ${environment}`);
-    console.error('Configuraciones disponibles:', Object.keys(config));
-    process.exit(1);
-}
-console.log(`Conectando a la base de datos en entorno: ${environment}`);
-const knex = (0, knex_1.default)(environmentConfig);
-objection_1.Model.knex(knex);
-exports.default = knex;
+const config = {
+    development: {
+        client: 'pg',
+        connection: {
+            host: process.env.DB_HOST || 'localhost',
+            port: Number(process.env.DB_PORT) || 5432,
+            user: process.env.DB_USER || 'postgres',
+            password: process.env.DB_PASSWORD || 'postgres',
+            database: process.env.DB_NAME || 'barbershop'
+        },
+        migrations: {
+            directory: path_1.default.join(__dirname, '../migrations'),
+            tableName: 'knex_migrations'
+        },
+        seeds: {
+            directory: path_1.default.join(__dirname, '../seeds')
+        }
+    },
+    production: {
+        client: 'pg',
+        connection: process.env.DATABASE_URL,
+        migrations: {
+            directory: path_1.default.join(__dirname, '../migrations'),
+            tableName: 'knex_migrations'
+        },
+        seeds: {
+            directory: path_1.default.join(__dirname, '../seeds')
+        },
+        pool: {
+            min: 2,
+            max: 10
+        }
+    }
+};
+module.exports = config;

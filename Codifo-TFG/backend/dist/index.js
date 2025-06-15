@@ -38,28 +38,26 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const dotenv = __importStar(require("dotenv"));
 dotenv.config();
-const cookie_parser_1 = __importDefault(require("cookie-parser"));
 const express_1 = __importDefault(require("express"));
-const path_1 = __importDefault(require("path"));
-const user_routes_1 = require("./routes/user.routes");
-const barbero_routes_1 = require("./routes/barbero.routes");
-const servicio_routes_1 = require("./routes/servicio.routes");
-const cita_routes_1 = require("./routes/cita.routes");
-const galeria_routes_1 = require("./routes/galeria.routes");
+const cors_1 = __importDefault(require("cors"));
+const cookie_parser_1 = __importDefault(require("cookie-parser"));
 const security_middleware_1 = require("./middlewares/security.middleware");
 const knex_1 = __importDefault(require("./db/knex"));
-const cors = require('cors');
+const user_routes_1 = require("./routes/user.routes");
+const cita_routes_1 = require("./routes/cita.routes");
+const servicio_routes_1 = require("./routes/servicio.routes");
+const barbero_routes_1 = require("./routes/barbero.routes");
+const public_routes_1 = require("./routes/public.routes");
+const galeria_routes_1 = require("./routes/galeria.routes");
 const app = (0, express_1.default)();
+const PORT = Number(process.env.PORT) || 3000;
 const allowedOrigins = [
     process.env.FRONTEND_URL || 'http://localhost:5173',
     'https://www.rasoio.es'
 ];
-const cleanAllowedOrigins = allowedOrigins.map(origin => origin.endsWith('/') ? origin.slice(0, -1) : origin);
-app.use(cors({
-    origin: function (origin, callback) {
-        if (!origin)
-            return callback(null, true);
-        if (cleanAllowedOrigins.indexOf(origin) !== -1) {
+app.use((0, cors_1.default)({
+    origin: (origin, callback) => {
+        if (!origin || allowedOrigins.includes(origin)) {
             callback(null, true);
         }
         else {
@@ -68,20 +66,25 @@ app.use(cors({
     },
     credentials: true
 }));
-app.use(express_1.default.json());
 app.use((0, cookie_parser_1.default)());
-app.use('/galeria', express_1.default.static(path_1.default.join(__dirname, 'ApiGaleria')));
-app.use('/public', express_1.default.static(path_1.default.join(__dirname, '../../public')));
+app.use('/api/stripe-webhook', express_1.default.raw({ type: 'application/json' }), public_routes_1.publicRouter);
+app.use(express_1.default.json());
 app.use(security_middleware_1.protectApi);
-knex_1.default.raw('SELECT 1')
-    .then(() => console.log('✅ Conexión a la base de datos exitosa'))
-    .catch(err => console.error('❌ Error conectando a la base de datos', err));
 app.use('/api/user', user_routes_1.userRouter);
-app.use('/api/barbero', barbero_routes_1.barberoRouter);
-app.use('/api/servicio', servicio_routes_1.servicioRouter);
 app.use('/api/cita', cita_routes_1.citaRouter);
+app.use('/api/servicio', servicio_routes_1.servicioRouter);
+app.use('/api/barbero', barbero_routes_1.barberoRouter);
 app.use('/api/galeria', galeria_routes_1.galeriaRouter);
-const PORT = Number(process.env.PORT) || 3000;
-app.listen(PORT, '0.0.0.0', () => {
+async function syncCitaSequence() {
+    try {
+        const result = await knex_1.default.raw("SELECT setval('cita_id_seq', COALESCE((SELECT MAX(id) FROM cita), 0) + 1, false);");
+        console.log('Secuencia de ID de citas sincronizada correctamente.', result);
+    }
+    catch (error) {
+        console.error('Error al sincronizar la secuencia de citas:', error);
+    }
+}
+app.listen(PORT, '0.0.0.0', async () => {
     console.log(`Servidor en puerto ${PORT}`);
+    await syncCitaSequence();
 });

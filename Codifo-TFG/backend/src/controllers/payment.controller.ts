@@ -20,6 +20,11 @@ export async function createCheckoutSession(req: Request, res: Response, next: N
       frontendUrl: process.env.FRONTEND_URL
     });
 
+    let frontendUrl = process.env.FRONTEND_URL || '';
+    if (!frontendUrl.startsWith('http://') && !frontendUrl.startsWith('https://')) {
+      frontendUrl = `https://${frontendUrl}`;
+    }
+
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
       line_items: [{
@@ -34,8 +39,8 @@ export async function createCheckoutSession(req: Request, res: Response, next: N
         quantity: 1,
       }],
       mode: 'payment',
-      success_url: `${process.env.FRONTEND_URL}/cita-exito?cita_id=${citaId}`,
-      cancel_url: `${process.env.FRONTEND_URL}/`,
+      success_url: `${frontendUrl}/cita-exito?cita_id=${citaId}`,
+      cancel_url: `${frontendUrl}/`,
       metadata: {
         citaId: citaId.toString()
       }

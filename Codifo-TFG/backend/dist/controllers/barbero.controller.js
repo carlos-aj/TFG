@@ -45,6 +45,7 @@ async function getBarberoById(req, res) {
         const barbero = await BarberoService.getBarberoById(id);
         if (!barbero) {
             res.status(404).json({ message: 'Barber not found' });
+            return;
         }
         res.json(barbero);
     }
@@ -80,6 +81,7 @@ async function deleteBarbero(req, res) {
         const barberDeleted = await BarberoService.deleteBarbero(id);
         if (barberDeleted === 0) {
             res.status(404).json({ message: 'Barber not found' });
+            return;
         }
         res.json({ message: 'Barber deleted successfully' });
     }
@@ -95,6 +97,7 @@ async function updateBarbero(req, res) {
         const barberUpdated = await BarberoService.updateBarbero(data, id);
         if (!barberUpdated) {
             res.status(404).json({ message: 'Barber not found' });
+            return;
         }
         res.json(barberUpdated);
     }

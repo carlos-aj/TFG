@@ -47,7 +47,7 @@ const transporter = nodemailer.createTransport({
 async function sendConfirmationEmail(to, token) {
     const confirmUrl = `${process.env.FRONTEND_URL}/confirm?token=${token}`;
     const info = await transporter.sendMail({
-        from: '"Rasoio Barber Shop" <no-reply@rasoio.com>',
+        from: '""Rasoio Barber Shop" <no-reply@tuapp.com>',
         to,
         subject: 'Confirma tu cuenta',
         html: `<p>Haz clic en el siguiente enlace para confirmar tu cuenta:</p>
@@ -55,40 +55,52 @@ async function sendConfirmationEmail(to, token) {
     });
 }
 async function sendCitaEmail(to, citaInfo) {
-    let invitadoHtml = '';
-    if (citaInfo.invitado) {
-        invitadoHtml = `
-      <hr>
-      <h3>Información de tu invitado:</h3>
-      <p><b>Nombre:</b> ${citaInfo.invitado.nombre}</p>
-      <p><b>Servicio:</b> ${citaInfo.invitado.servicio}</p>
-      <p><b>Barbero:</b> ${citaInfo.invitado.barbero}</p>
-      <p><b>Fecha:</b> ${formatFecha(citaInfo.invitado.fecha)}</p>
-      <p><b>Hora:</b> ${citaInfo.invitado.hora}</p>
-    `;
+    try {
+        let invitadoHtml = '';
+        if (citaInfo.invitado) {
+            invitadoHtml = `
+        <hr>
+        <h3>Información de tu invitado:</h3>
+        <p><b>Nombre:</b> ${citaInfo.invitado.nombre}</p>
+        <p><b>Servicio:</b> ${citaInfo.invitado.servicio}</p>
+        <p><b>Barbero:</b> ${citaInfo.invitado.barbero}</p>
+        <p><b>Fecha:</b> ${formatFecha(citaInfo.invitado.fecha)}</p>
+        <p><b>Hora:</b> ${citaInfo.invitado.hora}</p>
+      `;
+        }
+        const estadoPagoHtml = citaInfo.importe_pagado && citaInfo.importe_pagado > 0
+            ? `<p><b>Estado del pago:</b> Pagado</p><p><b>Importe pagado:</b> ${citaInfo.importe_pagado} €</p>`
+            : `<p><b>Estado del pago:</b> Pendiente de pago en el local</p>`;
+        const info = await transporter.sendMail({
+            from: '""Rasoio Barber Shop" <no-reply@barberia.com>',
+            to,
+            subject: 'Confirmación de tu cita',
+            html: `
+        <h2>¡Cita reservada!</h2>
+        <p><b>Servicio:</b> ${citaInfo.servicio}</p>
+        <p><b>Barbero:</b> ${citaInfo.barbero}</p>
+        <p><b>Fecha:</b> ${formatFecha(citaInfo.fecha)}</p>
+        <p><b>Hora:</b> ${citaInfo.hora}</p>
+        ${estadoPagoHtml}
+        ${invitadoHtml}
+      `,
+        });
     }
-    const importeHtml = citaInfo.importe_pagado
-        ? `<p><b>Importe pagado:</b> ${citaInfo.importe_pagado / 100} €</p>`
-        : '';
-    const info = await transporter.sendMail({
-        from: '"Rasoio Barber Shop" <no-reply@barberia.com>',
-        to,
-        subject: 'Confirmación de tu cita',
-        html: `
-      <h2>¡Cita reservada!</h2>
-      <p><b>Servicio:</b> ${citaInfo.servicio}</p>
-      <p><b>Barbero:</b> ${citaInfo.barbero}</p>
-      <p><b>Fecha:</b> ${formatFecha(citaInfo.fecha)}</p>
-      <p><b>Hora:</b> ${citaInfo.hora}</p>
-      ${importeHtml}
-      ${invitadoHtml}
-    `,
-    });
+    catch (error) {
+        console.error('Error al enviar correo de cita:', error);
+        throw error;
+    }
 }
 function formatFecha(fecha) {
-    const d = new Date(fecha);
-    const dia = String(d.getDate()).padStart(2, '0');
-    const mes = String(d.getMonth() + 1).padStart(2, '0');
-    const anio = d.getFullYear();
-    return `${dia}/${mes}/${anio}`;
+    try {
+        const d = new Date(fecha);
+        const dia = String(d.getDate()).padStart(2, '0');
+        const mes = String(d.getMonth() + 1).padStart(2, '0');
+        const anio = d.getFullYear();
+        return `${dia}/${mes}/${anio}`;
+    }
+    catch (error) {
+        console.error('Error al formatear fecha:', error);
+        return fecha;
+    }
 }
