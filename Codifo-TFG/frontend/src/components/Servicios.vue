@@ -205,6 +205,22 @@
           </v-alert>
         </v-card-text>
       </v-card>
+
+      <!-- Diálogo de confirmación para eliminar -->
+      <v-dialog v-model="dialogDelete" max-width="500px">
+        <v-card>
+          <v-card-title class="text-h5">Confirmar eliminación</v-card-title>
+          <v-card-text>
+            ¿Estás seguro de que quieres eliminar este servicio?
+            Esta acción no se puede deshacer.
+          </v-card-text>
+          <v-card-actions>
+            <v-spacer></v-spacer>
+            <v-btn color="grey-darken-1" variant="text" @click="closeDeleteDialog">Cancelar</v-btn>
+            <v-btn color="error" variant="text" @click="deleteItemConfirm">Eliminar</v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-dialog>
     </v-container>
   </div>
 </template>
@@ -230,6 +246,10 @@ const paginatedServicios = computed(() => {
   const start = (currentPage.value - 1) * pageSize.value
   return servicios.value.slice(start, start + pageSize.value)
 })
+
+// Para el diálogo de confirmación
+const dialogDelete = ref(false)
+const itemToDelete = ref(null)
 
 async function cargarServicios() {
   try {
@@ -274,10 +294,19 @@ async function crearServicio() {
   }
 }
 
-async function eliminarServicio(id) {
-  if (!confirm('¿Seguro que quieres eliminar este servicio?')) return
+function eliminarServicio(id) {
+  itemToDelete.value = id
+  dialogDelete.value = true
+}
+
+function closeDeleteDialog() {
+  dialogDelete.value = false
+  itemToDelete.value = null
+}
+
+async function deleteItemConfirm() {
   try {
-    const response = await fetch(`${API_URL}/api/servicio/${id}`, {
+    const response = await fetch(`${API_URL}/api/servicio/${itemToDelete.value}`, {
       method: 'DELETE',
       credentials: 'include'
     })
@@ -288,6 +317,8 @@ async function eliminarServicio(id) {
     }
   } catch {
     error.value = 'Error de red'
+  } finally {
+    closeDeleteDialog()
   }
 }
 
