@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import { User } from '../models/User';
+import { Cita } from '../models/Cita';
 
 declare global {
   namespace Express {
@@ -111,6 +112,36 @@ export const isOwnerOrAdmin = (paramName: string) => {
       res.status(403).json({ message: 'Unauthorized' });
     } catch (err) {
       res.status(500).json({ message: 'Error checking authorization' });
+    }
+  };
+};
+
+export const isCitaOwnerOrAdmin = () => {
+  return async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const user = req.user as User;
+      const citaId = parseInt(req.params.id);
+
+      if (user.rol === 'admin' || user.rol === 'empleado') {
+        next();
+        return;
+      }
+      
+      const cita = await Cita.query().findById(citaId);
+      if (!cita) {
+        res.status(404).json({ message: 'Cita no encontrada' });
+        return;
+      }
+      
+      if (cita.user_id === user.id) {
+        next();
+        return;
+      }
+
+      res.status(403).json({ message: 'No tienes permiso para modificar esta cita' });
+    } catch (err) {
+      console.error('Error al verificar permisos de cita:', err);
+      res.status(500).json({ message: 'Error al verificar permisos' });
     }
   };
 }; 

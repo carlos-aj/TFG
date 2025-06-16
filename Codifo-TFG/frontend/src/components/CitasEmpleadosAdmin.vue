@@ -223,19 +223,29 @@ const citasFiltradas = computed(() => {
 
 async function toggleEstado(cita) {
   const nuevoEstado = !cita.estado;
+  const estadoOriginal = cita.estado;
+  
   try {
+    cita.estado = nuevoEstado;
+    
     const res = await fetch(`${API_URL}/api/cita/${cita.id}`, {
       method: 'PUT',
       credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ estado: nuevoEstado }),
     });
-    if (res.ok) {
-      cita.estado = nuevoEstado;
+    
+    if (!res.ok) {
+      cita.estado = estadoOriginal;
+      console.error('Error al actualizar el estado:', await res.text());
+      alert(`Error al actualizar el estado: ${res.status} ${res.statusText}`);
     } else {
-      alert('Error al actualizar el estado');
+      const updatedCita = await res.json();
+      cita.estado = updatedCita.estado;
     }
   } catch (e) {
+    cita.estado = estadoOriginal;
+    console.error('Error de red al actualizar el estado:', e);
     alert('Error de red al actualizar el estado');
   }
 }

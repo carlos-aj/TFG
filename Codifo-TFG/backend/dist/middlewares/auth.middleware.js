@@ -3,9 +3,10 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.isOwnerOrAdmin = exports.hasRole = exports.isAuthenticated = void 0;
+exports.isCitaOwnerOrAdmin = exports.isOwnerOrAdmin = exports.hasRole = exports.isAuthenticated = void 0;
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const User_1 = require("../models/User");
+const Cita_1 = require("../models/Cita");
 const isAuthenticated = async (req, res, next) => {
     try {
         const authHeader = req.headers.authorization;
@@ -94,3 +95,30 @@ const isOwnerOrAdmin = (paramName) => {
     };
 };
 exports.isOwnerOrAdmin = isOwnerOrAdmin;
+const isCitaOwnerOrAdmin = () => {
+    return async (req, res, next) => {
+        try {
+            const user = req.user;
+            const citaId = parseInt(req.params.id);
+            if (user.rol === 'admin' || user.rol === 'empleado') {
+                next();
+                return;
+            }
+            const cita = await Cita_1.Cita.query().findById(citaId);
+            if (!cita) {
+                res.status(404).json({ message: 'Cita no encontrada' });
+                return;
+            }
+            if (cita.user_id === user.id) {
+                next();
+                return;
+            }
+            res.status(403).json({ message: 'No tienes permiso para modificar esta cita' });
+        }
+        catch (err) {
+            console.error('Error al verificar permisos de cita:', err);
+            res.status(500).json({ message: 'Error al verificar permisos' });
+        }
+    };
+};
+exports.isCitaOwnerOrAdmin = isCitaOwnerOrAdmin;
