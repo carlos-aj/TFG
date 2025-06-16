@@ -437,13 +437,18 @@ function getHorasDisponibles() {
   }
   
   const hoy = new Date();
-  if (fecha.toDateString() === hoy.toDateString()) {
+  const esHoy = 
+    fecha.getFullYear() === hoy.getFullYear() && 
+    fecha.getMonth() === hoy.getMonth() && 
+    fecha.getDate() === hoy.getDate();
+  
+  if (esHoy) {
     const horaActual = hoy.getHours();
     const minutosActuales = hoy.getMinutes();
     
     return horas.filter(hora => {
       const [h, m] = hora.split(':').map(Number);
-      return (h > horaActual) || (h === horaActual && m > minutosActuales);
+      return (h > horaActual) || (h === horaActual && m > minutosActuales + 15);
     });
   }
   
