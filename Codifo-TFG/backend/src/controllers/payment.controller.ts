@@ -1,7 +1,7 @@
 import Stripe from 'stripe';
 import { Request, Response, NextFunction } from 'express';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: '2025-06-30.basil' });
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: '2025-05-28.basil' });
 
 export async function createCheckoutSession(req: Request, res: Response, next: NextFunction): Promise<void> {
   const { amount, citaId } = req.body;
